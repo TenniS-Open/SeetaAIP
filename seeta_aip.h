@@ -45,18 +45,21 @@ enum SEETA_AIP_SHAPE_TYPE {
     /**
      * Unknown shape
      */
-    SEETA_AIP_UNKOWN_SHAPE = 0,
+    SEETA_AIP_UNKNOWN_SHAPE = 0,
+
     /**
      * with forced rotate=0, scale=1, size>=1
      * points represents points
      */
     SEETA_AIP_POINTS = 1,
+
     /**
      * with forced rotate=0, scale=1, size>=2
      * points represents multi lines:
      *     points[0]->points[1], points[1]->points[2], ..., points[size-2]->points[size-1]
      */
     SEETA_AIP_LINES = 2,
+
     /**
      * with forced scale=1, size=2
      * rotate represents the angle of rotation around the center point.
@@ -64,12 +67,14 @@ enum SEETA_AIP_SHAPE_TYPE {
      * points[1] represents the right-bottom corner
      */
     SEETA_AIP_RECTANGLE = 3,
+
     /**
      * with forced rotate=0, scale=1, size=3
      * rotate represents the angle of rotation around the center point.
      * points represents the first 3 points of parallelogram with anticlockwise
      */
     SEETA_AIP_PARALLELOGRAM = 4,
+
     /**
      * with forced rotate=0, scale=1, size>=2
      * points represents multi lines with anticlockwise:
@@ -77,12 +82,14 @@ enum SEETA_AIP_SHAPE_TYPE {
      *     points[size-2]->points[size-1], points[size-1]->points[0]
      */
     SEETA_AIP_POLYGON = 5,
+
     /**
      * with forced rotate=0, size=1
      * scale represents the radius
 	 * points[0] represents the center
      */
     SEETA_AIP_CIRCLE = 6,
+
     /**
      * with forced rotate=0, scale=1, size=3
      * points[0] represents the left-top-front corner
@@ -130,8 +137,6 @@ struct SeetaAIPDevice {
     int32_t id;
 };
 
-struct SeetaAIPContainer;
-
 /**
  * \brief ImageData type
  */
@@ -140,35 +145,110 @@ struct SeetaAIPImageData {
     void *data;                     ///< an array contains each pixel with dims [height, width, channels], the pixel type should be the given type
     // type=SEETA_AIP_VALUE_BYTE represents decltype(*data)=uint8_t
     // type=SEETA_AIP_VALUE_FLOAT represents decltype(*data)=float
+    uint32_t number;                ///< number of data
     uint32_t height;                ///< height of image
     uint32_t width;                 ///< width of image
     uint32_t channels;              ///< channels of image
 };
 
-/**
- * Got an string to describe this AIP's ability
- * @return json string
- */
-const char* seeta_aip_describe();
+
+struct SeetaAIPStruct;
+typedef struct SeetaAIPStruct *SeetaAIPHandle;
 
 /**
- * Got english error message by errcode
- * @param [in] errcode
- * @return meaningful error message
+ * Get readable string for errcode
+ * @param [in] errcode non-zero error code, suggest -1 for the last error.
+ * @return string for error code description
  */
-const char* seeta_api_error_message(int32_t errcode);
+typedef const char* seeta_aip_error(int32_t errcode);
 
-int32_t seeta_aip_create(struct SeetaAIPContainer *paip);
+/**
+ *
+ * @param paip pointer to created
+ * @param [in] device NULL for default device
+ * @param [in] models C-style of string, end with NULL. Example: {"file1.dat", "file2.json", NULL}
+ * @return error code, non-zero for failed.
+ */
+typedef int32_t seeta_aip_create(SeetaAIPHandle **paip,
+        const SeetaAIPDevice *device,
+        const char **models);
 
-int32_t seeta_aip_free(struct SeetaAIPContainer *aip);
+typedef int32_t seeta_aip_free(SeetaAIPHandle aip);
 
-int32_t seeta_aip_reset(struct SeetaAIPContainer *aip);
+typedef int32_t seeta_aip_reset(SeetaAIPHandle aip);
 
-int32_t seeta_aip_forward(struct SeetaAIPContainer *aip,
-                uint32_t method_id,
-                const struct SeetaAIPImageData *images, uint32_t images_size,
-                const struct SeetaAIPImageData *objects, uint32_t objects_size,
-                struct SeetaAIPImageData **result_objects, uint32_t *result_size);
+typedef int32_t seeta_aip_forward(SeetaAIPHandle aip,
+                                  uint32_t method_id,
+                                  const struct SeetaAIPImageData *images, uint32_t images_size,
+                                  const struct SeetaAIPObject *objects, uint32_t objects_size,
+                                  struct SeetaAIPObject **result_objects, uint32_t *result_objects_size,
+                                  struct SeetaAIPImageData **result_images, uint32_t*result_images_size);
+
+/**
+ * @param [out] property pointer to int list, contains all property_id, end with 0, like: {1001, 1002, 0}
+ */
+typedef int32_t seeta_aip_property(SeetaAIPHandle aip, int32_t **property);
+
+typedef int32_t seeta_aip_get(SeetaAIPHandle aip, int32_t property_id, double *value);
+
+typedef int32_t seeta_aip_set(SeetaAIPHandle aip, int32_t property_id, double value);
+
+#define SEETA_AIP_API_VERSION 1
+
+struct SeetaAIP {
+    /**
+     * Version for AIP's AIP version. must be SEETA_AIP_API_VERSION for what you seeing.
+     * Must be the first member in next versions.
+     */
+    int32_t aip_version;
+
+    /**
+     * String for module name, must be `[a-zA-Z_][a-zA-Z_0-9]*`, used to distinguish from other libraries.
+     * For example, SeetaFaceDetector610
+     */
+    const char *module;
+
+    /**
+     * JSON string for more information.
+     * Must contain:
+     * 1. module files number
+     * 2. supported computing device
+     * 3. input image format of each method
+     * 4. input object format of each method
+     * 5. output object format of each method
+     * 6. output image format of each method
+     * 7. each property description and default value
+     */
+    const char *description;    ///< json string for more information, the format will post later
+    const char *ID;             ///< not readable ID of AIP, only satisfied in system
+    const char *version;        ///< this AIP's version, comparable `Dotted String`, like 1.3, 6.4.0, or 1.2.3.rc1
+    const char **support;       ///< C-stype array of string, like {'cpu', 'gpu', NULL}, only for tips
+
+    seeta_aip_error *error;     ///< used to convert error number to error string
+    seeta_aip_create *create;   ///< create a new AIP instance
+    seeta_aip_free *free;       ///< free the AIP instance
+    seeta_aip_property *property;   ///< list all properties, used to save all property to system
+    seeta_aip_get *get;         ///< get AIP's property
+    seeta_aip_set *set;         ///< set AIP's property
+    seeta_aip_reset *reset;     ///< reset AIP, for video status AIP
+    seeta_aip_forward *forward; ///< forward an image, got processed image, detected object or other extra data
+};
+
+enum SEETA_AIP_LOAD_ERROR {
+    SEETA_AIP_LOAD_SUCCEED = 0,
+    SEETA_AIP_LOAD_SIZE_NOT_ENOUGH = 1, ///< once this error return the wanted version will be set.
+    SEETA_AIP_LOAD_UNHANDLED_INTERNAL_ERROR = 2,    ///< for unknown load failed, no more informations
+};
+
+/**
+ *
+ * @param aip return loaded AIP
+ * @param size must greater than 4, should be sizeof(SeetaAIP)
+ * @return SEETA_AIP_LOAD_ERROR
+ * For each libraries can be static linked in system, the should be another exported API,
+ * named like <module>_aip_load, the <module> is returned aip's module
+ */
+SEETA_AIP_API int32_t seeta_aip_load(struct SeetaAIP *aip, uint32_t size);
 
 #ifdef __cplusplus
 }
