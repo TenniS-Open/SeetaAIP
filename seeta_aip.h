@@ -97,13 +97,18 @@ enum SEETA_AIP_SHAPE_TYPE {
      * points[2] represents the right-top-back corner
      */
     SEETA_AIP_CUBE = 7,
+
+    /**
+     * Means the shape is undefined
+     */
+    SEETA_AIP_NO_SHAPE = 255,
 };
 
 /**
  * \brief shape of object
  */
 struct SeetaAIPShape {
-    enum SEETA_AIP_SHAPE_TYPE type; ///< type of this shape
+    int32_t type;                   ///< SEETA_AIP_SHAPE_TYPE, type of this shape
     struct Landmarks {
         struct SeetaAIPPoint *data; ///< landmarks
         uint32_t size;              ///< size of points
@@ -123,9 +128,12 @@ struct SeetaAIPObject {
         uint32_t size;                  ///< size of label and score
     } tags;                         ///< tags of object
     struct Extra {
-        enum SEETA_AIP_VALUE_TYPE type; ///< extra data type
-        void *data;                     ///< extra data pointer
-        uint32_t size;                  ///< extra data size
+        int32_t type;                   ///< SEETA_AIP_VALUE_TYPE, extra data type, most be SEETA_AIP_VALUE_FLOAT
+        void *data;                     ///< empty for no extra data
+        struct Dims {
+            uint32_t *data;                 ///< dims data
+            uint32_t size;                  ///< dims size
+        } dims;                         ///< dims of extra data
     } extra;                        ///< extra data of object, be related to algorithm
 };
 
@@ -141,7 +149,7 @@ struct SeetaAIPDevice {
  * \brief ImageData type
  */
 struct SeetaAIPImageData {
-    enum SEETA_AIP_VALUE_TYPE type;    ///< data value type, support SEETA_AIP_VALUE_BYTE or SEETA_AIP_VALUE_FLOAT
+    int32_t type;                   ///< SEETA_AIP_VALUE_TYPE, data value type, support SEETA_AIP_VALUE_BYTE or SEETA_AIP_VALUE_FLOAT
     void *data;                     ///< an array contains each pixel with dims [height, width, channels], the pixel type should be the given type
     // type=SEETA_AIP_VALUE_BYTE represents decltype(*data)=uint8_t
     // type=SEETA_AIP_VALUE_FLOAT represents decltype(*data)=float
@@ -151,8 +159,10 @@ struct SeetaAIPImageData {
     uint32_t channels;              ///< channels of image
 };
 
-
 struct SeetaAIPStruct;
+/**
+ * AIP handle
+ */
 typedef struct SeetaAIPStruct *SeetaAIPHandle;
 
 /**
@@ -163,20 +173,45 @@ typedef struct SeetaAIPStruct *SeetaAIPHandle;
 typedef const char* seeta_aip_error(int32_t errcode);
 
 /**
- *
- * @param paip pointer to created
+ * Create the aip
+ * @param [out] paip pointer to created
  * @param [in] device NULL for default device
  * @param [in] models C-style of string, end with NULL. Example: {"file1.dat", "file2.json", NULL}
- * @return error code, non-zero for failed.
+ * @return error code, zero for succeed.
  */
-typedef int32_t seeta_aip_create(SeetaAIPHandle **paip,
+typedef int32_t seeta_aip_create(SeetaAIPHandle *paip,
         const SeetaAIPDevice *device,
         const char **models);
 
+/**
+ *
+ * @param [in] aip The AIP Handle
+ * @return error code, zero for succeed.
+ */
 typedef int32_t seeta_aip_free(SeetaAIPHandle aip);
 
+
+/**
+ * @param [in] aip The AIP Handle
+ * @return error code, zero for succeed.
+ */
 typedef int32_t seeta_aip_reset(SeetaAIPHandle aip);
 
+/**
+ *
+ * @param [in] aip The AIP Handle
+ * @param [in] method_id
+ * @param [in] images
+ * @param [in] images_size
+ * @param [in] objects
+ * @param [in] objects_size
+ * @param [out] result_objects
+ * @param [out] result_objects_size
+ * @param [out] result_images
+ * @param [out] result_images_size
+ * @return error code, zero for succeed.
+ * @note all the return value should be borrowed value, no need to free outside
+ */
 typedef int32_t seeta_aip_forward(SeetaAIPHandle aip,
                                   uint32_t method_id,
                                   const struct SeetaAIPImageData *images, uint32_t images_size,
@@ -185,13 +220,29 @@ typedef int32_t seeta_aip_forward(SeetaAIPHandle aip,
                                   struct SeetaAIPImageData **result_images, uint32_t*result_images_size);
 
 /**
+ * @param [in] aip The AIP Handle
  * @param [out] property pointer to int list, contains all property_id, end with 0, like: {1001, 1002, 0}
+ * @return error code, zero for succeed.
+ * @note the return property must can be saved
  */
 typedef int32_t seeta_aip_property(SeetaAIPHandle aip, int32_t **property);
 
-typedef int32_t seeta_aip_get(SeetaAIPHandle aip, int32_t property_id, double *value);
-
+/**
+ * @param [in] aip The AIP Handle
+ * @param [in] property_id property id
+ * @param [in] value set value
+ * @return error code, zero for succeed.
+ * @note the return property must can be saved
+ */
 typedef int32_t seeta_aip_set(SeetaAIPHandle aip, int32_t property_id, double value);
+
+/**
+ * @param [in] aip The AIP Handle
+ * @param [in] property_id property id
+ * @param [out] value get value
+ * @note the return property must can be saved
+ */
+typedef int32_t seeta_aip_get(SeetaAIPHandle aip, int32_t property_id, double *value);
 
 #define SEETA_AIP_API_VERSION 1
 
@@ -220,7 +271,8 @@ struct SeetaAIP {
      * 7. each property description and default value
      */
     const char *description;    ///< json string for more information, the format will post later
-    const char *ID;             ///< not readable ID of AIP, only satisfied in system
+    const char *mID;            ///< not readable ID of AIP, only satisfied in system
+    const char *sID;            ///< self describable algorithm ID, like SSD, FRCNN etc.
     const char *version;        ///< this AIP's version, comparable `Dotted String`, like 1.3, 6.4.0, or 1.2.3.rc1
     const char **support;       ///< C-stype array of string, like {'cpu', 'gpu', NULL}, only for tips
 
