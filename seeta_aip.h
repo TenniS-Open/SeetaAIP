@@ -15,7 +15,7 @@
 #define SEETA_AIP_API __attribute__ ((visibility("default")))
 #endif
 
-#define SEETA_AIP_VERSION "1.0"
+#define SEETA_AIP_VERSION 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -122,11 +122,14 @@ struct SeetaAIPShape {
  */
 struct SeetaAIPObject {
     struct SeetaAIPShape shape;     ///< shape of object
-    struct Tags {
-        uint32_t *label;                ///< label index, reserved in SEETAX_PURE_DETECTION mode
-        float *score;                   ///< score of each label
-        uint32_t size;                  ///< size of label and score
-    } tags;                         ///< tags of object
+    struct Tag {
+        int32_t label;                 ///< label index, reserved in SEETAX_PURE_DETECTION mode
+        float score;                    ///< score of each label
+    };
+    struct TagArray {
+        struct Tag *data;              ///< data of tags
+        uint32_t size;                 ///< number of tag
+    } tags;                        ///< tags of object
     struct Extra {
         int32_t type;                   ///< SEETA_AIP_VALUE_TYPE, extra data type, most be SEETA_AIP_VALUE_FLOAT
         void *data;                     ///< empty for no extra data
@@ -244,7 +247,6 @@ typedef int32_t seeta_aip_set(SeetaAIPHandle aip, int32_t property_id, double va
  */
 typedef int32_t seeta_aip_get(SeetaAIPHandle aip, int32_t property_id, double *value);
 
-#define SEETA_AIP_API_VERSION 1
 
 struct SeetaAIP {
     /**
@@ -273,7 +275,7 @@ struct SeetaAIP {
     const char *description;    ///< json string for more information, the format will post later
     const char *mID;            ///< not readable ID of AIP, only satisfied in system
     const char *sID;            ///< self describable algorithm ID, like SSD, FRCNN etc.
-    const char *version;        ///< this AIP's version, comparable `Dotted String`, like 1.3, 6.4.0, or 1.2.3.rc1
+    const char *version;        ///< this AIP's version of mID, comparable `Dotted String`, like 1.3, 6.4.0, or 1.2.3.rc1
     const char **support;       ///< C-stype array of string, like {'cpu', 'gpu', NULL}, only for tips
 
     seeta_aip_error *error;     ///< used to convert error number to error string
