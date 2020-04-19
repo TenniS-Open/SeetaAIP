@@ -168,12 +168,24 @@ struct SeetaAIPStruct;
  */
 typedef struct SeetaAIPStruct *SeetaAIPHandle;
 
+enum SEETA_AIP_COMMON_ERRORCODE {
+    SEETA_AIP_NO_ERROR = 0,
+    SEETA_AIP_ERROR_UNHANDLED_INTERNAL_ERROR = 0x1001,
+    SEETA_AIP_ERROR_BAD_ALLOC = 0x1002,
+    SEETA_AIP_ERROR_OUT_OF_MEMORY = 0x1003,
+    SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE = 0x1004,
+    SEETA_AIP_ERROR_PROPERTY_NOT_EXISTS = 0x1005,
+};
+
 /**
  * Get readable string for errcode
+ * @param [in] aip The AIP Handle
  * @param [in] errcode non-zero error code, suggest -1 for the last error.
  * @return string for error code description
+ * @note aip can often be nullptr, if errcode is -1, aip must be set
+ * @note can not use common errcode, see SEETA_AIP_COMMON_ERRORCODE
  */
-typedef const char* seeta_aip_error(int32_t errcode);
+typedef const char* seeta_aip_error(SeetaAIPHandle aip, int32_t errcode);
 
 /**
  * Create the aip

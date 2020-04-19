@@ -17,7 +17,17 @@
 namespace seeta {
     namespace aip {
         class Exception : std::exception {
+        public:
+            int32_t errcode() const {
+                return m_errcode;
+            }
+            const std::string &message() const {
+                return m_message;
+            }
 
+        private:
+            int32_t m_errcode = -1;
+            std::string m_message;
         };
 
         using Point = SeetaAIPPoint;
