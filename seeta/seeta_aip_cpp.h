@@ -124,34 +124,6 @@ namespace seeta {
             Landmarks m_landmarks;
         };
 
-        class Points : public Shape {
-        public:
-            using self = Points;
-
-            Points() {
-                type(SEETA_AIP_POINTS);
-            }
-
-            explicit Points(const std::vector<Point> &points)
-                    : self() {
-                landmarks(points);
-            }
-        };
-
-        class Lines : public Shape {
-        public:
-            using self = Lines;
-
-            Lines() {
-                type(SEETA_AIP_LINES);
-            }
-
-            explicit Lines(const std::vector<Point> &points)
-                    : self() {
-                landmarks(points);
-            }
-        };
-
         class Tensor : public Wrapper<SeetaAIPObject::Extra> {
         public:
             using self = Tensor;

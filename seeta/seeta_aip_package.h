@@ -280,11 +280,53 @@ namespace seeta {
             }
         };
 
+        class Header {
+        public:
+            const char *module = "";
+            const char *description = "";
+            const char *mID = "";
+            const char *sID = "";
+            const char *version = "0.0.0";
+            const char **support = { nullptr };
+        };
+
+        inline void setup_aip_header(SeetaAIP &aip,
+                const char *module,
+                const char *description,
+                const char *mID,
+                const char *sID,
+                const char *version,
+                const char ** support) {
+            aip.aip_version = SEETA_AIP_VERSION;
+
+            aip.module = module;
+
+            aip.description = description;
+            aip.mID = mID;
+            aip.sID = sID;
+            aip.version = version;
+            aip.support = support;
+        }
+
+        template<typename T>
+        inline void setup_aip_header(SeetaAIP &aip) {
+            aip.aip_version = SEETA_AIP_VERSION;
+
+            T tmp;
+
+            aip.module = tmp.module;
+
+            aip.description = tmp.description;
+            aip.mID = tmp.mID;
+            aip.sID = tmp.sID;
+            aip.version = tmp.version;
+            aip.support = tmp.support;
+        }
+
         template<typename T, typename = typename std::enable_if<std::is_base_of<Package, T>::value>::type>
-        inline SeetaAIP describe_aip() {
+        inline void setup_aip_entry(SeetaAIP &aip) {
             using Wrapper = PackageWrapper<T>;
 
-            SeetaAIP aip;
             aip.error = Wrapper::Error;
             aip.free = Wrapper::Free;
             aip.reset = Wrapper::Reset;
@@ -292,9 +334,13 @@ namespace seeta {
             aip.property = Wrapper::Property;
             aip.set = Wrapper::Set;
             aip.get = Wrapper::Get;
-
-            return aip;
         }
+
+#define CHECK_AIP_SIZE(aip, size) \
+            if (size < sizeof(SeetaAIP)) { \
+                if (size > 4) aip->aip_version = SEETA_AIP_VERSION; \
+                return SEETA_AIP_LOAD_SIZE_NOT_ENOUGH; \
+            }
     }
 }
 
