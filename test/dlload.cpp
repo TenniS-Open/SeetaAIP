@@ -9,7 +9,7 @@
 
 int main() {
     std::cout << "[Host] dlopen" << std::endl;
-    auto handle = seeta::aip::dlopen("../lib/libtest.dylib");
+    auto handle = seeta::aip::dlopen_v2("../lib/test");
     std::cout << "[Host] dlopen " << handle << std::endl;
 
     if (handle == nullptr) {
