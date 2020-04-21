@@ -25,6 +25,13 @@
 
 namespace seeta {
     namespace aip {
+        /**
+         * Load dynamic library
+         * @param [in] libname full path to library name
+         * @return handle to library
+         * @note call dlclose to close handle
+         * @note return null if failed. Call dlerror to get error message.
+         */
         inline void *dlopen(const char *libname) {
 #if SEETA_AIP_OS_UNIX
             auto handle = ::dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
@@ -38,6 +45,12 @@ namespace seeta {
 #endif
         }
 
+        /**
+         * Open symbol in dynamic library
+         * @param [in] handle return value of dlopen
+         * @param [in] symbol symbol name
+         * @return pointer to function
+         */
         inline void *dlsym(void *handle, const char *symbol) {
 #if SEETA_AIP_OS_UNIX
             return ::dlsym(handle, symbol);
@@ -51,6 +64,10 @@ namespace seeta {
 #endif
         }
 
+        /**
+         * Close dynamic library
+         * @param [in] handle return value of dlopen
+         */
         inline void dlclose(void *handle) {
 #if SEETA_AIP_OS_UNIX
             ::dlclose(handle);
@@ -82,6 +99,10 @@ namespace seeta {
         }
 #endif
 
+        /**
+         * Get last dlopen error message
+         * @return error message
+         */
         inline std::string dlerror() {
 #if SEETA_AIP_OS_UNIX
             auto error_message = ::dlerror();
@@ -116,6 +137,14 @@ namespace seeta {
 #endif
         }
 
+        /**
+         * Load dynamic library
+         * @param [in] libname path to libname, can ignore the the prefix or suffix of libname
+         * @return handle to library
+         * @note call dlclose to close handle
+         * @note return null if failed. Call dlerror to get error message.
+         * Example dlopen_v2("test") can load `test`, `libtest.so` or `test.so` on linux instead.
+         */
         inline void *dlopen_v2(const std::string &libname) {
 #if SEETA_AIP_OS_MAC || SEETA_AIP_OS_IOS
             static const char *prefix = "lib";
@@ -145,6 +174,17 @@ namespace seeta {
             if (handle) return handle;
 
             // third open library
+            fixed_libname_buf.str("");
+            if (head.empty()) {
+                fixed_libname_buf << tail << suffix;
+            } else {
+                fixed_libname_buf << _file_separator() << prefix << tail << suffix;
+            }
+            fixed_libname = fixed_libname_buf.str();
+            handle = dlopen(fixed_libname.c_str());
+            if (handle) return handle;
+
+            // 4-th open library
             handle = dlopen(libname.c_str());
             if (handle) return handle;
 
