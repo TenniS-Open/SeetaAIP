@@ -8,12 +8,16 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# compile shared libraries
-add_library(test_aip_shared SHARED
-        test/seeta_aip_package.cpp
-        )
+FILE(GLOB_RECURSE MODULE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/module/*.cpp)
+foreach (path ${MODULE_FILES})
+    string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
+    string(REGEX MATCH "^[^.]*" file ${file_ext})
+    add_library(${file} SHARED ${path})
+endforeach ()
 
-# compile test
-add_executable(seeta_aip
-        test/main.cpp
-        )
+FILE(GLOB_RECURSE TEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp)
+foreach (path ${TEST_FILES})
+    string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
+    string(REGEX MATCH "^[^.]*" file ${file_ext})
+    add_executable(test_${file} ${path})
+endforeach ()

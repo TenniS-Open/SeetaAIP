@@ -306,6 +306,8 @@ enum SEETA_AIP_LOAD_ERROR {
     SEETA_AIP_LOAD_UNHANDLED_INTERNAL_ERROR = 2,    ///< for unknown load failed, no more informations
 };
 
+typedef int32_t seeta_aip_load_entry(struct SeetaAIP *aip, uint32_t size);
+
 /**
  *
  * @param aip return loaded AIP

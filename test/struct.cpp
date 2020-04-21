@@ -4,6 +4,7 @@
 
 #include "seeta_aip_struct.h"
 #include "seeta_aip_shape.h"
+#include "seeta_aip_dll.h"
 
 
 void plot_shape(const seeta::aip::Shape &shape) {

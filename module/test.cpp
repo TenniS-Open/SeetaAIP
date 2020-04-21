@@ -4,6 +4,8 @@
 
 #include "seeta_aip_package.h"
 
+#include <iostream>
+
 class MyPackage : public seeta::aip::Package {
 public:
     using self = MyPackage;
@@ -39,11 +41,21 @@ public:
     }
 };
 
-class B {
+class Init {
+public:
+    Init() {
+        std::cout << "[dll] initialized." << std::endl;
+    }
 
+    ~Init() {
+        std::cout << "[dll] finalized." << std::endl;
+    }
 };
 
+Init init;
+
 int32_t seeta_aip_load(struct SeetaAIP *aip, uint32_t size) {
+    std::cout << "[dll] package information loaded." << std::endl;
     CHECK_AIP_SIZE(aip, size)
     static const char *support[] = {"cpu", nullptr};
     seeta::aip::setup_aip_header(*aip,
