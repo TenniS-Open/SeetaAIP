@@ -7,7 +7,7 @@
 
 
 #include "seeta_aip.h"
-#include "seeta_aip_cpp.h"
+#include "seeta_aip_struct.h"
 
 #include <vector>
 #include <string>

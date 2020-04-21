@@ -5,7 +5,7 @@
 #ifndef _INC_SEETA_AIP_SHAPE_H
 #define _INC_SEETA_AIP_SHAPE_H
 
-#include "seeta_aip_cpp.h"
+#include "seeta_aip_struct.h"
 
 namespace seeta {
     namespace aip {
@@ -21,6 +21,15 @@ namespace seeta {
                     : self() {
                 landmarks(points);
             }
+
+            std::string str() const override {
+                std::ostringstream oss;
+
+                oss << "Points";
+                PlotPoints(oss, this->landmarks());
+
+                return oss.str();
+            }
         };
 
         class Lines : public Shape {
@@ -34,6 +43,15 @@ namespace seeta {
             explicit Lines(const std::vector<Point> &points)
                     : self() {
                 landmarks(points);
+            }
+
+            std::string str() const override {
+                std::ostringstream oss;
+
+                oss << "Lines";
+                PlotPoints(oss, this->landmarks());
+
+                return oss.str();
             }
         };
 
@@ -57,6 +75,22 @@ namespace seeta {
                                  {x + width, y + height}});
                 this->rotate(rotate);
             }
+
+            std::string str() const override {
+                std::ostringstream oss;
+
+                auto &left_top = this->landmarks()[0];
+                auto &right_bottom = this->landmarks()[1];
+
+                oss << "Rectangle{";
+                oss << "x=" << left_top.x
+                    << ", y=" << left_top.y
+                    << ", width=" << right_bottom.x - left_top.x
+                    << ", height=" << right_bottom.y - left_top.y;
+                oss << "}";
+
+                return oss.str();
+            }
         };
 
         class Parallelogram : public Shape {
@@ -67,12 +101,26 @@ namespace seeta {
                 type(SEETA_AIP_PARALLELOGRAM);
             }
 
-
             explicit Parallelogram(const Point &first, const Point &second, const Point &third)
                     : self() {
                 this->landmarks({first, second, third});
             }
 
+            std::string str() const override {
+                std::ostringstream oss;
+
+                auto &first = this->landmarks()[0];
+                auto &second = this->landmarks()[1];
+                auto &third = this->landmarks()[2];
+
+                oss << "Parallelogram{";
+                oss << "first=" << first
+                    << ", second=" << second
+                    << ", third=" << third;
+                oss << "}";
+
+                return oss.str();
+            }
         };
 
         class Polygon : public Shape {
@@ -86,6 +134,15 @@ namespace seeta {
             explicit Polygon(const std::vector<Point> &points)
                     : self() {
                 landmarks(points);
+            }
+
+            std::string str() const override {
+                std::ostringstream oss;
+
+                oss << "Polygon";
+                PlotPoints(oss, this->landmarks());
+
+                return oss.str();
             }
         };
 
@@ -102,6 +159,25 @@ namespace seeta {
                 landmarks({center});
                 scale(radius);
             }
+
+            const Point &center() const {
+                return landmarks()[0];
+            }
+
+            float radius() const {
+                return scale();
+            }
+
+            std::string str() const override {
+                std::ostringstream oss;
+
+                oss << "Circle{";
+                oss << "center=" << center()
+                    << ", radius=" << radius();
+                oss << "}";
+
+                return oss.str();
+            }
         };
 
         class Cube : public Shape {
@@ -115,6 +191,22 @@ namespace seeta {
             explicit Cube(const Point &left_top_front, const Point &right_bottom_front, const Point &right_top_back)
                     : self() {
                 landmarks({left_top_front, right_bottom_front, right_top_back});
+            }
+
+            std::string str() const override {
+                std::ostringstream oss;
+
+                auto &first = this->landmarks()[0];
+                auto &second = this->landmarks()[1];
+                auto &third = this->landmarks()[2];
+
+                oss << "Cube{";
+                oss << "left_top_front=" << first
+                    << ", right_bottom_front=" << second
+                    << ", right_top_back=" << third;
+                oss << "}";
+
+                return oss.str();
             }
         };
     }

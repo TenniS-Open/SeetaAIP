@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <sstream>
 
 namespace seeta {
     namespace aip {
@@ -31,6 +32,14 @@ namespace seeta {
         };
 
         using Point = SeetaAIPPoint;
+
+        inline std::ostream &operator<<(std::ostream &out, const Point &point) {
+            std::ostringstream oss;
+
+            oss << "(" << point.x << ", " << point.y << ")";
+
+            return out << oss.str();
+        }
 
         template<typename T>
         class Wrapper {
@@ -79,6 +88,24 @@ namespace seeta {
 #define _SEETA_AIP_WRAPPER_DECLARE_GETTER(attr, dst) \
         dst attr() const { return dst(m_raw.attr); }
 
+        class ShapeType {
+        public:
+            static const char *String(SEETA_AIP_SHAPE_TYPE type) {
+                switch (type) {
+                    default:
+                    case SEETA_AIP_UNKNOWN_SHAPE: return "Unknown";
+                    case SEETA_AIP_POINTS: return "Points";
+                    case SEETA_AIP_LINES: return "Lines";
+                    case SEETA_AIP_RECTANGLE: return "Rectangle";
+                    case SEETA_AIP_PARALLELOGRAM: return "Parallelogram";
+                    case SEETA_AIP_POLYGON: return "Polygon";
+                    case SEETA_AIP_CIRCLE: return "Circle";
+                    case SEETA_AIP_CUBE: return "Cube";
+                    case SEETA_AIP_NO_SHAPE: return "NoShape";
+                }
+            }
+        };
+
         class Shape : public Wrapper<SeetaAIPShape> {
         public:
             using self = Shape;
@@ -118,6 +145,32 @@ namespace seeta {
 
             void importer() override {
                 m_landmarks = Landmarks(m_raw.landmarks.data, m_raw.landmarks.data + m_raw.landmarks.size);
+            }
+
+            virtual std::string str() const {
+                std::ostringstream oss;
+
+                oss << ShapeType::String(this->type()) << "{points=";
+                PlotPoints(oss, this->landmarks());
+                oss << ", scale=" << this->scale();
+                oss << ", rotate=" << this->rotate() << "}";
+
+                return oss.str();
+            }
+
+            static std::ostream &PlotPoints(std::ostream &out, const Landmarks &landmarks) {
+                out << "[";
+                for (size_t i = 0; i < landmarks.size(); ++i) {
+                    auto &point = landmarks[i];
+                    if (i) out << ", ";
+                    out << "(" << point.x << ", " << point.y << ")";
+                }
+                out << "]";
+                return out;
+            }
+
+            inline friend std::ostream &operator<<(std::ostream &out, const self &shape) {
+                return out << shape.str();
             }
 
         private:
