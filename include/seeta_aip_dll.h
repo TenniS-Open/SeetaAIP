@@ -8,6 +8,7 @@
 #include "seeta_aip_platform.h"
 #include <string>
 #include <sstream>
+#include <iomanip>
 
 #if SEETA_AIP_OS_UNIX
 
@@ -55,8 +56,8 @@ namespace seeta {
 #if SEETA_AIP_OS_UNIX
             return ::dlsym(handle, symbol);
 #elif SEETA_AIP_OS_WINDOWS
-            auto instance = static_cast<HINSTANCE>(handle);
-            return ::GetProcAddressA(instance, symbol);
+            auto instance = static_cast<HMODULE>(handle);
+            return reinterpret_cast<void*>(::GetProcAddress(instance, symbol));
 #else
             (void)(handle);
             (void)(symbol);
@@ -72,7 +73,7 @@ namespace seeta {
 #if SEETA_AIP_OS_UNIX
             ::dlclose(handle);
 #elif SEETA_AIP_OS_WINDOWS
-            auto instance = static_cast<HINSTANCE>(handle);
+            auto instance = static_cast<HMODULE>(handle);
             ::FreeLibrary(instance);
 #else
             (void)(handle);
@@ -82,7 +83,7 @@ namespace seeta {
 #if SEETA_AIP_OS_WINDOWS
         inline std::string _format_message(DWORD dw) {
             LPVOID lpMsgBuf = nullptr;
-            FormatMessageA(
+            ::FormatMessageA(
                     FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
                     NULL,
                     dw,
@@ -90,9 +91,9 @@ namespace seeta {
                     (LPTSTR) & lpMsgBuf,
                     0, NULL);
             std::ostringstream msg;
-            msg << std::hex << "0x" << dw << ": ";
+            msg << std::hex << "0x" << std::setw(8) << std::setfill('0') << dw << ": ";
             if (lpMsgBuf != nullptr) {
-                msg << lpMsgBuf;
+                msg << std::string(reinterpret_cast<char *>(lpMsgBuf));
                 LocalFree(lpMsgBuf);
             }
             return msg.str();

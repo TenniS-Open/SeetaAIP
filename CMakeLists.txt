@@ -23,6 +23,7 @@ foreach (path ${MODULE_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
     add_library(${file} SHARED ${path})
+    target_compile_definitions(${file} PRIVATE SEETA_AIP_EXPORTS)
 endforeach ()
 
 FILE(GLOB_RECURSE TEST_FILES ${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp)
