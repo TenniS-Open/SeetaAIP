@@ -8,6 +8,16 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+set(third)
+
+if (WIN32)
+elseif (IOS)
+elseif (APPLE)
+elseif (UNIX)
+    list(APPEND third dl)
+else ()
+endif ()
+
 FILE(GLOB_RECURSE MODULE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/module/*.cpp)
 foreach (path ${MODULE_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
@@ -20,4 +30,5 @@ foreach (path ${TEST_FILES})
     string(REGEX MATCH "[^/]*.[(c)|(cc)|(cpp)]$" file_ext ${path})
     string(REGEX MATCH "^[^.]*" file ${file_ext})
     add_executable(test_${file} ${path})
+    target_link_libraries(test_${file} ${third})
 endforeach ()
