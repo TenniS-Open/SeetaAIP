@@ -1,4 +1,14 @@
 /.idea
 /bin
-/cmake-*
+/cmake-build-*
 /lib
+*.so
+*.a
+*.o
+*.exe
+*.dll
+*.lib
+*.obj
+*.exp
+*.manifest
+
