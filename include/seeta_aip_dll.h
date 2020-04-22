@@ -179,7 +179,7 @@ namespace seeta {
             if (head.empty()) {
                 fixed_libname_buf << tail << suffix;
             } else {
-                fixed_libname_buf << _file_separator() << prefix << tail << suffix;
+                fixed_libname_buf << _file_separator() << tail << suffix;
             }
             fixed_libname = fixed_libname_buf.str();
             handle = dlopen(fixed_libname.c_str());
