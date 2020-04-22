@@ -14,19 +14,86 @@
 #include <cstring>
 #include <string>
 #include <sstream>
+#include <iomanip>
+
+#if defined(_MSC_VER)
+#define SEETA_AIP_NOEXCEPT
+#else
+#define SEETA_AIP_NOEXCEPT noexcept
+#endif
 
 namespace seeta {
     namespace aip {
         class Exception : std::exception {
         public:
+            explicit Exception(int32_t errcode)
+                    : m_what(Message(errcode))
+                    , m_errcode(errcode) {}
+
+            explicit Exception(const std::string &message)
+                    : m_what(Message(message))
+                    , m_message(message) {}
+
+            explicit Exception(int32_t errcode, const std::string &message)
+                    : m_what(Message(errcode, message))
+                    , m_errcode(errcode)
+                    , m_message(message) {}
+
+            explicit Exception(const char *message) {
+                if (message) {
+                    m_what = Message(message);
+                    m_message = message;
+                }
+            }
+
+            explicit Exception(int32_t errcode, const char *message) {
+                if (message) {
+                    m_what = Message(errcode, message);
+                    m_errcode = errcode;
+                    m_message = message;
+                } else {
+                    m_what = Message(errcode);
+                    m_errcode = errcode;
+                }
+            }
+
+            const char *what() const SEETA_AIP_NOEXCEPT override {
+                return m_what.c_str();
+            }
+
             int32_t errcode() const {
                 return m_errcode;
             }
+
             const std::string &message() const {
                 return m_message;
             }
 
+            static std::string Message(int32_t errcode) {
+                std::ostringstream oss;
+                oss << "(";
+                oss << std::hex << "0x" << std::setw(8) << std::setfill('0') << errcode;
+                oss << ")";
+                return oss.str();
+            }
+
+            static std::string Message(int32_t errcode, const std::string &message) {
+                std::ostringstream oss;
+                oss << "(";
+                oss << std::hex << "0x" << std::setw(8) << std::setfill('0') << errcode;
+                oss << ")";
+                oss << ": " << message;
+                return oss.str();
+            }
+
+            static std::string Message(const std::string &message) {
+                std::ostringstream oss;
+                oss << message;
+                return oss.str();
+            }
+
         private:
+            std::string m_what;
             int32_t m_errcode = -1;
             std::string m_message;
         };
@@ -47,7 +114,6 @@ namespace seeta {
             using self = Wrapper;
 
             using Raw = T;
-            using RawPtr = T *;
 
             virtual ~Wrapper() = default;
 
@@ -68,9 +134,9 @@ namespace seeta {
 
             operator Raw() const { return *this->raw(); }
 
-            operator RawPtr() { return this->raw(); }
+            operator Raw*() { return this->raw(); }
 
-            operator const RawPtr() const { return this->raw(); }
+            operator const Raw*() const { return this->raw(); }
 
         protected:
             mutable Raw m_raw;
@@ -198,6 +264,8 @@ namespace seeta {
 
             uint32_t element_width() const {
                 switch (type()) {
+                    default:
+                        return 0;
                     case SEETA_AIP_VALUE_BYTE:
                         return 1;
                     case SEETA_AIP_VALUE_FLOAT:
@@ -353,6 +421,8 @@ namespace seeta {
 
             uint32_t element_width() const {
                 switch (type()) {
+                    default:
+                        return 0;
                     case SEETA_AIP_VALUE_BYTE:
                         return 1;
                     case SEETA_AIP_VALUE_FLOAT:
@@ -411,12 +481,12 @@ namespace seeta {
             Device()
                 : self("cpu") {}
 
-            explicit Device(const std::string &device, int32_t id = 0) {
+            Device(const std::string &device, int32_t id = 0) {
                 this->device(device);
                 this->id(id);
             }
 
-            explicit Device(const char *device, int32_t id = 0) {
+            Device(const char *device, int32_t id = 0) {
                 this->device(device);
                 this->id(id);
             }

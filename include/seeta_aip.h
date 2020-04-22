@@ -302,8 +302,8 @@ struct SeetaAIP {
 
 enum SEETA_AIP_LOAD_ERROR {
     SEETA_AIP_LOAD_SUCCEED = 0,
-    SEETA_AIP_LOAD_SIZE_NOT_ENOUGH = 1, ///< once this error return the wanted version will be set.
-    SEETA_AIP_LOAD_UNHANDLED_INTERNAL_ERROR = 2,    ///< for unknown load failed, no more informations
+    SEETA_AIP_LOAD_SIZE_NOT_ENOUGH = 0xf001,    ///< once this error return the wanted version will be set.
+    SEETA_AIP_LOAD_UNHANDLED_INTERNAL_ERROR = 0xf002,   ///< for unknown load failed, no more informations
 };
 
 typedef int32_t seeta_aip_load_entry(struct SeetaAIP *aip, uint32_t size);

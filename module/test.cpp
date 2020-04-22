@@ -10,12 +10,17 @@ class MyPackage : public seeta::aip::Package {
 public:
     using self = MyPackage;
 
+    ~MyPackage() {
+        std::cout << "[aip] free" << std::endl;
+    }
+
     const char *error(int32_t errcode) override {
+        std::cout << "[aip] error" << std::endl;
         return nullptr;
     }
 
     void init(const SeetaAIPDevice &device, const std::vector<std::string> &models) override {
-
+        std::cout << "[aip] created" << std::endl;
     }
 
     std::vector<int32_t> property() override {

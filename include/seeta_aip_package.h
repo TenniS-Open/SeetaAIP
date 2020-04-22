@@ -119,7 +119,8 @@ namespace seeta {
                         return e.errcode();
                     }
 
-                    *paip = static_cast<SeetaAIPHandle>(wrapper.release());
+                    *paip = static_cast<SeetaAIPHandle>((void*)wrapper.release());
+                    return 0;
                 } catch (const std::bad_alloc &) {
                     return SEETA_AIP_ERROR_BAD_ALLOC;
                 } catch (const std::exception &) {
@@ -328,6 +329,7 @@ namespace seeta {
             using Wrapper = PackageWrapper<T>;
 
             aip.error = Wrapper::Error;
+            aip.create = Wrapper::Create;
             aip.free = Wrapper::Free;
             aip.reset = Wrapper::Reset;
             aip.forward = Wrapper::Forward;
