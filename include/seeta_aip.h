@@ -175,6 +175,12 @@ enum SEETA_AIP_COMMON_ERRORCODE {
     SEETA_AIP_ERROR_OUT_OF_MEMORY = 0x1003,
     SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE = 0x1004,
     SEETA_AIP_ERROR_PROPERTY_NOT_EXISTS = 0x1005,
+    SEETA_AIP_ERROR_METHOD_ID_OUT_OF_RANGE = 0x1006,
+    SEETA_AIP_ERROR_DEVICE_NOT_SUPPORTED = 0x1007,
+    SEETA_AIP_ERROR_DEVICE_ID_OUT_OF_RANGE = 0x1008,
+    SEETA_AIP_ERROR_MODEL_MISSING = 0x1009,
+    SEETA_AIP_ERROR_MISSING_REQUIRED_INPUT_IMAGE = 0x100a,
+    SEETA_AIP_ERROR_MISSING_REQUIRED_INPUT_OBJECT = 0x100b,
 };
 
 /**
@@ -262,12 +268,13 @@ typedef int32_t seeta_aip_get(SeetaAIPHandle aip, int32_t property_id, double *v
 /**
  * Get readable label string, for debug. and result auto plot.
  * @param [in] aip The AIP Handle
+ * @param [in] method_id method id
  * @param [in] label_index label's index
  * @param [in] label_value label's value
  * @return readable string, could be nullptr for no description
  * @note
  */
-typedef const char *seeta_aip_tag(SeetaAIPHandle aip, uint32_t label_index, int32_t label_value);
+typedef const char *seeta_aip_tag(SeetaAIPHandle aip, uint32_t method_id, uint32_t label_index, int32_t label_value);
 
 
 struct SeetaAIP {
@@ -308,7 +315,7 @@ struct SeetaAIP {
     seeta_aip_set *set;         ///< set AIP's property
     seeta_aip_reset *reset;     ///< reset AIP, for video status AIP
     seeta_aip_forward *forward; ///< forward an image, got processed image, detected object or other extra data
-    seeta_aip_tag *tag;
+    seeta_aip_tag *tag;         ///< get readable tag
 };
 
 enum SEETA_AIP_LOAD_ERROR {

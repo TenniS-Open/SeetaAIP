@@ -42,7 +42,7 @@ namespace seeta {
 
             virtual void reset() {}
 
-            virtual const char *tag(uint32_t label_index, int32_t label_value) { return nullptr; }
+            virtual const char *tag(uint32_t method_id, uint32_t label_index, int32_t label_value) { return nullptr; }
 
             virtual void forward(
                     uint32_t method_id,
@@ -77,6 +77,20 @@ namespace seeta {
                         return "Got emtpy package handle (==0).";
                     case SEETA_AIP_ERROR_PROPERTY_NOT_EXISTS:
                         return "Property not exists.";
+
+                    case SEETA_AIP_ERROR_METHOD_ID_OUT_OF_RANGE:
+                        return "Method ID out of range.";
+                    case SEETA_AIP_ERROR_DEVICE_NOT_SUPPORTED:
+                        return "Device not supported.";
+                    case SEETA_AIP_ERROR_DEVICE_ID_OUT_OF_RANGE:
+                        return "Device ID out of range.";
+                    case SEETA_AIP_ERROR_MODEL_MISSING:
+                        return "Model missing.";
+
+                    case SEETA_AIP_ERROR_MISSING_REQUIRED_INPUT_IMAGE:
+                        return "Missing required input image.";
+                    case SEETA_AIP_ERROR_MISSING_REQUIRED_INPUT_OBJECT:
+                        return "Missing required input object.";
                 }
                 try {
                     auto wrapper = static_cast<self *>((void *) aip);
@@ -240,13 +254,13 @@ namespace seeta {
                 }
             }
 
-            static const char *Tag(SeetaAIPHandle aip, uint32_t label_index, int32_t label_value) {
+            static const char *Tag(SeetaAIPHandle aip, uint32_t method_id, uint32_t label_index, int32_t label_value) {
                 try {
                     if (aip == nullptr) return nullptr;
                     auto wrapper = static_cast<self *>((void *) aip);
                     Package *raw = wrapper->m_raw.get();
                     try {
-                        return raw->tag(label_index, label_value);
+                        return raw->tag(method_id, label_index, label_value);
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
                         return nullptr;
