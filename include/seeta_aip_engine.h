@@ -281,6 +281,16 @@ namespace seeta {
                 return forward(method_id, Convert(images), std::vector<SeetaAIPObject>());
             }
 
+            const char *c_tag(uint32_t label_index, int32_t label_value) {
+                return m_aip.tag(m_handle, label_index, label_value);
+            }
+
+            std::string tag(uint32_t label_index, int32_t label_value) {
+                auto c_str = c_tag(label_index, label_value);
+                if (c_str) return c_str;
+                return "";
+            }
+
         private:
             SeetaAIP m_aip = {};
             SeetaAIPHandle m_handle = nullptr;

@@ -259,6 +259,16 @@ typedef int32_t seeta_aip_set(SeetaAIPHandle aip, int32_t property_id, double va
  */
 typedef int32_t seeta_aip_get(SeetaAIPHandle aip, int32_t property_id, double *value);
 
+/**
+ * Get readable label string, for debug. and result auto plot.
+ * @param [in] aip The AIP Handle
+ * @param [in] label_index label's index
+ * @param [in] label_value label's value
+ * @return readable string, could be nullptr for no description
+ * @note
+ */
+typedef const char *seeta_aip_tag(SeetaAIPHandle aip, uint32_t label_index, int32_t label_value);
+
 
 struct SeetaAIP {
     /**
@@ -298,6 +308,7 @@ struct SeetaAIP {
     seeta_aip_set *set;         ///< set AIP's property
     seeta_aip_reset *reset;     ///< reset AIP, for video status AIP
     seeta_aip_forward *forward; ///< forward an image, got processed image, detected object or other extra data
+    seeta_aip_tag *tag;
 };
 
 enum SEETA_AIP_LOAD_ERROR {

@@ -42,6 +42,8 @@ namespace seeta {
 
             virtual void reset() {}
 
+            virtual const char *tag(uint32_t label_index, int32_t label_value) { return nullptr; }
+
             virtual void forward(
                     uint32_t method_id,
                     const std::vector<SeetaAIPImageData> &images,
@@ -238,6 +240,22 @@ namespace seeta {
                 }
             }
 
+            static const char *Tag(SeetaAIPHandle aip, uint32_t label_index, int32_t label_value) {
+                try {
+                    if (aip == nullptr) return nullptr;
+                    auto wrapper = static_cast<self *>((void *) aip);
+                    Package *raw = wrapper->m_raw.get();
+                    try {
+                        return raw->tag(label_index, label_value);
+                    } catch (const Exception &e) {
+                        wrapper->m_error_message = e.message();
+                        return nullptr;
+                    }
+                } catch (const std::exception &) {
+                    return nullptr;
+                }
+            }
+
         private:
             std::shared_ptr<Raw> m_raw;
             std::string m_error_message;
@@ -336,6 +354,7 @@ namespace seeta {
             aip.property = Wrapper::Property;
             aip.set = Wrapper::Set;
             aip.get = Wrapper::Get;
+            aip.tag = Wrapper::Tag;
         }
 
 #define CHECK_AIP_SIZE(aip, size) \
