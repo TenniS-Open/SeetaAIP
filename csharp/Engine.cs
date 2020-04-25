@@ -13,7 +13,7 @@ namespace Seeta.AIP
             _dynamic = new DynamicLibrary(libName);
             Unmanaged.seeta_aip_load load = _dynamic.Invoke<Unmanaged.seeta_aip_load>("seeta_aip_load");
             Unmanaged.Package package = new Unmanaged.Package();
-            load(ref package, (uint)Marshal.SizeOf<Unmanaged.Package>());
+            load(ref package, (uint)Marshal.SizeOf(typeof(Unmanaged.Package)));
             _package = new Package(package);
         }
 
