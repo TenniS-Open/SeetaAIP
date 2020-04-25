@@ -123,7 +123,7 @@ namespace seeta {
                     Package *raw = wrapper->m_raw.get();
 
                     auto length = 0;
-                    while (models[length]) {
+                    while (models && models[length]) {
                         ++length;
                     }
 
