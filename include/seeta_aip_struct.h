@@ -335,6 +335,8 @@ namespace seeta {
                 return *this;
             }
 
+            Tensor &rextra() { return m_extra; }
+
             const Tensor &extra() const { return m_extra; }
 
             self &extra(const Tensor &val) {
