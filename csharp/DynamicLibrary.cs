@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System;
 
-namespace com.seetatech.aip
+namespace Seeta.AIP
 {
     public class DynamicLibrary
     {

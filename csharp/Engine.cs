@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace com.seetatech.aip
+namespace Seeta.AIP
 {
     public class Engine
     {

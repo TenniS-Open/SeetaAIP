@@ -7,14 +7,14 @@ using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace com.seetatech.aip
+namespace Seeta.AIP
 {
     using Point = Unmanaged.Point;
     using ShapeType = Unmanaged.ShapeType;
     using ValueType = Unmanaged.ValueType;
     using Tag = Unmanaged.Object.Tag;
 
-    public struct Unmanaged
+    namespace Unmanaged
     {
         [StructLayout(LayoutKind.Sequential)]
         public struct Point
@@ -182,18 +182,29 @@ namespace com.seetatech.aip
         public string device;
         public int id;
 
+        private IntPtr _device_tmp;
+
         public Device(string device, int id = 0)
         {
             this.device = device;
             this.id = id;
+            this._device_tmp = IntPtr.Zero;
+        }
+
+        ~Device()
+        {
+            if (this._device_tmp != IntPtr.Zero) Marshal.FreeHGlobal(_device_tmp);
         }
 
         public Unmanaged.Device Raw
         {
             get
             {
+                if (this._device_tmp != IntPtr.Zero) Marshal.FreeHGlobal(_device_tmp);
+                _device_tmp = Marshal.StringToHGlobalAnsi(device);
+                
                 Unmanaged.Device raw = new Unmanaged.Device();
-                raw.device = Marshal.StringToHGlobalAnsi(device);
+                raw.device = _device_tmp;
                 raw.id = id;
                 return raw;
             }
@@ -744,23 +755,62 @@ namespace com.seetatech.aip
             return Marshal.PtrToStringAnsi(errorMessage);
         }
 
+        private class UnmanagedStringList
+        {
+            private IntPtr[] _unmanaged;
+            private int _size;
+            public UnmanagedStringList(string[] models, bool appendNullEnd = true)
+            {
+                _size = models.Length;
+                _unmanaged = new IntPtr[appendNullEnd ? _size + 1 : _size];
+                for (int i = 0; i < _size; ++i)
+                {
+                    _unmanaged[i] = Marshal.StringToHGlobalAnsi(models[i]);
+                }
+
+                if (appendNullEnd)
+                {
+                    _unmanaged[_size] = IntPtr.Zero;
+                }
+            }
+
+            ~UnmanagedStringList()
+            {
+                Dispose();
+            }
+
+            public void Dispose()
+            {
+                if (_unmanaged == null) return;
+                for (int i = 0; i < _size; ++i)
+                {
+                    Marshal.FreeHGlobal(_unmanaged[i]);
+                }
+                _unmanaged = null;
+            }
+
+            public IntPtr[] Unmanaged
+            {
+                get
+                {
+                    return _unmanaged;
+                }
+            }
+        }
+
         public IntPtr Create(Device device, string[] models)
         {
             if (models == null) models = new string[0];
             Unmanaged.Device[] rawDevice = {device.Raw};
             IntPtr[] rawAip = new IntPtr[1];
-            IntPtr[] rawModels = new IntPtr[models.Length + 1];
-            for (int i = 0; i < models.Length; ++i)
-            {
-                rawModels[i] = Marshal.StringToHGlobalAnsi(models[i]);
-            }
-
-            rawModels[models.Length] = IntPtr.Zero;
+            UnmanagedStringList rawModelList = new UnmanagedStringList(models, true);
+            IntPtr[] rawModels = rawModelList.Unmanaged;
             int errCode = mAIP.create(
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawAip, 0),
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawDevice, 0),
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawModels, 0)
             );
+            rawModelList.Dispose();
             if (errCode != 0) throw new Exception(errCode, Error(null, errCode));
             return rawAip[0];
         }
