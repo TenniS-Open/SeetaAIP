@@ -44,18 +44,21 @@ namespace Seeta.AIP
     public class Instance
     {
         private Engine _engine;
+        private bool _engineBorrowed;
         private Package _package;
         private IntPtr _aip;
 
         public Instance(string libName, Device device, string[] models)
         {
             _engine = new Engine(libName);
+            _engineBorrowed = false;
             this.Construct(_engine.AIP, device, models);
         }
         
         public Instance(Engine engine, Device device, string[] models)
         {
             _engine = engine;
+            _engineBorrowed = true;
             this.Construct(_engine.AIP, device, models);
         }
 
@@ -80,6 +83,7 @@ namespace Seeta.AIP
             if (_aip == IntPtr.Zero) return;
             _package.Free(_aip);
             _aip = IntPtr.Zero;
+            if (_engine != null && !_engineBorrowed) _engine.Dispose();
         }
 
         public void Reset()
