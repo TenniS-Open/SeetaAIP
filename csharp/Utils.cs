@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using ImageFormat = Seeta.AIP.Unmanaged.ImageFormat;
 using ValueType = Seeta.AIP.Unmanaged.ValueType;
 
 namespace Seeta.AIP
@@ -10,7 +11,8 @@ namespace Seeta.AIP
     {
         public static ImageData ToImageData(Bitmap bitmap)
         {
-            ImageData image = new ImageData(ValueType.Byte, 1, (uint) bitmap.Height, (uint) bitmap.Width, 3);
+            ImageData image = new ImageData(ImageFormat.U8Bgr, 1, (uint) bitmap.Height, (uint) bitmap.Width, 3);
+            // TODO: make sure lock bits is BGR format, default is BGR by now
             BitmapData data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                 ImageLockMode.ReadOnly,
                 PixelFormat.Format24bppRgb);

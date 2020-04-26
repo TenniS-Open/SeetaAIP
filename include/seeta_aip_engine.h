@@ -272,6 +272,18 @@ namespace seeta {
             }
 
             Result forward(uint32_t method_id,
+                           const std::vector<SeetaAIPImageData> &images,
+                           const std::vector<Object> &objects) {
+                return forward(method_id, images, Convert(objects));
+            }
+
+            Result forward(uint32_t method_id,
+                           const std::vector<ImageData> &images,
+                           const std::vector<SeetaAIPObject> &objects) {
+                return forward(method_id, Convert(images), objects);
+            }
+
+            Result forward(uint32_t method_id,
                            const std::vector<SeetaAIPImageData> &images) {
                 return forward(method_id, images, std::vector<SeetaAIPObject>());
             }

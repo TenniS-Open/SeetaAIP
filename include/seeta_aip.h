@@ -29,6 +29,17 @@ enum SEETA_AIP_VALUE_TYPE {
     SEETA_AIP_VALUE_INT = 2,    ///< signed integer type with 4-bytes
 };
 
+enum SEETA_AIP_IMAGE_FORMAT {
+    SEETA_AIP_FORMAT_U8RAW = 0,     ///< byte type
+    SEETA_AIP_FORMAT_F32RAW = 1,    ///< float type with 4-bytes
+    SEETA_AIP_FORMAT_I32RAW = 2,    ///< signed integer type with 4-bytes
+    SEETA_AIP_FORMAT_U8RGB = 1001,  ///< byte format for RGB888
+    SEETA_AIP_FORMAT_U8BGR = 1002,  ///< byte format for BGR888
+    SEETA_AIP_FORMAT_U8RGBA = 1003, ///< byte format for RGBA8888
+    SEETA_AIP_FORMAT_U8BGRA = 1004, ///< byte format for BGRA8888
+    SEETA_AIP_FORMAT_U8Y = 1005,    ///< byte format for gray image
+};
+
 /**
  * \brief Point in image
  * Origin is the left upper corner.
@@ -152,7 +163,7 @@ struct SeetaAIPDevice {
  * \brief ImageData type
  */
 struct SeetaAIPImageData {
-    int32_t type;                   ///< SEETA_AIP_VALUE_TYPE, data value type, support SEETA_AIP_VALUE_BYTE or SEETA_AIP_VALUE_FLOAT
+    int32_t format;                 ///< SEETA_AIP_IMAGE_FORMAT, image format
     void *data;                     ///< an array contains each pixel with dims [height, width, channels], the pixel type should be the given type
     // type=SEETA_AIP_VALUE_BYTE represents decltype(*data)=uint8_t
     // type=SEETA_AIP_VALUE_FLOAT represents decltype(*data)=float

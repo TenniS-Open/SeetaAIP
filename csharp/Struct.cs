@@ -1,11 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Net.Mime;
-using System.Reflection.Emit;
 using System.Runtime.InteropServices;
-using System.Threading;
 
 namespace Seeta.AIP
 {
@@ -13,6 +8,7 @@ namespace Seeta.AIP
     using ShapeType = Unmanaged.ShapeType;
     using ValueType = Unmanaged.ValueType;
     using Tag = Unmanaged.Object.Tag;
+    using ImageFormat = Unmanaged.ImageFormat;
 
     namespace Unmanaged
     {
@@ -34,6 +30,25 @@ namespace Seeta.AIP
             Circle = 6,
             Cube = 7,
             NoShape = 255,
+        }
+
+        public enum ValueType
+        {
+            Byte = 0,
+            Float = 1,
+            Int = 2,
+        }
+
+        public enum ImageFormat
+        {
+            U8Raw = 0,
+            F32Raw = 1,
+            I32Raw = 2,
+            U8Rgb = 1001,
+            U8Bgr = 1002,
+            U8Rgba = 1003,
+            U8Bgra = 1004,
+            U8Y = 1005,
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -96,17 +111,10 @@ namespace Seeta.AIP
             public int id;
         }
 
-        public enum ValueType
-        {
-            Byte = 0,
-            Float = 1,
-            Int = 2,
-        }
-
         [StructLayout(LayoutKind.Sequential)]
         public struct ImageData
         {
-            public int type;
+            public int format;
             public IntPtr data; // void *
             public uint number;
             public uint height;
@@ -254,6 +262,7 @@ namespace Seeta.AIP
 
     public class ImageData
     {
+        private ImageFormat format;
         private ValueType type;
         private float[] data_float;
         private byte[] data_byte;
@@ -263,15 +272,34 @@ namespace Seeta.AIP
         private uint width;
         private uint channels;
 
-        public ImageData(ValueType type, uint number, uint height, uint width, uint channnls)
+        private static ValueType GetType(ImageFormat format)
         {
-            this.type = type;
+            switch (format) {
+                default:
+                case ImageFormat.U8Raw:
+                case ImageFormat.U8Rgb:
+                case ImageFormat.U8Bgr:
+                case ImageFormat.U8Rgba:
+                case ImageFormat.U8Bgra:
+                case ImageFormat.U8Y:
+                    return ValueType.Byte;
+                case ImageFormat.F32Raw:
+                    return ValueType.Float;
+                case ImageFormat.I32Raw:
+                    return ValueType.Int;
+            }
+        }
+
+        public ImageData(ImageFormat format, uint number, uint height, uint width, uint channels)
+        {
+            this.type = GetType(format);
+            this.format = format;
             this.number = number;
             this.height = height;
             this.width = width;
-            this.channels = channnls;
+            this.channels = channels;
 
-            uint count = number * height * width * channnls;
+            uint count = number * height * width * channels;
 
             switch (type)
             {
@@ -288,7 +316,7 @@ namespace Seeta.AIP
         }
 
         public ImageData(Unmanaged.ImageData image)
-            : this((ValueType)image.type, image.number, image.height, image.width, image.channels)
+            : this((ImageFormat)image.format, image.number, image.height, image.width, image.channels)
         {
             CopyFrom(image.data);
         }
@@ -296,6 +324,11 @@ namespace Seeta.AIP
         public ValueType Type
         {
             get { return type; }
+        }
+
+        public ImageFormat Format
+        {
+            get { return format; }
         }
 
         public uint Number
@@ -401,7 +434,7 @@ namespace Seeta.AIP
             get
             {
                 Unmanaged.ImageData raw = new Unmanaged.ImageData();
-                raw.type = (int) this.type;
+                raw.format = (int) this.format;
                 raw.data = this.Data();
                 raw.number = this.number;
                 raw.height = this.height;

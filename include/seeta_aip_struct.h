@@ -385,13 +385,15 @@ namespace seeta {
         public:
             using self = ImageData;
 
-            ImageData(SEETA_AIP_VALUE_TYPE type,
+            ImageData(SEETA_AIP_IMAGE_FORMAT format,
                       uint32_t number,
                       uint32_t width,
                       uint32_t height,
                       uint32_t channels,
                       void *data = nullptr) {
-                this->m_raw.type = int32_t(type);
+                auto type = GetType(format);
+                this->m_type = type;
+                this->m_raw.format = int32_t(format);
                 this->m_raw.number = number;
                 this->m_raw.width = width;
                 this->m_raw.height = height;
@@ -403,15 +405,34 @@ namespace seeta {
                 }
             }
 
-            ImageData(SEETA_AIP_VALUE_TYPE type,
+            ImageData(SEETA_AIP_IMAGE_FORMAT format,
                       uint32_t width,
                       uint32_t height,
                       uint32_t channels,
                       void *data = nullptr)
-                      : self(type, 1, width, height, channels, data) {
+                      : self(format, 1, width, height, channels, data) {
             }
 
-            _SEETA_AIP_WRAPPER_DECLARE_GETTER(type, SEETA_AIP_VALUE_TYPE)
+            static SEETA_AIP_VALUE_TYPE GetType(SEETA_AIP_IMAGE_FORMAT format) {
+                switch (format) {
+                    default:
+                    case SEETA_AIP_FORMAT_U8RAW:
+                    case SEETA_AIP_FORMAT_U8RGB:
+                    case SEETA_AIP_FORMAT_U8BGR:
+                    case SEETA_AIP_FORMAT_U8RGBA:
+                    case SEETA_AIP_FORMAT_U8BGRA:
+                    case SEETA_AIP_FORMAT_U8Y:
+                        return SEETA_AIP_VALUE_BYTE;
+                    case SEETA_AIP_FORMAT_F32RAW:
+                        return SEETA_AIP_VALUE_FLOAT;
+                    case SEETA_AIP_FORMAT_I32RAW:
+                        return SEETA_AIP_VALUE_INT;
+                }
+            }
+
+            SEETA_AIP_VALUE_TYPE type() const { return m_type; }
+
+            _SEETA_AIP_WRAPPER_DECLARE_GETTER(format, SEETA_AIP_IMAGE_FORMAT)
 
             _SEETA_AIP_WRAPPER_DECLARE_GETTER(number, uint32_t)
 
@@ -474,6 +495,7 @@ namespace seeta {
 
         private:
             std::shared_ptr<char> m_data;
+            SEETA_AIP_VALUE_TYPE m_type;
         };
 
         class Device : public Wrapper<SeetaAIPDevice> {
