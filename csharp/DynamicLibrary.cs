@@ -51,6 +51,7 @@ namespace Seeta.AIP
             return (Delegate)Marshal.GetDelegateForFunctionPointer(hFunProc, type);
         }
         
+        /*
         public T Invoke<T>(string funcName) where T : Delegate
         {
             IntPtr hFunProc = GetProcAddress(_hModule, funcName);
@@ -61,5 +62,6 @@ namespace Seeta.AIP
             }
             return (T)Marshal.GetDelegateForFunctionPointer(hFunProc, typeof(T));
         }
+        */
     }
 }

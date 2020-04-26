@@ -11,7 +11,9 @@ namespace Seeta.AIP
         public Engine(string libName)
         {
             _dynamic = new DynamicLibrary(libName);
-            Unmanaged.seeta_aip_load load = _dynamic.Invoke<Unmanaged.seeta_aip_load>("seeta_aip_load");
+            Unmanaged.seeta_aip_load load =
+                (Unmanaged.seeta_aip_load)_dynamic.Invoke(
+                    "seeta_aip_load", typeof(Unmanaged.seeta_aip_load));
             Unmanaged.Package package = new Unmanaged.Package();
             load(ref package, (uint)Marshal.SizeOf(typeof(Unmanaged.Package)));
             _package = new Package(package);
@@ -22,7 +24,7 @@ namespace Seeta.AIP
             Dispose();
         }
 
-        void Dispose()
+        public void Dispose()
         {
             if (_dynamic == null) return;
             _dynamic.Dispose();
