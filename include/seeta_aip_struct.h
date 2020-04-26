@@ -328,6 +328,23 @@ namespace seeta {
             using Tag = SeetaAIPObject::Tag;
             using Tags = std::vector<Tag>;
 
+            Object() = default;
+
+            Object(Shape shape)
+                : m_shape(std::move(shape)) {}
+
+            Object(Shape shape, Tags tags)
+                : m_shape(std::move(shape)), m_tags(std::move(tags)) {}
+
+            Object(Shape shape, Tags tags, Tensor extra)
+                : m_shape(std::move(shape)), m_tags(std::move(tags)), m_extra(std::move(extra)) {}
+
+            Object(Shape shape, Tensor extra)
+                : m_shape(std::move(shape)), m_extra(std::move(extra)) {}
+
+            Object(Tensor extra)
+                : m_extra(std::move(extra)) {}
+
             Shape &rshape() { return m_shape; }
 
             const Shape &shape() const { return m_shape; }
