@@ -19,6 +19,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W3")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "NVIDIA")
 endif()
 
 if (WIN32)
@@ -27,6 +28,16 @@ elseif (APPLE)
 elseif (UNIX)
     list(APPEND third dl)
 else ()
+endif ()
+
+find_package(OpenCV OPTIONAL_COMPONENTS)
+
+if (OpenCV_FOUND )
+    include_directories(${OpenCV_INCLUDES})
+    list(APPEND third ${OpenCV_LIBRARIES})
+    message(STATUS "[STATUS] Compiling with OpenCV.")
+else ()
+    message(STATUS "[WARNING] Can not find OpenCV libraries, some test project would failed.")
 endif ()
 
 FILE(GLOB_RECURSE MODULE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/module/*.cpp)
