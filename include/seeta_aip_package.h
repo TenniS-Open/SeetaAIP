@@ -32,7 +32,9 @@ namespace seeta {
 
             virtual const char *error(int32_t errcode) = 0;
 
-            virtual void init(const SeetaAIPDevice &device, const std::vector<std::string> &models) = 0;
+            virtual void create(const SeetaAIPDevice &device, const std::vector<std::string> &models) = 0;
+
+            virtual void free() = 0;
 
             virtual std::vector<int32_t> property() = 0;
 
@@ -130,7 +132,7 @@ namespace seeta {
                     std::vector<std::string> cpp_models(models, models + length);
 
                     try {
-                        raw->init(*device, cpp_models);
+                        raw->create(*device, cpp_models);
                     } catch (const Exception &e) {
                         return e.errcode();
                     }
@@ -146,7 +148,14 @@ namespace seeta {
 
             static int32_t Free(SeetaAIPHandle aip) {
                 try {
+                    if (aip == nullptr) return 0;
                     auto wrapper = static_cast<self *>((void *) aip);
+                    Package *raw = wrapper->m_raw.get();
+                    try {
+                        raw->free();
+                    } catch (const std::exception &) {
+                        // no exception should be throw
+                    }
                     delete wrapper;
                     return 0;
                 } catch (const std::exception &) {
