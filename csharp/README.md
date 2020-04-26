@@ -1,6 +1,6 @@
 # C# load interface.
 
-Use `com.seetatech.sdk.Engine` and `com.seetatech.sdk.Instance` to load AIP.
+Use `Seeta.AIP.Engine` and `Seeta.AIP.Instance` to load AIP.
 Notice: Use `Dispose` method to control memory, as that GC not free memory in time.
 
 ## In Linux or MacOS
