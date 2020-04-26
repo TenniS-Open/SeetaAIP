@@ -13,6 +13,7 @@ namespace Seeta.AIP
         private static extern bool FreeLibrary(IntPtr lib);
         
         private IntPtr _hModule;
+        private string _libName;
 
         public DynamicLibrary(string libName)
         {
@@ -20,8 +21,11 @@ namespace Seeta.AIP
             _hModule = LoadLibrary(libName);
             if (_hModule == IntPtr.Zero)
             {
-                throw new Exception("Can not open library：" + libName + ".");
+                throw new DllNotFoundException(
+                    "Unable to load shared library '" + libName + "' or one of its dependencies.");
             }
+
+            _libName = libName;
         }
 
         ~DynamicLibrary()
@@ -41,7 +45,8 @@ namespace Seeta.AIP
             IntPtr hFunProc = GetProcAddress(_hModule, funcName);
             if (hFunProc == IntPtr.Zero)
             {
-                throw new Exception("Can not find entry：" + funcName + ".");
+                throw new EntryPointNotFoundException(
+                    "Unable to find entry pointer '" + funcName + "' on '" + _libName + "'.");
             }
             return (Delegate)Marshal.GetDelegateForFunctionPointer(hFunProc, type);
         }
@@ -51,7 +56,8 @@ namespace Seeta.AIP
             IntPtr hFunProc = GetProcAddress(_hModule, funcName);
             if (hFunProc == IntPtr.Zero)
             {
-                throw new Exception("Can not find entry：" + funcName + ".");
+                throw new EntryPointNotFoundException(
+                    "Unable to find entry pointer '" + funcName + "' on '" + _libName + "'.");
             }
             return (T)Marshal.GetDelegateForFunctionPointer(hFunProc, typeof(T));
         }
