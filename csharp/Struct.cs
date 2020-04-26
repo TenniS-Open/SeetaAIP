@@ -821,6 +821,12 @@ namespace Seeta.AIP
             if (errCode != 0) throw new Exception(errCode, Error(null, errCode));
         }
 
+        public void Reset(IntPtr aip)
+        {
+            int errCode = mAIP.reset(aip);
+            if (errCode != 0) throw new Exception(errCode, Error(null, errCode));
+        }
+
         public int[] Property(IntPtr aip)
         {
             IntPtr[] rawProperty = new IntPtr[1];

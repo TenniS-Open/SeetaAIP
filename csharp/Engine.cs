@@ -80,6 +80,11 @@ namespace Seeta.AIP
             _aip = IntPtr.Zero;
         }
 
+        public void Reset()
+        {
+            _package.Reset(_aip);
+        }
+
         public string Error(int errCode)
         {
             return _package.Error(_aip, errCode);
