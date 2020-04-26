@@ -328,6 +328,8 @@ namespace seeta {
             using Tag = SeetaAIPObject::Tag;
             using Tags = std::vector<Tag>;
 
+            Shape &rshape() { return m_shape; }
+
             const Shape &shape() const { return m_shape; }
 
             self &shape(const Shape &val) {
@@ -343,6 +345,8 @@ namespace seeta {
                 m_extra = val;
                 return *this;
             }
+
+            Tags &rtags() { return m_tags; };
 
             const Tags &tags() const { return m_tags; };
 
@@ -488,6 +492,7 @@ namespace seeta {
             }
 
             void importer() override {
+                m_type = GetType(SEETA_AIP_IMAGE_FORMAT(m_raw.format));
                 auto bytes = this->bytes();
                 m_data.reset(new char[bytes], std::default_delete<char[]>());
                 std::memcpy(m_data.get(), m_raw.data, bytes);
