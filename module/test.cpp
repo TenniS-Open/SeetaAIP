@@ -3,6 +3,7 @@
 //
 
 #include "seeta_aip_package.h"
+#include "seeta_aip_shape.h"
 
 #include <iostream>
 
@@ -15,7 +16,9 @@ public:
         return nullptr;
     }
 
-    void create(const SeetaAIPDevice &device, const std::vector<std::string> &models) override {
+    void create(const SeetaAIPDevice &device,
+            const std::vector<std::string> &models,
+            const std::vector<SeetaAIPObject> &objects) override {
         std::cout << "[aip] created on ";
         std::cout << "[" << device.device << ":" << device.id << "] with: ";
         for (auto &model : models) {

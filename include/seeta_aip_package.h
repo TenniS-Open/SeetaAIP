@@ -32,7 +32,9 @@ namespace seeta {
 
             virtual const char *error(int32_t errcode) = 0;
 
-            virtual void create(const SeetaAIPDevice &device, const std::vector<std::string> &models) = 0;
+            virtual void create(const SeetaAIPDevice &device,
+                    const std::vector<std::string> &models,
+                    const std::vector<SeetaAIPObject> &args) = 0;
 
             virtual void free() = 0;
 
@@ -89,10 +91,10 @@ namespace seeta {
                     case SEETA_AIP_ERROR_MODEL_MISSING:
                         return "Model missing.";
 
-                    case SEETA_AIP_ERROR_MISSING_REQUIRED_INPUT_IMAGE:
-                        return "Missing required input image.";
-                    case SEETA_AIP_ERROR_MISSING_REQUIRED_INPUT_OBJECT:
-                        return "Missing required input object.";
+                    case SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_IMAGE:
+                        return "Mismatch required input image.";
+                    case SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_OBJECT:
+                        return "Mismatch required input object.";
                 }
                 try {
                     auto wrapper = static_cast<self *>((void *) aip);
@@ -116,7 +118,8 @@ namespace seeta {
 
             static int32_t Create(SeetaAIPHandle *paip,
                                   const SeetaAIPDevice *device,
-                                  const char **models) {
+                                  const char **models,
+                                  const struct SeetaAIPObject *args, uint32_t argc) {
                 try {
                     *paip = nullptr;
 
@@ -131,8 +134,11 @@ namespace seeta {
 
                     std::vector<std::string> cpp_models(models, models + length);
 
+                    wrapper->update_input(nullptr, 0, args, argc);
+                    auto &input_objects = wrapper->m_input_objects;
+
                     try {
-                        raw->create(*device, cpp_models);
+                        raw->create(*device, cpp_models, input_objects);
                     } catch (const Exception &e) {
                         return e.errcode();
                     }

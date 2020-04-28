@@ -190,8 +190,8 @@ enum SEETA_AIP_COMMON_ERRORCODE {
     SEETA_AIP_ERROR_DEVICE_NOT_SUPPORTED = 0x1007,
     SEETA_AIP_ERROR_DEVICE_ID_OUT_OF_RANGE = 0x1008,
     SEETA_AIP_ERROR_MODEL_MISSING = 0x1009,
-    SEETA_AIP_ERROR_MISSING_REQUIRED_INPUT_IMAGE = 0x100a,
-    SEETA_AIP_ERROR_MISSING_REQUIRED_INPUT_OBJECT = 0x100b,
+    SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_IMAGE = 0x100a,
+    SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_OBJECT = 0x100b,
 };
 
 /**
@@ -209,11 +209,14 @@ typedef const char* seeta_aip_error(SeetaAIPHandle aip, int32_t errcode);
  * @param [out] paip pointer to created
  * @param [in] device NULL for default device
  * @param [in] models C-style of string, end with NULL. Example: {"file1.dat", "file2.json", NULL}
+ * @param [in] args pointer to init objects, suggest first object use tag to set property, some AIP will give some property must be set
+ * @param [in] argc common be 1 or zero
  * @return error code, zero for succeed.
  */
 typedef int32_t seeta_aip_create(SeetaAIPHandle *paip,
         const SeetaAIPDevice *device,
-        const char **models);
+        const char **models,
+        const struct SeetaAIPObject *args, uint32_t argc);
 
 /**
  *

@@ -126,33 +126,41 @@ namespace seeta {
 
         private:
             void construct(const SeetaAIP &aip, const Device &device, const std::vector<std::string> &models) {
+                this->construct(aip, device, models, {});
+            }
+
+            void construct(const SeetaAIP &aip, const Device &device,
+                    const std::vector<std::string> &models,
+                    const std::vector<Object> &args) {
                 m_handle = nullptr;
                 m_aip = aip;
+
+                auto c_args = Convert(args);
 
                 std::vector<const char *> c_models;
                 c_models.reserve(models.size());
                 for (auto &model : models) { c_models.emplace_back(model.c_str()); }
                 c_models.emplace_back(nullptr);
-                auto errcode = m_aip.create(&m_handle, device, c_models.data());
+                auto errcode = m_aip.create(&m_handle, device, c_models.data(), c_args.data(), uint32_t(c_args.size()));
                 if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
             }
 
         public:
 
-            Instance(const SeetaAIP &aip, const Device &device, const std::vector<std::string> &models) {
-                this->construct(aip, device, models);
+            Instance(const SeetaAIP &aip, const Device &device, const std::vector<std::string> &models, const std::vector<Object> &args) {
+                this->construct(aip, device, models, args);
             }
 
-            Instance(const std::shared_ptr<Engine> &engine, const Device &device, const std::vector<std::string> &models) {
+            Instance(const std::shared_ptr<Engine> &engine, const Device &device, const std::vector<std::string> &models, const std::vector<Object> &args) {
                 auto &aip = engine->aip();
                 if (engine->type() == Engine::DYNAMIC) {
                     m_engine = engine;
                 }
 
-                this->construct(aip, device, models);
+                this->construct(aip, device, models, args);
             }
 
-            Instance(const std::string &libname, const Device &device, const std::vector<std::string> &models) {
+            Instance(const std::string &libname, const Device &device, const std::vector<std::string> &models, const std::vector<Object> &args) {
                 auto engine = std::make_shared<Engine>(libname);
 
                 auto &aip = engine->aip();
@@ -160,10 +168,10 @@ namespace seeta {
                     m_engine = engine;
                 }
 
-                this->construct(aip, device, models);
+                this->construct(aip, device, models, args);
             }
 
-            Instance(seeta_aip_load_entry *entry, const Device &device, const std::vector<std::string> &models) {
+            Instance(seeta_aip_load_entry *entry, const Device &device, const std::vector<std::string> &models, const std::vector<Object> &args) {
                 auto engine = std::make_shared<Engine>(entry);
 
                 auto &aip = engine->aip();
@@ -171,8 +179,23 @@ namespace seeta {
                     m_engine = engine;
                 }
 
-                this->construct(aip, device, models);
+                this->construct(aip, device, models, args);
             }
+
+            Instance(const SeetaAIP &aip, const Device &device, const std::vector<std::string> &models)
+                : self(aip, device, models, {}) {}
+
+
+            Instance(const std::shared_ptr<Engine> &engine, const Device &device, const std::vector<std::string> &models)
+                    : self(engine, device, models, {}) {}
+
+
+            Instance(const std::string &libname, const Device &device, const std::vector<std::string> &models)
+                    : self(libname, device, models, {}) {}
+
+
+            Instance(seeta_aip_load_entry *entry, const Device &device, const std::vector<std::string> &models)
+                    : self(entry, device, models, {}) {}
 
             ~Instance() {
                 if (m_handle) {
