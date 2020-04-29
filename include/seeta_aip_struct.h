@@ -24,7 +24,7 @@
 
 namespace seeta {
     namespace aip {
-        class Exception : std::exception {
+        class Exception : public std::exception {
         public:
             explicit Exception(int32_t errcode)
                     : m_what(Message(errcode))

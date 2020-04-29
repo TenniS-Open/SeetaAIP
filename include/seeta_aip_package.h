@@ -88,8 +88,8 @@ namespace seeta {
                         return "Device not supported.";
                     case SEETA_AIP_ERROR_DEVICE_ID_OUT_OF_RANGE:
                         return "Device ID out of range.";
-                    case SEETA_AIP_ERROR_MODEL_MISSING:
-                        return "Model missing.";
+                    case SEETA_AIP_ERROR_MODEL_MISMATCH:
+                        return "Model mismatch.";
 
                     case SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_IMAGE:
                         return "Mismatch required input image.";

@@ -189,7 +189,7 @@ enum SEETA_AIP_COMMON_ERRORCODE {
     SEETA_AIP_ERROR_METHOD_ID_OUT_OF_RANGE = 0x1006,
     SEETA_AIP_ERROR_DEVICE_NOT_SUPPORTED = 0x1007,
     SEETA_AIP_ERROR_DEVICE_ID_OUT_OF_RANGE = 0x1008,
-    SEETA_AIP_ERROR_MODEL_MISSING = 0x1009,
+    SEETA_AIP_ERROR_MODEL_MISMATCH = 0x1009,
     SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_IMAGE = 0x100a,
     SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_OBJECT = 0x100b,
 };
@@ -289,6 +289,31 @@ typedef int32_t seeta_aip_get(SeetaAIPHandle aip, int32_t property_id, double *v
  * @note
  */
 typedef const char *seeta_aip_tag(SeetaAIPHandle aip, uint32_t method_id, uint32_t label_index, int32_t label_value);
+
+/**
+ * @param [in] aip The AIP Handle
+ * @param [out] setting pointer to int list, contains all setting_id, end with 0, like: {1001, 1002, 0}
+ * @return error code, zero for succeed.
+ * @note the return setting must can be saved
+ */
+typedef int32_t seeta_aip_mem_list(SeetaAIPHandle aip, int32_t **member);
+
+/**
+ * @param [in] aip The AIP Handle
+ * @param [in] property_id property id
+ * @param [in] value set value
+ * @return error code, zero for succeed.
+ * @note the return property must can be saved
+ */
+typedef int32_t seeta_aip_mem_set(SeetaAIPHandle aip, int32_t member_id, const SeetaAIPObject *object);
+
+/**
+ * @param [in] aip The AIP Handle
+ * @param [in] property_id property id
+ * @param [out] value get value
+ * @note the return property must can be saved
+ */
+typedef const SeetaAIPObject *seeta_aip_mem_get(SeetaAIPHandle aip, int32_t member_id);
 
 
 struct SeetaAIP {

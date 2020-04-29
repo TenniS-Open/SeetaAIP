@@ -126,7 +126,7 @@ namespace Seeta.AIP
         public delegate IntPtr seeta_aip_error(IntPtr aip, int errcode);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int seeta_aip_create([Out] IntPtr paip, IntPtr device, IntPtr models);
+        public delegate int seeta_aip_create([Out] IntPtr paip, IntPtr device, IntPtr models, IntPtr args, uint argc);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int seeta_aip_free(IntPtr aip);
@@ -831,17 +831,24 @@ namespace Seeta.AIP
             }
         }
 
-        public IntPtr Create(Device device, string[] models)
+        public IntPtr Create(Device device, string[] models, Object[] args)
         {
             if (models == null) models = new string[0];
             Unmanaged.Device[] rawDevice = {device.Raw};
             IntPtr[] rawAip = new IntPtr[1];
             UnmanagedStringList rawModelList = new UnmanagedStringList(models, true);
             IntPtr[] rawModels = rawModelList.Unmanaged;
+            
+            if (args == null) args = new Object[0];
+            Unmanaged.Object[] rawArgs = new Unmanaged.Object[args.Length];
+            for (int i = 0; i < args.Length; ++i) rawArgs[i] = args[i].Raw;
+            
             int errCode = mAIP.create(
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawAip, 0),
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawDevice, 0),
-                Marshal.UnsafeAddrOfPinnedArrayElement(rawModels, 0)
+                Marshal.UnsafeAddrOfPinnedArrayElement(rawModels, 0),
+                Marshal.UnsafeAddrOfPinnedArrayElement(rawArgs, 0),
+                (uint)rawArgs.Length
             );
             rawModelList.Dispose();
             if (errCode != 0) throw new Exception(errCode, Error(null, errCode));

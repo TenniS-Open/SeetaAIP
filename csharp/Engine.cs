@@ -48,23 +48,23 @@ namespace Seeta.AIP
         private Package _package;
         private IntPtr _aip;
 
-        public Instance(string libName, Device device, string[] models)
+        public Instance(string libName, Device device, string[] models, Object[] args = null)
         {
             _engine = new Engine(libName);
             _engineBorrowed = false;
-            this.Construct(_engine.AIP, device, models);
+            this.Construct(_engine.AIP, device, models, args);
         }
         
-        public Instance(Engine engine, Device device, string[] models)
+        public Instance(Engine engine, Device device, string[] models, Object[] args = null)
         {
             _engine = engine;
             _engineBorrowed = true;
-            this.Construct(_engine.AIP, device, models);
+            this.Construct(_engine.AIP, device, models, args);
         }
 
-        public Instance(Package aip, Device device, string[] models)
+        public Instance(Package aip, Device device, string[] models, Object[] args = null)
         {
-            this.Construct(aip, device, models);
+            this.Construct(aip, device, models, args);
         }
 
         ~Instance()
@@ -72,10 +72,10 @@ namespace Seeta.AIP
             Dispose();
         }
 
-        private void Construct(Package aip, Device device, string[] models)
+        private void Construct(Package aip, Device device, string[] models, Object[] args = null)
         {
             _package = aip;
-            _aip = _package.Create(device, models);
+            _aip = _package.Create(device, models, args);
         }
 
         public void Dispose()
