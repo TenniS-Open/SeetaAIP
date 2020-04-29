@@ -37,6 +37,7 @@ namespace Seeta.AIP
             Byte = 0,
             Float = 1,
             Int = 2,
+            Double = 3,
         }
 
         public enum ImageFormat
@@ -180,8 +181,9 @@ namespace Seeta.AIP
             [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_forward forward;
             [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_tag tag;
         }
-        
-        public enum LoadError {
+
+        public enum LoadError
+        {
             Succeed = 0,
             SizeNotEnough = 0xf001,
             UnhandledInternalError = 0xf002,
@@ -217,7 +219,7 @@ namespace Seeta.AIP
             {
                 if (this._device_tmp != IntPtr.Zero) Marshal.FreeHGlobal(_device_tmp);
                 _device_tmp = Marshal.StringToHGlobalAnsi(device);
-                
+
                 Unmanaged.Device raw = new Unmanaged.Device();
                 raw.device = _device_tmp;
                 raw.id = id;
@@ -281,7 +283,8 @@ namespace Seeta.AIP
 
         private static ValueType GetType(ImageFormat format)
         {
-            switch (format) {
+            switch (format)
+            {
                 default:
                 case ImageFormat.U8Raw:
                 case ImageFormat.U8Rgb:
@@ -323,7 +326,7 @@ namespace Seeta.AIP
         }
 
         public ImageData(Unmanaged.ImageData image)
-            : this((ImageFormat)image.format, image.number, image.height, image.width, image.channels)
+            : this((ImageFormat) image.format, image.number, image.height, image.width, image.channels)
         {
             CopyFrom(image.data);
         }
@@ -396,8 +399,8 @@ namespace Seeta.AIP
             GetData<int>.Get = GetDataInt;
             GetData<float>.Get = GetDataFloat;
         }
-        
-        public T[] Data<T>() where T: struct
+
+        public T[] Data<T>() where T : struct
         {
             return GetData<T>.Get(this);
         }
@@ -407,12 +410,12 @@ namespace Seeta.AIP
             switch (type)
             {
                 default: return IntPtr.Zero;
-                case ValueType.Byte: return data_byte == null ? IntPtr.Zero : 
-                    Marshal.UnsafeAddrOfPinnedArrayElement(data_byte, 0);
-                case ValueType.Int: return data_int == null ? IntPtr.Zero : 
-                    Marshal.UnsafeAddrOfPinnedArrayElement(data_int, 0);
-                case ValueType.Float: return data_float == null ? IntPtr.Zero : 
-                    Marshal.UnsafeAddrOfPinnedArrayElement(data_float, 0);
+                case ValueType.Byte:
+                    return data_byte == null ? IntPtr.Zero : Marshal.UnsafeAddrOfPinnedArrayElement(data_byte, 0);
+                case ValueType.Int:
+                    return data_int == null ? IntPtr.Zero : Marshal.UnsafeAddrOfPinnedArrayElement(data_int, 0);
+                case ValueType.Float:
+                    return data_float == null ? IntPtr.Zero : Marshal.UnsafeAddrOfPinnedArrayElement(data_float, 0);
             }
         }
 
@@ -425,13 +428,13 @@ namespace Seeta.AIP
             {
                 default: return;
                 case ValueType.Byte:
-                    Marshal.Copy(ptr, data_byte, 0, (int)count);
+                    Marshal.Copy(ptr, data_byte, 0, (int) count);
                     break;
                 case ValueType.Int:
-                    Marshal.Copy(ptr, data_int, 0, (int)count);
+                    Marshal.Copy(ptr, data_int, 0, (int) count);
                     break;
                 case ValueType.Float:
-                    Marshal.Copy(ptr, data_float, 0, (int)count);
+                    Marshal.Copy(ptr, data_float, 0, (int) count);
                     break;
             }
         }
@@ -467,7 +470,7 @@ namespace Seeta.AIP
         public Shape(Unmanaged.Shape shape)
         {
             landmarks = Package.ToArrayWithSize<Point>(shape.landmarks.data, shape.landmarks.size);
-            type = (ShapeType)shape.type;
+            type = (ShapeType) shape.type;
             rotate = shape.rotate;
             scale = shape.scale;
         }
@@ -485,7 +488,7 @@ namespace Seeta.AIP
             get
             {
                 Unmanaged.Shape raw = new Unmanaged.Shape();
-                raw.type = (int)this.type;
+                raw.type = (int) this.type;
                 raw.landmarks = ToLandmarks(this.landmarks);
                 raw.rotate = this.rotate;
                 raw.scale = this.scale;
@@ -493,20 +496,22 @@ namespace Seeta.AIP
             }
         }
     }
-    
-    public class Tensor {
+
+    public class Tensor
+    {
         private ValueType type;
         private float[] data_float;
         private byte[] data_byte;
         private int[] data_int;
         private uint[] dims;
+        private double[] data_double;
 
         public Tensor()
         {
             type = ValueType.Byte;
         }
 
-        public Tensor(ValueType type, uint []dims)
+        public Tensor(ValueType type, uint[] dims)
         {
             this.type = type;
             this.dims = dims;
@@ -530,14 +535,17 @@ namespace Seeta.AIP
                 case ValueType.Float:
                     this.data_float = new float[count];
                     break;
+                case ValueType.Double:
+                    this.data_double = new double[count];
+                    break;
             }
         }
 
         public Tensor(Unmanaged.Object.Extra tensor)
-            : this((ValueType)tensor.type, 
+            : this((ValueType) tensor.type,
                 Package.ToArrayWithSize<uint>(tensor.dims.data, tensor.dims.size))
         {
-            CopyFrom(tensor.data);            
+            CopyFrom(tensor.data);
         }
 
         public ValueType Type
@@ -582,14 +590,20 @@ namespace Seeta.AIP
             return obj.data_float;
         }
 
+        static double[] GetDataDouble(Tensor obj)
+        {
+            return obj.data_double;
+        }
+
         static Tensor()
         {
             GetData<byte>.Get = GetDataByte;
             GetData<int>.Get = GetDataInt;
             GetData<float>.Get = GetDataFloat;
+            GetData<double>.Get = GetDataDouble;
         }
-        
-        public T[] Data<T>() where T: struct
+
+        public T[] Data<T>() where T : struct
         {
             return GetData<T>.Get(this);
         }
@@ -599,39 +613,45 @@ namespace Seeta.AIP
             switch (type)
             {
                 default: return IntPtr.Zero;
-                case ValueType.Byte: return data_byte == null ? IntPtr.Zero : 
-                    Marshal.UnsafeAddrOfPinnedArrayElement(data_byte, 0);
-                case ValueType.Int: return data_int == null ? IntPtr.Zero : 
-                    Marshal.UnsafeAddrOfPinnedArrayElement(data_int, 0);
-                case ValueType.Float: return data_float == null ? IntPtr.Zero : 
-                    Marshal.UnsafeAddrOfPinnedArrayElement(data_float, 0);
+                case ValueType.Byte:
+                    return data_byte == null ? IntPtr.Zero : Marshal.UnsafeAddrOfPinnedArrayElement(data_byte, 0);
+                case ValueType.Int:
+                    return data_int == null ? IntPtr.Zero : Marshal.UnsafeAddrOfPinnedArrayElement(data_int, 0);
+                case ValueType.Float:
+                    return data_float == null ? IntPtr.Zero : Marshal.UnsafeAddrOfPinnedArrayElement(data_float, 0);
+                case ValueType.Double:
+                    return data_double == null ? IntPtr.Zero : Marshal.UnsafeAddrOfPinnedArrayElement(data_double, 0);
             }
         }
 
         public void CopyFrom(IntPtr ptr)
         {
             if (ptr == IntPtr.Zero || this.Empty()) return;
-            
+
             uint count = 1;
             for (int i = 0; i < dims.Length; ++i)
             {
                 count *= dims[i];
             }
+
             switch (type)
             {
                 default: return;
                 case ValueType.Byte:
-                    Marshal.Copy(ptr, data_byte, 0, (int)count);
+                    Marshal.Copy(ptr, data_byte, 0, (int) count);
                     break;
                 case ValueType.Int:
-                    Marshal.Copy(ptr, data_int, 0, (int)count);
+                    Marshal.Copy(ptr, data_int, 0, (int) count);
                     break;
                 case ValueType.Float:
-                    Marshal.Copy(ptr, data_float, 0, (int)count);
+                    Marshal.Copy(ptr, data_float, 0, (int) count);
+                    break;
+                case ValueType.Double:
+                    Marshal.Copy(ptr, data_double, 0, (int) count);
                     break;
             }
         }
-        
+
         private static Unmanaged.Object.Extra.Dims ToDims(uint[] dims)
         {
             Unmanaged.Object.Extra.Dims raw = new Unmanaged.Object.Extra.Dims();
@@ -654,29 +674,31 @@ namespace Seeta.AIP
 
         public bool Empty()
         {
-            return (data_byte == null && data_int == null && data_float == null) || dims == null;
+            return (data_byte == null && data_int == null && data_float == null && data_double == null)
+                   || dims == null;
         }
     }
-    
+
     public class Object
     {
-        public Shape shape;    // must be set
-        public Tag[] tags;    // must be set
-        public Tensor extra;    // can be null, or empty tensor
+        public Shape shape; // must be set
+        public Tag[] tags; // must be set
+        public Tensor extra; // can be null, or empty tensor
 
         public Object()
         {
             shape = new Shape();
             tags = new Tag[0];
-            extra = new Tensor();
+            extra = null; // new Tensor();
         }
 
         public Object(Unmanaged.Object obj)
         {
             shape = new Shape(obj.shape);
-            extra = new Tensor(obj.extra);
             tags = Package.ToArrayWithSize<Tag>(obj.tags.data, obj.tags.size);
             if (tags == null) tags = new Tag[0];
+            Tensor extraTmp = new Tensor(obj.extra);
+            if (!extraTmp.Empty()) extra = extraTmp;
         }
 
         public Unmanaged.Object Raw
@@ -690,9 +712,18 @@ namespace Seeta.AIP
                 raw.tags.size = (uint) tags.Length;
                 if (extra == null)
                 {
-                    extra = new Tensor();
+                    raw.extra = new Unmanaged.Object.Extra();
+                    raw.extra.data = IntPtr.Zero;
+                    raw.extra.type = (int) Unmanaged.ValueType.Byte;
+                    raw.extra.dims = new Unmanaged.Object.Extra.Dims();
+                    raw.extra.dims.data = IntPtr.Zero;
+                    raw.extra.dims.size = 0;
                 }
-                raw.extra = extra.Raw;
+                else
+                {
+                    raw.extra = extra.Raw;
+                }
+
                 return raw;
             }
         }
@@ -741,6 +772,7 @@ namespace Seeta.AIP
                 T element = (T) elementObject;
                 tmp.Add(element);
             }
+
             return tmp.ToArray();
         }
 
@@ -770,7 +802,7 @@ namespace Seeta.AIP
         public static uint ToUint(IntPtr obj, uint ifNull = 0)
         {
             if (obj == IntPtr.Zero) return ifNull;
-            return (uint)Marshal.ReadInt32(obj);
+            return (uint) Marshal.ReadInt32(obj);
         }
 
         public Package(Unmanaged.Package raw)
@@ -799,6 +831,7 @@ namespace Seeta.AIP
         {
             private IntPtr[] _unmanaged;
             private int _size;
+
             public UnmanagedStringList(string[] models, bool appendNullEnd = true)
             {
                 _size = models.Length;
@@ -826,15 +859,13 @@ namespace Seeta.AIP
                 {
                     Marshal.FreeHGlobal(_unmanaged[i]);
                 }
+
                 _unmanaged = null;
             }
 
             public IntPtr[] Unmanaged
             {
-                get
-                {
-                    return _unmanaged;
-                }
+                get { return _unmanaged; }
             }
         }
 
@@ -845,17 +876,17 @@ namespace Seeta.AIP
             IntPtr[] rawAip = new IntPtr[1];
             UnmanagedStringList rawModelList = new UnmanagedStringList(models, true);
             IntPtr[] rawModels = rawModelList.Unmanaged;
-            
+
             if (args == null) args = new Object[0];
             Unmanaged.Object[] rawArgs = new Unmanaged.Object[args.Length];
             for (int i = 0; i < args.Length; ++i) rawArgs[i] = args[i].Raw;
-            
+
             int errCode = mAIP.create(
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawAip, 0),
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawDevice, 0),
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawModels, 0),
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawArgs, 0),
-                (uint)rawArgs.Length
+                (uint) rawArgs.Length
             );
             rawModelList.Dispose();
             if (errCode != 0) throw new Exception(errCode, Error(null, errCode));
@@ -916,7 +947,7 @@ namespace Seeta.AIP
             for (int i = 0; i < images.Length; ++i) rawImages[i] = images[i].Raw;
             Unmanaged.Object[] rawObjects = new Unmanaged.Object[objects.Length];
             for (int i = 0; i < objects.Length; ++i) rawObjects[i] = objects[i].Raw;
-            IntPtr[] rawOutputObjects = {IntPtr.Zero, IntPtr.Zero, };
+            IntPtr[] rawOutputObjects = {IntPtr.Zero, IntPtr.Zero,};
             uint[] rawOutputSizes = {0, 0};
 
             int errCode = mAIP.forward(aip, methodId,
@@ -931,9 +962,11 @@ namespace Seeta.AIP
             if (errCode != 0) throw new Exception(errCode, Error(null, errCode));
 
             uint rawResultObjectsSize = rawOutputSizes[0];
-            Unmanaged.Object[] rawResultObjects = ToArrayWithSize<Unmanaged.Object>(rawOutputObjects[0], rawResultObjectsSize);
+            Unmanaged.Object[] rawResultObjects =
+                ToArrayWithSize<Unmanaged.Object>(rawOutputObjects[0], rawResultObjectsSize);
             uint rawResultImagesSize = rawOutputSizes[1];
-            Unmanaged.ImageData[] rawResultImages = ToArrayWithSize<Unmanaged.ImageData>(rawOutputObjects[1], rawResultImagesSize);
+            Unmanaged.ImageData[] rawResultImages =
+                ToArrayWithSize<Unmanaged.ImageData>(rawOutputObjects[1], rawResultImagesSize);
 
             Result result;
             result.images = new ImageData[rawResultImagesSize];

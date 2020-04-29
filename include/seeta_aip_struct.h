@@ -249,13 +249,14 @@ namespace seeta {
 
             using Dims = std::vector<uint32_t>;
 
-            Tensor()
-                    : self(SEETA_AIP_VALUE_BYTE, {}) {
+            Tensor() {
+                m_raw.type = SEETA_AIP_VALUE_BYTE;
+                // m_data and m_dims keep nullptr;
             }
 
             Tensor(SEETA_AIP_VALUE_TYPE type, const std::vector<uint32_t> &dims) {
                 m_raw.type = int32_t(type);
-                m_dims = dims;
+                m_dims = std::make_shared<Dims>(dims);
                 auto bytes = this->bytes();
                 m_data.reset(new char[bytes], std::default_delete<char[]>());
             }
@@ -278,7 +279,9 @@ namespace seeta {
             }
 
             uint32_t bytes() const {
-                return std::accumulate(m_dims.begin(), m_dims.end(), uint32_t(1)) * element_width();
+                return m_dims
+                    ? std::accumulate(m_dims->begin(), m_dims->end(), uint32_t(1)) * element_width()
+                    : 0;
             }
 
             void *data() { return m_data.get(); }
@@ -303,24 +306,46 @@ namespace seeta {
             template<typename T>
             const T &data(int i) const { return this->data<T>()[i]; }
 
-            const Dims &dims() const { return m_dims; }
+            const Dims &dims() const { return *m_dims; }
 
             void exporter() override {
-                m_raw.dims.data = m_dims.data();
-                m_raw.dims.size = uint32_t(m_dims.size());
+                if (m_dims) {
+                    m_raw.dims.data = m_dims->data();
+                    m_raw.dims.size = uint32_t(m_dims->size());
+                } else {
+                    m_raw.dims.data = nullptr;
+                    m_raw.dims.size = 0;
+                }
                 m_raw.data = m_data.get();
             }
 
             void importer() override {
-                m_dims = Dims(m_raw.dims.data, m_raw.dims.data + m_raw.dims.size);
-                auto bytes = this->bytes();
-                m_data.reset(new char[bytes], std::default_delete<char[]>());
-                std::memcpy(m_data.get(), m_raw.data, bytes);
+                if (m_raw.data) {
+                    m_dims = std::make_shared<Dims>(m_raw.dims.data, m_raw.dims.data + m_raw.dims.size);
+                    auto bytes = this->bytes();
+                    m_data.reset(new char[bytes], std::default_delete<char[]>());
+                    std::memcpy(m_data.get(), m_raw.data, bytes);
+                } else {
+                    m_dims.reset();
+                    m_data.reset();
+                }
+            }
+
+            bool empty() const {
+                return m_data == nullptr || m_dims == nullptr;
+            }
+
+            bool operator==(std::nullptr_t) const {
+                return empty();
+            }
+
+            explicit operator bool() const {
+                return !empty();
             }
 
         private:
             std::shared_ptr<char> m_data;
-            Dims m_dims;
+            std::shared_ptr<Dims> m_dims;
         };
 
         class Object : public Wrapper<SeetaAIPObject> {
