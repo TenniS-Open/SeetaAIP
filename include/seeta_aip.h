@@ -15,7 +15,7 @@
 #define SEETA_AIP_API __attribute__ ((visibility("default")))
 #endif
 
-#define SEETA_AIP_VERSION 1
+#define SEETA_AIP_VERSION 2
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,8 +25,9 @@ extern "C" {
 
 enum SEETA_AIP_VALUE_TYPE {
     SEETA_AIP_VALUE_BYTE = 0,   ///< byte type
-    SEETA_AIP_VALUE_FLOAT = 1,  ///< float type with 4-bytes
-    SEETA_AIP_VALUE_INT = 2,    ///< signed integer type with 4-bytes
+    SEETA_AIP_VALUE_FLOAT32 = 1,  ///< float type with 4-bytes
+    SEETA_AIP_VALUE_INT32 = 2,    ///< signed integer type with 4-bytes
+    SEETA_AIP_VALUE_FLOAT64 = 3,    ///< signed float type with 8-bytes
 };
 
 enum SEETA_AIP_IMAGE_FORMAT {
@@ -192,6 +193,7 @@ enum SEETA_AIP_COMMON_ERRORCODE {
     SEETA_AIP_ERROR_MODEL_MISMATCH = 0x1009,
     SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_IMAGE = 0x100a,
     SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_OBJECT = 0x100b,
+    SEETA_AIP_ERROR_NULLPTR = 0x100c,
 };
 
 /**
@@ -256,28 +258,26 @@ typedef int32_t seeta_aip_forward(SeetaAIPHandle aip,
 
 /**
  * @param [in] aip The AIP Handle
- * @param [out] property pointer to int list, contains all property_id, end with 0, like: {1001, 1002, 0}
- * @return error code, zero for succeed.
- * @note the return property must can be saved
+ * @return C-style array of C-style string, end with NULL, example {"number_threads", "min_face_size", NULL}
+ * @note return NULL means no property
  */
-typedef int32_t seeta_aip_property(SeetaAIPHandle aip, int32_t **property);
+typedef const char **seeta_aip_property(SeetaAIPHandle aip);
 
 /**
  * @param [in] aip The AIP Handle
- * @param [in] property_id property id
+ * @param [in] name property name
  * @param [in] value set value
  * @return error code, zero for succeed.
- * @note the return property must can be saved
  */
-typedef int32_t seeta_aip_set(SeetaAIPHandle aip, int32_t property_id, double value);
+typedef int32_t seeta_aip_setd(SeetaAIPHandle aip, const char *name, double value);
 
 /**
  * @param [in] aip The AIP Handle
- * @param [in] property_id property id
+ * @param [in] name property name
  * @param [out] value get value
  * @note the return property must can be saved
  */
-typedef int32_t seeta_aip_get(SeetaAIPHandle aip, int32_t property_id, double *value);
+typedef int32_t seeta_aip_getd(SeetaAIPHandle aip, const char *name, double *value);
 
 /**
  * Get readable label string, for debug. and result auto plot.
@@ -292,28 +292,21 @@ typedef const char *seeta_aip_tag(SeetaAIPHandle aip, uint32_t method_id, uint32
 
 /**
  * @param [in] aip The AIP Handle
- * @param [out] setting pointer to int list, contains all setting_id, end with 0, like: {1001, 1002, 0}
- * @return error code, zero for succeed.
- * @note the return setting must can be saved
- */
-typedef int32_t seeta_aip_mem_list(SeetaAIPHandle aip, int32_t **member);
-
-/**
- * @param [in] aip The AIP Handle
- * @param [in] property_id property id
+ * @param [in] name property name
  * @param [in] value set value
  * @return error code, zero for succeed.
- * @note the return property must can be saved
  */
-typedef int32_t seeta_aip_mem_set(SeetaAIPHandle aip, int32_t member_id, const SeetaAIPObject *object);
+typedef int32_t seeta_aip_set(SeetaAIPHandle aip, const char *name, const SeetaAIPObject *pvalue);
 
 /**
  * @param [in] aip The AIP Handle
- * @param [in] property_id property id
+ * @param [in] name property name
  * @param [out] value get value
  * @note the return property must can be saved
+ * @note the return value is borrowed value, no need to free
+ * @note the get value only readable, DO NOT write any value. If write needed, use set_v2 instead.
  */
-typedef const SeetaAIPObject *seeta_aip_mem_get(SeetaAIPHandle aip, int32_t member_id);
+typedef int32_t seeta_aip_get(SeetaAIPHandle aip, const char *name, SeetaAIPObject *pvalue);
 
 
 struct SeetaAIP {
@@ -350,17 +343,20 @@ struct SeetaAIP {
     seeta_aip_create *create;   ///< create a new AIP instance
     seeta_aip_free *free;       ///< free the AIP instance
     seeta_aip_property *property;   ///< list all properties, used to save all property to system
-    seeta_aip_get *get;         ///< get AIP's property
-    seeta_aip_set *set;         ///< set AIP's property
+    seeta_aip_getd *getd;         ///< get AIP's property
+    seeta_aip_setd *setd;         ///< set AIP's property
     seeta_aip_reset *reset;     ///< reset AIP, for video status AIP
     seeta_aip_forward *forward; ///< forward an image, got processed image, detected object or other extra data
     seeta_aip_tag *tag;         ///< get readable tag
+    seeta_aip_get *get;         ///< get AIP's property
+    seeta_aip_set *set;         ///< set AIP's property
 };
 
 enum SEETA_AIP_LOAD_ERROR {
     SEETA_AIP_LOAD_SUCCEED = 0,
     SEETA_AIP_LOAD_SIZE_NOT_ENOUGH = 0xf001,    ///< once this error return the wanted version will be set.
-    SEETA_AIP_LOAD_UNHANDLED_INTERNAL_ERROR = 0xf002,   ///< for unknown load failed, no more informations
+    SEETA_AIP_LOAD_UNHANDLED_INTERNAL_ERROR = 0xf002,   ///< for unknown load failed, no more information.
+    SEETA_AIP_LOAD_AIP_VERSION_MISMATCH = 0xf003,   ///< for AIP version mismatched.
 };
 
 typedef int32_t seeta_aip_load_entry(struct SeetaAIP *aip, uint32_t size);

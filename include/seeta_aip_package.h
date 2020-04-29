@@ -38,11 +38,15 @@ namespace seeta {
 
             virtual void free() = 0;
 
-            virtual std::vector<int32_t> property() = 0;
+            virtual const char **property() = 0;
 
-            virtual void set(int32_t property_id, double value) = 0;
+            virtual void setd(const std::string &name, double value) = 0;
 
-            virtual double get(int32_t property_id) = 0;
+            virtual double getd(const std::string &name) = 0;
+
+            virtual void set(const std::string &name, const SeetaAIPObject &value) = 0;
+
+            virtual SeetaAIPObject get(const std::string &name) = 0;
 
             virtual void reset() {}
 
@@ -186,13 +190,14 @@ namespace seeta {
                 }
             }
 
-            static int32_t Set(SeetaAIPHandle aip, int32_t property_id, double value) {
+            static int32_t SetD(SeetaAIPHandle aip, const char *name, double value) {
                 try {
                     if (aip == nullptr) return SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE;
+                    if (name == nullptr) return SEETA_AIP_ERROR_NULLPTR;
                     auto wrapper = static_cast<self *>((void *) aip);
                     Package *raw = wrapper->m_raw.get();
                     try {
-                        raw->set(property_id, value);
+                        raw->setd(name, value);
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
                         return e.errcode();
@@ -203,13 +208,14 @@ namespace seeta {
                 }
             }
 
-            static int32_t Get(SeetaAIPHandle aip, int32_t property_id, double *pvalue) {
+            static int32_t GetD(SeetaAIPHandle aip, const char *name, double *pvalue) {
                 try {
                     if (aip == nullptr) return SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE;
+                    if (name == nullptr) return SEETA_AIP_ERROR_NULLPTR;
                     auto wrapper = static_cast<self *>((void *) aip);
                     Package *raw = wrapper->m_raw.get();
                     try {
-                        *pvalue = raw->get(property_id);
+                        *pvalue = raw->getd(name);
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
                         return e.errcode();
@@ -220,15 +226,50 @@ namespace seeta {
                 }
             }
 
-            static int32_t Property(SeetaAIPHandle aip, int32_t **property) {
+            static const char **Property(SeetaAIPHandle aip) {
                 try {
-                    if (aip == nullptr) return SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE;
+                    if (aip == nullptr) return nullptr;
                     auto wrapper = static_cast<self *>((void *) aip);
                     Package *raw = wrapper->m_raw.get();
                     try {
-                        wrapper->m_property = raw->property();
-                        wrapper->m_property.push_back(0);
-                        *property = wrapper->m_property.data();
+                        return raw->property();
+                    } catch (const Exception &e) {
+                        wrapper->m_error_message = e.message();
+                        return nullptr;
+                    }
+                    return nullptr;
+                } catch (const std::exception &) {
+                    return nullptr;
+                }
+            }
+
+            static int32_t Set(SeetaAIPHandle aip, const char *name, const SeetaAIPObject *pvalue) {
+                try {
+                    if (aip == nullptr) return SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE;
+                    if (name == nullptr) return SEETA_AIP_ERROR_NULLPTR;
+                    if (pvalue == nullptr) return SEETA_AIP_ERROR_NULLPTR;
+                    auto wrapper = static_cast<self *>((void *) aip);
+                    Package *raw = wrapper->m_raw.get();
+                    try {
+                        raw->set(name, *pvalue);
+                    } catch (const Exception &e) {
+                        wrapper->m_error_message = e.message();
+                        return e.errcode();
+                    }
+                    return 0;
+                } catch (const std::exception &) {
+                    return SEETA_AIP_ERROR_UNHANDLED_INTERNAL_ERROR;
+                }
+            }
+
+            static int32_t Get(SeetaAIPHandle aip, const char *name, SeetaAIPObject *pvalue) {
+                try {
+                    if (aip == nullptr) return SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE;
+                    if (name == nullptr) return SEETA_AIP_ERROR_NULLPTR;
+                    auto wrapper = static_cast<self *>((void *) aip);
+                    Package *raw = wrapper->m_raw.get();
+                    try {
+                        *pvalue = raw->get(name);
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
                         return e.errcode();
@@ -381,9 +422,11 @@ namespace seeta {
             aip.reset = Wrapper::Reset;
             aip.forward = Wrapper::Forward;
             aip.property = Wrapper::Property;
+            aip.setd = Wrapper::SetD;
+            aip.getd = Wrapper::GetD;
+            aip.tag = Wrapper::Tag;
             aip.set = Wrapper::Set;
             aip.get = Wrapper::Get;
-            aip.tag = Wrapper::Tag;
         }
 
 #define CHECK_AIP_SIZE(aip, size) \

@@ -31,16 +31,25 @@ public:
         std::cout << "[aip] free" << std::endl;
     }
 
-    std::vector<int32_t> property() override {
-        return {3001, 0};
+    const char **property() override {
+        static const char *tmp[] = {"test", nullptr};
+        return tmp;
     }
 
-    void set(int32_t property_id, double value) override {
+    void setd(const std::string &name, double value) override {
 
     }
 
-    double get(int32_t property_id) override {
+    double getd(const std::string &name) override {
         return 0;
+    }
+
+    void set(const std::string &name, const SeetaAIPObject &value) override {
+
+    }
+
+    SeetaAIPObject get(const std::string &name) override {
+        return {};
     }
 
     void reset() override {
@@ -55,7 +64,7 @@ public:
         std::cout << "[aip] image 0: data(0) = " << int(reinterpret_cast<char *>(images[0].data)[0]) << std::endl;
         result.objects.resize(1);
         result.objects[0].tag(1, 0);
-        result.objects[0].extra(seeta::aip::Tensor(SEETA_AIP_VALUE_FLOAT, {1}));
+        result.objects[0].extra(seeta::aip::Tensor(SEETA_AIP_VALUE_FLOAT32, {1}));
         result.objects[0].rextra().data<float>()[0] = 233;
     }
 

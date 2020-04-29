@@ -74,6 +74,9 @@ namespace seeta {
                             throw Exception("Unhandled internal error.");
                     }
                 }
+                if (m_aip.aip_version != SEETA_AIP_VERSION) {
+                    throw Exception(SEETA_AIP_LOAD_AIP_VERSION_MISMATCH, "AIP version mismatch.");
+                }
             }
 
             explicit Engine(const std::string &libname) {
@@ -90,6 +93,9 @@ namespace seeta {
                         case SEETA_AIP_LOAD_UNHANDLED_INTERNAL_ERROR:
                             throw Exception("Unhandled internal error.");
                     }
+                }
+                if (m_aip.aip_version != SEETA_AIP_VERSION) {
+                    throw Exception(SEETA_AIP_LOAD_AIP_VERSION_MISMATCH, "AIP version mismatch.");
                 }
             }
 
@@ -223,28 +229,43 @@ namespace seeta {
                 if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
             }
 
-            std::vector<int32_t> property() {
+            std::vector<std::string> property() {
                 int32_t *values = nullptr;
-                auto errcode = m_aip.property(m_handle, &values);
-                if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
-                if (values == nullptr) return {};
-                std::vector<int32_t> result;
-                while (*values) {
-                    result.emplace_back(*values);
-                    ++values;
+                auto property_names = m_aip.property(m_handle);
+                if (property_names == nullptr) return {};
+                std::vector<std::string> result;
+                while (*property_names) {
+                    result.emplace_back(*property_names);
+                    ++property_names;
                 }
                 return result;
             }
 
-            void set(int32_t property_id, double value) {
-                auto errcode = m_aip.set(m_handle, property_id, value);
+            void setd(const std::string &name, double value) {
+                auto errcode = m_aip.setd(m_handle, name.c_str(), value);
                 if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
             }
 
 
-            double get(int32_t property_id) {
+            double getd(const std::string &name) {
                 double value = 0;
-                auto errcode = m_aip.get(m_handle, property_id, &value);
+                auto errcode = m_aip.getd(m_handle, name.c_str(), &value);
+                if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
+                return value;
+            }
+
+            void set(const std::string &name, const SeetaAIPObject &value) {
+                auto errcode = m_aip.set(m_handle, name.c_str(), &value);
+                if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
+            }
+
+            void set(const std::string &name, const Object &value) {
+                return set(name, *value.raw());
+            }
+
+            SeetaAIPObject get(const std::string &name) {
+                SeetaAIPObject value = {};
+                auto errcode = m_aip.get(m_handle, name.c_str(), &value);
                 if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
                 return value;
             }

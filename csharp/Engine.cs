@@ -8,6 +8,8 @@ namespace Seeta.AIP
         private DynamicLibrary _dynamic;
         private Package _package;
 
+        public static int AIP_VERSION = 1;
+
         public Engine(string libName)
         {
             _dynamic = new DynamicLibrary(libName);
@@ -15,7 +17,21 @@ namespace Seeta.AIP
                 (Unmanaged.seeta_aip_load)_dynamic.Invoke(
                     "seeta_aip_load", typeof(Unmanaged.seeta_aip_load));
             Unmanaged.Package package = new Unmanaged.Package();
-            load(ref package, (uint)Marshal.SizeOf(typeof(Unmanaged.Package)));
+            int errCode = load(ref package, (uint)Marshal.SizeOf(typeof(Unmanaged.Package)));
+            switch ((Unmanaged.LoadError)errCode)
+            {
+                default:
+                    throw new Exception("Unknown load error.");
+                case 0:
+                    break;
+                case Unmanaged.LoadError.SizeNotEnough:
+                    throw new Exception((int)Unmanaged.LoadError.SizeNotEnough, "Size not enough.");
+                case Unmanaged.LoadError.UnhandledInternalError:
+                    throw new Exception((int)Unmanaged.LoadError.SizeNotEnough, "Unhandled internal error.");
+                case Unmanaged.LoadError.AipVersionMismatch:
+                    throw new Exception((int)Unmanaged.LoadError.SizeNotEnough, "AIP version mismatch.");
+            }
+            if (package.aip_version != AIP_VERSION) throw new Exception("AIP version mismatch.");
             _package = new Package(package);
         }
 

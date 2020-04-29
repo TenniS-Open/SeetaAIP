@@ -69,10 +69,12 @@ namespace seeta {
                             return 0;
                         case SEETA_AIP_VALUE_BYTE:
                             return 1;
-                        case SEETA_AIP_VALUE_FLOAT:
+                        case SEETA_AIP_VALUE_FLOAT32:
                             return 4;
-                        case SEETA_AIP_VALUE_INT:
+                        case SEETA_AIP_VALUE_INT32:
                             return 4;
+                        case SEETA_AIP_VALUE_FLOAT64:
+                            return 8;
                     }
                 }
 

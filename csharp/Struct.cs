@@ -180,6 +180,13 @@ namespace Seeta.AIP
             [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_forward forward;
             [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_tag tag;
         }
+        
+        public enum LoadError {
+            Succeed = 0,
+            SizeNotEnough = 0xf001,
+            UnhandledInternalError = 0xf002,
+            AipVersionMismatch = 0xf003,
+        }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int seeta_aip_load(ref Package package, uint size);
