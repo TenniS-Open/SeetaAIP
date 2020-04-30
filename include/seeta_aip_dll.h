@@ -38,6 +38,7 @@ namespace seeta {
             auto handle = ::dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
             return handle;
 #elif SEETA_AIP_OS_WINDOWS
+            ::SetEnvironmentVariableA("OMP_WAIT_POLICY", "passive");
             auto instance = ::LoadLibraryA(libname);
             return static_cast<void*>(instance);
 #else
@@ -73,6 +74,7 @@ namespace seeta {
 #if SEETA_AIP_OS_UNIX
             ::dlclose(handle);
 #elif SEETA_AIP_OS_WINDOWS
+            // ::SetEnvironmentVariableA("OMP_WAIT_POLICY", "passive");
             auto instance = static_cast<HMODULE>(handle);
             ::FreeLibrary(instance);
 #else
