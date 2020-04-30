@@ -143,13 +143,19 @@ namespace Seeta.AIP
             [Out] IntPtr result_images, [Out] IntPtr result_image_size);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int seeta_aip_property(IntPtr aip, [Out] IntPtr property);
+        public delegate IntPtr seeta_aip_property(IntPtr aip);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int seeta_aip_set(IntPtr aip, int property_id, double value);
+        public delegate int seeta_aip_setd(IntPtr aip, string name, double value);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int seeta_aip_get(IntPtr aip, int property_id, ref double value);
+        public delegate int seeta_aip_getd(IntPtr aip, string name, ref double value);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int seeta_aip_set(IntPtr aip, string name, IntPtr value);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int seeta_aip_get(IntPtr aip, string name, IntPtr value);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate IntPtr seeta_aip_tag(IntPtr aip, uint method_id, uint label_index, int label_value);
@@ -175,11 +181,13 @@ namespace Seeta.AIP
             [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_create create;
             [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_free free;
             [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_property property;
-            [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_get get;
-            [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_set set;
+            [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_getd getd;
+            [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_setd setd;
             [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_reset reset;
             [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_forward forward;
             [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_tag tag;
+            [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_get get;
+            [MarshalAs(UnmanagedType.FunctionPtr)] public seeta_aip_set set;
         }
 
         public enum LoadError
@@ -902,30 +910,44 @@ namespace Seeta.AIP
         public void Reset(IntPtr aip)
         {
             int errCode = mAIP.reset(aip);
-            if (errCode != 0) throw new Exception(errCode, Error(null, errCode));
+            if (errCode != 0) throw new Exception(errCode, Error(aip, errCode));
         }
 
-        public int[] Property(IntPtr aip)
+        public string[] Property(IntPtr aip)
         {
-            IntPtr[] rawProperty = new IntPtr[1];
-            int errCode = mAIP.property(aip,
-                Marshal.UnsafeAddrOfPinnedArrayElement(rawProperty, 0));
-            if (errCode != 0) throw new Exception(errCode, Error(null, errCode));
-            return ToArrayWithEndValue<int>(rawProperty[0], 0);
+            IntPtr rawProperty = mAIP.property(aip);
+            IntPtr[] rawPropertyList = ToArrayWithEndValue(rawProperty, IntPtr.Zero);
+            if (rawPropertyList == null) return new string[0];
+            return ToString(rawPropertyList);
         }
 
-        public void Set(IntPtr aip, int propertyId, double value)
+        public void SetD(IntPtr aip, string name, double value)
         {
-            int errCode = mAIP.set(aip, propertyId, value);
-            if (errCode != 0) throw new Exception(errCode, Error(null, errCode));
+            int errCode = mAIP.setd(aip, name, value);
+            if (errCode != 0) throw new Exception(errCode, Error(aip, errCode));
         }
 
-        public double Get(IntPtr aip, int propertyId)
+        public double GetD(IntPtr aip, string name)
         {
             double value = 0;
-            int errCode = mAIP.get(aip, propertyId, ref value);
-            if (errCode != 0) throw new Exception(errCode, Error(null, errCode));
+            int errCode = mAIP.getd(aip, name, ref value);
+            if (errCode != 0) throw new Exception(errCode, Error(aip, errCode));
             return value;
+        }
+
+        public void Set(IntPtr aip, string name, Object value)
+        {
+            Unmanaged.Object[] rawValue = {value.Raw};
+            int errCode = mAIP.set(aip, name, Marshal.UnsafeAddrOfPinnedArrayElement(rawValue, 0));
+            if (errCode != 0) throw new Exception(errCode, Error(aip, errCode));
+        }
+
+        public Object Get(IntPtr aip, string name)
+        {
+            Unmanaged.Object[] rawValue = {new Unmanaged.Object()};
+            int errCode = mAIP.get(aip, name, Marshal.UnsafeAddrOfPinnedArrayElement(rawValue, 0));
+            if (errCode != 0) throw new Exception(errCode, Error(aip, errCode));
+            return new Object(rawValue[0]);
         }
 
         public string Tag(IntPtr aip, uint methodId, uint labelIndex, int labelValue)
@@ -959,7 +981,7 @@ namespace Seeta.AIP
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawOutputSizes, 0),
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawOutputObjects, 1),
                 Marshal.UnsafeAddrOfPinnedArrayElement(rawOutputSizes, 1));
-            if (errCode != 0) throw new Exception(errCode, Error(null, errCode));
+            if (errCode != 0) throw new Exception(errCode, Error(aip, errCode));
 
             uint rawResultObjectsSize = rawOutputSizes[0];
             Unmanaged.Object[] rawResultObjects =

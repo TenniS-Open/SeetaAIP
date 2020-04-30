@@ -8,7 +8,7 @@ namespace Seeta.AIP
         private DynamicLibrary _dynamic;
         private Package _package;
 
-        public static int AIP_VERSION = 1;
+        public static int AIP_VERSION = 2;
 
         public Engine(string libName)
         {
@@ -112,19 +112,34 @@ namespace Seeta.AIP
             return _package.Error(_aip, errCode);
         }
 
-        public int[] Property()
+        public string[] Property()
         {
             return _package.Property(_aip);
         }
 
-        public void Set(int propertyId, double value)
+        public void SetD(string name, double value)
         {
-            _package.Set(_aip, propertyId, value);
+            _package.SetD(_aip, name, value);
         }
 
-        public double Get(int propertyId)
+        public void Set(string name, double value)
         {
-            return _package.Get(_aip, propertyId);
+            SetD(name, value);
+        }
+
+        public double GetD(string name)
+        {
+            return _package.GetD(_aip, name);
+        }
+
+        public void Set(string name, Object value)
+        {
+            _package.Set(_aip, name, value);
+        }
+
+        public Object Get(string name)
+        {
+            return _package.Get(_aip, name);
         }
 
         public string Tag(uint methodId, uint labelIndex, int labelValue)
