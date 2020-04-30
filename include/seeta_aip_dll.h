@@ -35,6 +35,7 @@ namespace seeta {
          */
         inline void *dlopen(const char *libname) {
 #if SEETA_AIP_OS_UNIX
+            // ::setenv("OMP_WAIT_POLICY", "passive", 1);
             auto handle = ::dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
             return handle;
 #elif SEETA_AIP_OS_WINDOWS
