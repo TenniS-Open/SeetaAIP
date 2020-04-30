@@ -2,18 +2,25 @@
 // Created by kier on 2020/4/18.
 //
 
-#include "seeta_aip_package.h"
+#include "seeta_aip_package_v2.h"
 #include "seeta_aip_shape.h"
 
 #include <iostream>
 
-class MyPackage : public seeta::aip::Package {
+class MyPackage : public seeta::aip::PackageV2 {
 public:
     using self = MyPackage;
 
-    const char *error(int32_t errcode) override {
-        std::cout << "[aip] error" << std::endl;
-        return nullptr;
+    int min_face_size = 122;
+    seeta::aip::Object max_face_size;
+
+    MyPackage() {
+        bind_error(1001, "Error");
+        bind_property("min_face_size", min_face_size);
+        bind_property("max_face_size", max_face_size);
+        bind_tag(0, 0, 0, "face");
+        bind_tag(0, 0, {{1, "hand"}, {2, "body"}});
+        bind_tag(0, {{1, 1, "hand"}, {1, 3, "body"}});
     }
 
     void create(const SeetaAIPDevice &device,
@@ -31,27 +38,6 @@ public:
         std::cout << "[aip] free" << std::endl;
     }
 
-    const char **property() override {
-        static const char *tmp[] = {"test", nullptr};
-        return tmp;
-    }
-
-    void setd(const std::string &name, double value) override {
-
-    }
-
-    double getd(const std::string &name) override {
-        return 0;
-    }
-
-    void set(const std::string &name, const SeetaAIPObject &value) override {
-
-    }
-
-    SeetaAIPObject get(const std::string &name) override {
-        return {};
-    }
-
     void reset() override {
 
     }
@@ -66,10 +52,6 @@ public:
         result.objects[0].tag(1, 0);
         result.objects[0].extra(seeta::aip::Tensor(SEETA_AIP_VALUE_FLOAT32, {1}));
         result.objects[0].rextra().data<float>()[0] = 233;
-    }
-
-    const char *tag(uint32_t method_id, uint32_t label_index, int32_t label_value) override  {
-        return "label";
     }
 };
 

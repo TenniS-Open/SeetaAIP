@@ -226,7 +226,7 @@ namespace seeta {
 
             void reset() {
                 auto errcode = m_aip.reset(m_handle);
-                if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
+                if (errcode) throw Exception(errcode, m_aip.error(m_handle, errcode));
             }
 
             std::vector<std::string> property() {
@@ -243,20 +243,23 @@ namespace seeta {
 
             void setd(const std::string &name, double value) {
                 auto errcode = m_aip.setd(m_handle, name.c_str(), value);
-                if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
+                if (errcode) throw Exception(errcode, m_aip.error(m_handle, errcode));
             }
 
+            void set(const std::string &name, double value) {
+                setd(name, value);
+            }
 
             double getd(const std::string &name) {
                 double value = 0;
                 auto errcode = m_aip.getd(m_handle, name.c_str(), &value);
-                if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
+                if (errcode) throw Exception(errcode, m_aip.error(m_handle, errcode));
                 return value;
             }
 
             void set(const std::string &name, const SeetaAIPObject &value) {
                 auto errcode = m_aip.set(m_handle, name.c_str(), &value);
-                if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
+                if (errcode) throw Exception(errcode, m_aip.error(m_handle, errcode));
             }
 
             void set(const std::string &name, const Object &value) {
@@ -266,7 +269,7 @@ namespace seeta {
             SeetaAIPObject get(const std::string &name) {
                 SeetaAIPObject value = {};
                 auto errcode = m_aip.get(m_handle, name.c_str(), &value);
-                if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
+                if (errcode) throw Exception(errcode, m_aip.error(m_handle, errcode));
                 return value;
             }
 
@@ -279,7 +282,7 @@ namespace seeta {
                                              images, images_size, objects, objects_size,
                                              &result.objects.data, &result.objects.size,
                                              &result.images.data, &result.images.size);
-                if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
+                if (errcode) throw Exception(errcode, m_aip.error(m_handle, errcode));
                 return result;
             }
 

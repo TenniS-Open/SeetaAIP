@@ -99,6 +99,11 @@ namespace seeta {
                         return "Mismatch required input image.";
                     case SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_OBJECT:
                         return "Mismatch required input object.";
+
+                    case SEETA_AIP_ERROR_NULLPTR:
+                        return "Got unexpected null pointer.";
+                    case SEETA_AIP_ERROR_WRITE_READONLY_PROPERTY:
+                        return "Write read-only property.";
                 }
                 try {
                     auto wrapper = static_cast<self *>((void *) aip);
