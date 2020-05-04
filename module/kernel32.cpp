@@ -9,15 +9,15 @@
 #pragma message("[WRANING] Using system kernel32.dll instead in windows.")
 #else
 
-SEETA_AIP_API extern "C" int *LoadLibrary(const char *libname) {
+extern "C" SEETA_AIP_API int *LoadLibrary(const char *libname) {
     return reinterpret_cast<int *>(seeta::aip::dlopen_v2(libname));
 }
 
-SEETA_AIP_API extern "C" int *GetProcAddress(int *lib, const char *symbol) {
+extern "C" SEETA_AIP_API int *GetProcAddress(int *lib, const char *symbol) {
     return reinterpret_cast<int *>(seeta::aip::dlsym(lib, symbol));
 }
 
-SEETA_AIP_API extern "C" int FreeLibrary(int *lib) {
+extern "C" SEETA_AIP_API int FreeLibrary(int *lib) {
     seeta::aip::dlclose(lib);
     return 1;
 }
