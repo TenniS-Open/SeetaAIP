@@ -35,10 +35,10 @@ namespace Seeta.AIP
         public enum ValueType
         {
             Void = 0,
-            Byte = 1,
-            Float = 2,
-            Int = 3,
-            Double = 4,
+            Byte = 2,
+            Int = 5,
+            Float = 10,
+            Double = 11,
         }
 
         public enum ImageFormat

@@ -25,10 +25,10 @@ extern "C" {
 
 enum SEETA_AIP_VALUE_TYPE {
     SEETA_AIP_VALUE_VOID = 0,    ///< for non value type
-    SEETA_AIP_VALUE_BYTE = 1,   ///< byte type
-    SEETA_AIP_VALUE_FLOAT32 = 2,  ///< float type with 4-bytes
-    SEETA_AIP_VALUE_INT32 = 3,    ///< signed integer type with 4-bytes
-    SEETA_AIP_VALUE_FLOAT64 = 4,    ///< signed float type with 8-bytes
+    SEETA_AIP_VALUE_BYTE = 2,   ///< byte type
+    SEETA_AIP_VALUE_INT32 = 5,    ///< signed integer type with 4-bytes
+    SEETA_AIP_VALUE_FLOAT32 = 10,  ///< float type with 4-bytes
+    SEETA_AIP_VALUE_FLOAT64 = 11,    ///< signed float type with 8-bytes
 };
 
 enum SEETA_AIP_IMAGE_FORMAT {

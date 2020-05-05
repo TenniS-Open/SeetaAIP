@@ -3,10 +3,10 @@
 import numpy
 
 VOID = 0
-UINT8 = 1
-FLOAT32 = 2
-INT32 = 3
-FLOAT64 = 4
+UINT8 = 2
+INT32 = 5
+FLOAT32 = 10
+FLOAT64 = 11
 
 __dtype_bytes_map = {
     VOID: 0,
