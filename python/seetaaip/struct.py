@@ -162,7 +162,7 @@ class Tensor(object):
         return self.__data is not None
 
     def __bool__(self):
-        return self.empty()
+        return not self.empty()
 
     @property
     def type(self) -> int:
@@ -207,6 +207,12 @@ class Tensor(object):
 
     def __str__(self):
         return self.__data.__str__()
+
+    def __nonzero__(self) -> bool:
+        return not self.empty()
+
+    def __array__(self) -> numpy.ndarray:
+        return self.__data
 
 
 class Package(object):
