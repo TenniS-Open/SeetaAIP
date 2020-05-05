@@ -55,6 +55,7 @@ BYTE = 0        # byte type
 FLOAT32 = 1     # float type with 4-bytes
 INT32 = 2       # signed integer type with 4-bytes
 FLOAT64 = 3     # signed float type with 8-bytes
+VOID = 404     # for non value type
 
 
 FORMAT_U8RAW = 0      # byte type

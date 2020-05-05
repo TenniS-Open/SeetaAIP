@@ -52,15 +52,18 @@ class Device(object):
 
 
 class Tensor(object):
-    def __init__(self, obj: Union[_C.POINTER(_C.Tensor), _C.Tensor, numpy.ndarray, Iterable, int, float],
+    def __init__(self, obj: Union[_C.POINTER(_C.Tensor), _C.Tensor, numpy.ndarray, Iterable, int, float] = None,
                  dtype: Union[int, Any, type(int), type(float)]=None, shape: Iterable[int] = None):
-        self.__type = _C.BYTE
+        self.__type = _C.VOID
         self.__dims = []
         self.__data = None  # numpy
         self.__raw = None
 
         self.__tmp_tensor = None  # tmp value to keep value safe
         self.__tmp_dims = None
+
+        if obj is None:
+            return
 
         if isinstance(obj, Tensor):
             self.__type = obj.__type
@@ -94,6 +97,8 @@ class Tensor(object):
         if not c_data:
             return
         c_type = self.__raw.type
+        if int(c_type) == _C.VOID:
+            return
         c_dims = self.__raw.dims
         dims = [int(c_dims.data[i]) for i in range(int(c_dims.size))]
 
