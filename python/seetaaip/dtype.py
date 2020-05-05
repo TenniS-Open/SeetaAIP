@@ -2,12 +2,14 @@
 
 import numpy
 
-UINT8 = 0
-FLOAT32 = 1
-INT32 = 2
-FLOAT64 = 3
+VOID = 0
+UINT8 = 1
+FLOAT32 = 2
+INT32 = 3
+FLOAT64 = 4
 
 __dtype_bytes_map = {
+    VOID: 0,
     UINT8: 1,
     INT32: 4,
     FLOAT32: 4,
@@ -15,6 +17,7 @@ __dtype_bytes_map = {
 }
 
 __dtype_str_map = {
+    VOID: 'void',
     UINT8: 'byte',
     INT32: 'int32',
     FLOAT32: 'float32',
