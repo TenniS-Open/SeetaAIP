@@ -38,6 +38,7 @@ namespace Seeta.AIP
             Float = 1,
             Int = 2,
             Double = 3,
+            Void = 404,
         }
 
         public enum ImageFormat
@@ -516,7 +517,7 @@ namespace Seeta.AIP
 
         public Tensor()
         {
-            type = ValueType.Byte;
+            type = ValueType.Void;
         }
 
         public Tensor(ValueType type, uint[] dims)
@@ -525,6 +526,7 @@ namespace Seeta.AIP
             this.dims = dims;
 
             if (dims == null) return;
+            if (type == ValueType.Void) return;
 
             uint count = 1;
             for (int i = 0; i < dims.Length; ++i)
@@ -683,7 +685,7 @@ namespace Seeta.AIP
         public bool Empty()
         {
             return (data_byte == null && data_int == null && data_float == null && data_double == null)
-                   || dims == null;
+                   || dims == null || type == ValueType.Void;
         }
     }
 

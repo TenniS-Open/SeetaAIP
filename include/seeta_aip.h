@@ -28,6 +28,7 @@ enum SEETA_AIP_VALUE_TYPE {
     SEETA_AIP_VALUE_FLOAT32 = 1,  ///< float type with 4-bytes
     SEETA_AIP_VALUE_INT32 = 2,    ///< signed integer type with 4-bytes
     SEETA_AIP_VALUE_FLOAT64 = 3,    ///< signed float type with 8-bytes
+    SEETA_AIP_VALUE_VOID = 404,    ///< for non value type, for easy use
 };
 
 enum SEETA_AIP_IMAGE_FORMAT {

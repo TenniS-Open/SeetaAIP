@@ -250,7 +250,7 @@ namespace seeta {
             using Dims = std::vector<uint32_t>;
 
             Tensor() {
-                m_raw.type = SEETA_AIP_VALUE_BYTE;
+                m_raw.type = SEETA_AIP_VALUE_VOID;
                 // m_data and m_dims keep nullptr;
             }
 
@@ -266,6 +266,8 @@ namespace seeta {
             uint32_t element_width() const {
                 switch (type()) {
                     default:
+                        return 0;
+                    case SEETA_AIP_VALUE_VOID:
                         return 0;
                     case SEETA_AIP_VALUE_BYTE:
                         return 1;
@@ -332,7 +334,7 @@ namespace seeta {
             }
 
             bool empty() const {
-                return m_data == nullptr || m_dims == nullptr;
+                return m_data == nullptr || m_dims == nullptr || m_raw.type == SEETA_AIP_VALUE_VOID;
             }
 
             bool operator==(std::nullptr_t) const {
@@ -493,6 +495,8 @@ namespace seeta {
             uint32_t element_width() const {
                 switch (type()) {
                     default:
+                        return 0;
+                    case SEETA_AIP_VALUE_VOID:
                         return 0;
                     case SEETA_AIP_VALUE_BYTE:
                         return 1;
