@@ -51,38 +51,38 @@ GetProcAddress = __KERNEL32_IMPORT("GetProcAddress", c_void_p, POINTER(c_int32),
 FreeLibrary = __KERNEL32_IMPORT("FreeLibrary", c_int32, POINTER(c_int32))
 
 
-SEETA_AIP_VALUE_BYTE = 0        # byte type
-SEETA_AIP_VALUE_FLOAT32 = 1     # float type with 4-bytes
-SEETA_AIP_VALUE_INT32 = 2       # signed integer type with 4-bytes
-SEETA_AIP_VALUE_FLOAT64 = 3     # signed float type with 8-bytes
+BYTE = 0        # byte type
+FLOAT32 = 1     # float type with 4-bytes
+INT32 = 2       # signed integer type with 4-bytes
+FLOAT64 = 3     # signed float type with 8-bytes
 
 
-SEETA_AIP_FORMAT_U8RAW = 0      # byte type
-SEETA_AIP_FORMAT_F32RAW = 1     # float type with 4-bytes
-SEETA_AIP_FORMAT_I32RAW = 2     # signed integer type with 4-bytes
-SEETA_AIP_FORMAT_U8RGB = 1001   # byte format for RGB888
-SEETA_AIP_FORMAT_U8BGR = 1002   # byte format for BGR888
-SEETA_AIP_FORMAT_U8RGBA = 1003  # byte format for RGBA8888
-SEETA_AIP_FORMAT_U8BGRA = 1004  # byte format for BGRA8888
-SEETA_AIP_FORMAT_U8Y = 1005     # byte format for gray image
+FORMAT_U8RAW = 0      # byte type
+FORMAT_F32RAW = 1     # float type with 4-bytes
+FORMAT_I32RAW = 2     # signed integer type with 4-bytes
+FORMAT_U8RGB = 1001   # byte format for RGB888
+FORMAT_U8BGR = 1002   # byte format for BGR888
+FORMAT_U8RGBA = 1003  # byte format for RGBA8888
+FORMAT_U8BGRA = 1004  # byte format for BGRA8888
+FORMAT_U8Y = 1005     # byte format for gray image
 
 '''
 * Unknown shape
 '''
-SEETA_AIP_UNKNOWN_SHAPE = 0
+SHAPE_UNKNOWN = 0
 
 '''
 * with forced rotate=0, scale=1, size>=1
 * points represents points
 '''
-SEETA_AIP_POINTS = 1
+SHAPE_POINTS = 1
 
 '''
 * with forced rotate=0, scale=1, size>=2
 * points represents multi lines:
 *     points[0]->points[1], points[1]->points[2], ..., points[size-2]->points[size-1]
 '''
-SEETA_AIP_LINES = 2
+SHAPE_LINES = 2
 
 '''
 * with forced scale=1, size=2
@@ -90,14 +90,14 @@ SEETA_AIP_LINES = 2
 * points[0] represents the left-top corner
 * points[1] represents the right-bottom corner
 '''
-SEETA_AIP_RECTANGLE = 3
+SHAPE_RECTANGLE = 3
 
 '''
 * with forced rotate=0, scale=1, size=3
 * rotate represents the angle of rotation around the center point.
 * points represents the first 3 points of parallelogram with anticlockwise
     '''
-SEETA_AIP_PARALLELOGRAM = 4
+SHAPE_PARALLELOGRAM = 4
 
 '''
 * with forced rotate=0, scale=1, size>=2
@@ -105,14 +105,14 @@ SEETA_AIP_PARALLELOGRAM = 4
     *     points[0]->points[1], points[1]->points[2], ...,
 *     points[size-2]->points[size-1], points[size-1]->points[0]
 '''
-SEETA_AIP_POLYGON = 5
+SHAPE_POLYGON = 5
 
 '''
 * with forced rotate=0, size=1
 * scale represents the radius
 * points[0] represents the center
 '''
-SEETA_AIP_CIRCLE = 6
+SHAPE_CIRCLE = 6
 
 '''
 * with forced rotate=0, scale=1, size=3
@@ -120,18 +120,18 @@ SEETA_AIP_CIRCLE = 6
 * points[1] represents the right-bottom-front corner
 * points[2] represents the right-top-back corner
 '''
-SEETA_AIP_CUBE = 7
+SHAPE_CUBE = 7
 
 '''
 * Means the shape is undefined
 '''
-SEETA_AIP_NO_SHAPE = 255
+SHAPE_NONE = 255
 
 
-SEETA_AIP_LOAD_SUCCEED = 0
-SEETA_AIP_LOAD_SIZE_NOT_ENOUGH = 0xf001    # once this error return the wanted version will be set.
-SEETA_AIP_LOAD_UNHANDLED_INTERNAL_ERROR = 0xf002   # for unknown load failed, no more information.
-SEETA_AIP_LOAD_AIP_VERSION_MISMATCH = 0xf003   # for AIP version mismatched.
+SHAPE_LOAD_SUCCEED = 0
+SHAPE_LOAD_SIZE_NOT_ENOUGH = 0xf001    # once this error return the wanted version will be set.
+SHAPE_LOAD_UNHANDLED_INTERNAL_ERROR = 0xf002   # for unknown load failed, no more information.
+SHAPE_LOAD_AIP_VERSION_MISMATCH = 0xf003   # for AIP version mismatched.
 
 
 class Point(Structure):
@@ -250,7 +250,6 @@ class Package(Structure):
 
 
 seeta_aip_load_entry = CFUNCTYPE(c_int32, POINTER(Package), c_uint32)
-empty_function = CFUNCTYPE(None)
 
 
 class DynamicLibrary(object):
@@ -272,4 +271,6 @@ class DynamicLibrary(object):
         assert isinstance(name, str)
         assert isinstance(func, type(seeta_aip_load_entry))
         sym = GetProcAddress(self.lib, name.encode())
+        if not sym:
+            return None
         return func(int(sym))
