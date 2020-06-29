@@ -206,7 +206,7 @@ int32_t seeta_aip_load(struct SeetaAIP *aip, uint32_t size) {
     CHECK_AIP_SIZE(aip, size)
     static const char *support[] = {"cpu", "gpu", nullptr};
     seeta::aip::setup_aip_header(*aip,
-                                 "Rotate_image",
+                                 "RotateImage",
                                  "Rotate image in multiply of 90 degree",
                                  "rotate_image",
                                  "v1",
