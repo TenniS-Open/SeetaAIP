@@ -435,6 +435,16 @@ namespace seeta {
         public:
             using self = ImageData;
 
+            ImageData() {
+                this->m_type = SEETA_AIP_VALUE_BYTE;
+                this->m_raw.format = SEETA_AIP_FORMAT_U8RAW;
+                this->m_raw.number = 0;
+                this->m_raw.width = 0;
+                this->m_raw.height = 0;
+                this->m_raw.channels = 0;
+                m_data.reset(new char[1], std::default_delete<char[]>());
+            }
+
             ImageData(SEETA_AIP_IMAGE_FORMAT format,
                       uint32_t number,
                       uint32_t width,
