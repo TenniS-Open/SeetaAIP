@@ -39,7 +39,7 @@ int main() {
     plot_shape(b);
     plot_shape(c);
 
-    seeta::aip::ImageData image(SEETA_AIP_VALUE_BYTE, 320, 320, 3, nullptr);
+    seeta::aip::ImageData image(SEETA_AIP_FORMAT_U8RAW, 320, 320, 3, nullptr);
 
     std::cout << seeta::aip::Points({{1, 2}}) << std::endl;
     std::cout << seeta::aip::Lines({{1, 2}, {3, 4}}) << std::endl;
