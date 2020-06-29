@@ -73,6 +73,9 @@ namespace seeta {
             using ObjectSetter = std::function<void(const SeetaAIPObject &)>;
             using ObjectGetter = std::function<SeetaAIPObject()>;
 
+            using PropertyChecker = std::function<bool(double)>;
+            using ObjectChecker = std::function<bool(const SeetaAIPObject &)>;
+
             template<typename K, typename V>
             static void insert_map(std::map<K, V> &map, const K &k, const V &v) {
                 auto it = map.find(k);
@@ -99,6 +102,30 @@ namespace seeta {
                 insert_map(m_object_getter_map, name, getter);
                 if (setter != nullptr) insert_map(m_object_setter_map, name, setter);
                 m_property_buf.emplace_back(name);
+            }
+
+            void bind_property(const std::string &name,
+                               const PropertyGetter &getter,
+                               const PropertySetter &setter,
+                               const PropertyChecker &checker,
+                               const std::string &check_message = "") {
+                insert_map(m_property_getter_map, name, getter);
+                if (setter != nullptr) insert_map(m_property_setter_map, name, setter);
+                m_property_buf.emplace_back(name);
+                if (checker != nullptr) insert_map(m_property_checker_map, name, checker);
+                if (!check_message.empty()) insert_map(m_check_message_map, name, check_message);
+            }
+
+            void bind_property(const std::string &name,
+                               const ObjectGetter &getter,
+                               const ObjectSetter &setter,
+                               const ObjectChecker &checker,
+                               const std::string &check_message = "") {
+                insert_map(m_object_getter_map, name, getter);
+                if (setter != nullptr) insert_map(m_object_setter_map, name, setter);
+                m_property_buf.emplace_back(name);
+                if (checker != nullptr) insert_map(m_object_checker_map, name, checker);
+                if (!check_message.empty()) insert_map(m_check_message_map, name, check_message);
             }
 
             void bind_tag(uint32_t method_id, uint32_t label_index, int32_t label_value, const std::string &text) {
@@ -134,6 +161,22 @@ namespace seeta {
                 bind_property(name, getter, setter);
             }
 
+            template<typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value>::type, typename FUNC>
+            void bind_property(const std::string &name, T &value,
+                    FUNC checker, const std::string &check_message = "") {
+                PropertyGetter getter = [&value]() { return static_cast<double>(value); };
+                PropertySetter setter = [&value](double arg) { value = static_cast<T>(arg); };
+                auto fix_checker = [checker](double value) { auto tmp = checker; return bool(tmp(value)); };
+                bind_property(name, getter, setter, fix_checker, check_message);
+            }
+
+            void bind_property(const std::string &name, Object &value,
+                    ObjectChecker checker, const std::string &check_message = "") {
+                ObjectGetter getter = [&value]() { return *value.raw(); };
+                ObjectSetter setter = [&value](const SeetaAIPObject &arg) { value.raw(arg); };
+                bind_property(name, getter, setter, checker, check_message);
+            }
+
             const char *error(int32_t errcode) final {
                 auto key = errcode;
                 auto it = m_error_message.find(key);
@@ -152,7 +195,40 @@ namespace seeta {
                 return m_property_tmp.data();
             }
 
+            void check(const std::string &name, double value) {
+                auto it = m_property_checker_map.find(name);
+                if (it == m_property_checker_map.end()) return;
+                if (it->second(value)) return;
+                auto msg = m_check_message_map.find(name);
+                if (msg == m_check_message_map.end()) {
+                    std::ostringstream oss;
+                    oss << "Property \"" << name << "\" check failed, with value = " << value;
+                    throw Exception(-1, oss.str());
+                } else {
+                    std::ostringstream oss;
+                    oss << "Property \"" << name << "\" check failed: \"" << msg->second << "\", with value = " << value;
+                    throw Exception(-1, oss.str());
+                }
+            }
+
+            void check(const std::string &name, const SeetaAIPObject &object) {
+                auto it = m_object_checker_map.find(name);
+                if (it == m_object_checker_map.end()) return;
+                if (it->second(object)) return;
+                auto msg = m_check_message_map.find(name);
+                if (msg == m_check_message_map.end()) {
+                    std::ostringstream oss;
+                    oss << "Property \"" << name << "\" check failed.";
+                    throw Exception(-1, oss.str());
+                } else {
+                    std::ostringstream oss;
+                    oss << "Property \"" << name << "\" check failed: \"" << msg->second << "\".";
+                    throw Exception(-1, oss.str());
+                }
+            }
+
             void setd(const std::string &name, double value) final {
+                check(name, value);
                 auto it = m_property_setter_map.find(name);
                 if (it != m_property_setter_map.end()) {
                     it->second(value);
@@ -188,6 +264,7 @@ namespace seeta {
             }
 
             void set(const std::string &name, const SeetaAIPObject &object) final {
+                check(name, object);
                 auto it = m_object_setter_map.find(name);
                 if (it != m_object_setter_map.end()) {
                     it->second(object);
@@ -248,6 +325,7 @@ namespace seeta {
                 Tensor extra(SEETA_AIP_VALUE_FLOAT64, {});
                 extra.data<double>()[0] = value;
                 Object object(extra);
+                check(name, object);
                 it->second(object);
                 return true;
             }
@@ -306,7 +384,9 @@ namespace seeta {
                     oss << "Property \"" << name << "\": Can not convert " << get_extra_tensor(object) << " to double.";
                     throw Exception(-1, oss.str());
                 }
-                it->second(getd_for_object(object));
+                auto value = getd_for_object(object);
+                check(name, value);
+                it->second(value);
                 return true;
             }
 
@@ -353,6 +433,10 @@ namespace seeta {
             std::map<std::string, PropertyGetter> m_property_getter_map;
             std::map<std::string, ObjectSetter> m_object_setter_map;
             std::map<std::string, ObjectGetter> m_object_getter_map;
+
+            std::map<std::string, PropertyChecker> m_property_checker_map;
+            std::map<std::string, ObjectChecker> m_object_checker_map;
+            std::map<std::string, std::string> m_check_message_map;
 
             std::vector<std::string> m_property_buf;
             std::vector<const char *> m_property_tmp = {nullptr};
