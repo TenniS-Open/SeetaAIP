@@ -56,21 +56,27 @@ class Tensor(object):
                  dtype: Union[int, Any, type(int), type(float)]=None, shape: Iterable[int] = None):
         self.__type = _C.VOID
         self.__dims = []
-        self.__data = None  # numpy
-        self.__raw = None
+        self.__numpy = None  # numpy
 
-        self.__tmp_tensor = None  # tmp value to keep value safe
-        self.__tmp_dims = None
+        self.__raw = None   # _C.Tensor; use for import
+        self.__raw_dims = None  # numpy.ndarray; usr for export
 
         if obj is None:
-            return
-
-        if isinstance(obj, Tensor):
+            if dtype is None and shape is None:
+                return
+            if shape is None:
+                shape = []
+            if dtype is None:
+                dtype = _C.FLOAT32
+            dtype = self._check_dtype_aip(dtype)
+            self.__type = dtype
+            self.__dims = tuple(shape)
+            self.__numpy = numpy.zeros(self.__dims, self._check_dtype_numpy(dtype))
+        elif isinstance(obj, Tensor):
             self.__type = obj.__type
             self.__dims = obj.__dims
-            self.__data = obj.__data
-            self.__tmp_tensor = obj.__tmp_tensor
-            self.__raw = obj.__raw
+            self.__numpy = obj.__numpy
+            # self.__raw = obj.__raw
         elif isinstance(obj, _C.POINTER(_C.Tensor)):
             assert hasattr(obj, "contents")
             contents = obj.contents
@@ -82,15 +88,15 @@ class Tensor(object):
             self._import_raw()
         else:
             if dtype is None:
-                self.__data = numpy.ascontiguousarray(obj)
-                self.__data = numpy.ascontiguousarray(self.__data,
-                    dtype=self._narraw_numpy_dtype(self.__data.dtype.type))
+                self.__numpy = numpy.ascontiguousarray(obj)
+                self.__numpy = numpy.ascontiguousarray(self.__numpy,
+                                                       dtype=self._narraw_numpy_dtype(self.__numpy.dtype.type))
             else:
-                self.__data = numpy.ascontiguousarray(obj, dtype=dtype)
-            self.__type = self._check_dtype_aip(self.__data.dtype.type)
+                self.__numpy = numpy.ascontiguousarray(obj, dtype=dtype)
+            self.__type = self._check_dtype_aip(self.__numpy.dtype.type)
             if shape is not None:
-                self.__data = numpy.reshape(self.__data, shape)
-            self.__dims = self.__data.shape
+                self.__numpy = numpy.reshape(self.__numpy, shape)
+            self.__dims = self.__numpy.shape
 
     def _import_raw(self):
         c_data = self.__raw.data
@@ -102,11 +108,8 @@ class Tensor(object):
         c_dims = self.__raw.dims
         dims = [int(c_dims.data[i]) for i in range(int(c_dims.size))]
 
-        ppp = _C.cast(c_data, _C.POINTER(_C.c_double))
-        ppp = [ppp[i] for i in range(6)]
-
         c_dtype_data = _C.cast(c_data, _C.POINTER(self._to_ctype(int(c_type))))
-        self.__data = numpy.ctypeslib.as_array(c_dtype_data, shape=tuple(dims))
+        self.__numpy = numpy.ctypeslib.as_array(c_dtype_data, shape=tuple(dims))
         self.__type = int(c_type)
         self.__dims = tuple(dims)
 
@@ -164,7 +167,7 @@ class Tensor(object):
         return dtype
 
     def empty(self) -> bool:
-        return self.__data is not None
+        return self.__numpy is not None
 
     def __bool__(self):
         return not self.empty()
@@ -183,7 +186,7 @@ class Tensor(object):
 
     @property
     def data(self) -> Optional[numpy.ndarray]:
-        return self.__data
+        return self.__numpy
 
     @property
     def _as_parameter_(self) -> _C.POINTER(_C.Tensor):
@@ -195,29 +198,33 @@ class Tensor(object):
 
     @property
     def ref(self) -> _C.Tensor:
-        self.__tmp_tensor = _C.Tensor(type=_C.BYTE)
-        if self.__data is not None:
-            self.__tmp_dims = numpy.ascontiguousarray(self.dims, dtype=numpy.uint32)
-            c_dims_data = self.__tmp_dims.ctypes.data_as(_C.POINTER(_C.c_uint32))
+        self.__raw = _C.Tensor(type=_C.BYTE)
+        if self.__numpy is not None:
+            self.__raw_dims = numpy.ascontiguousarray(self.dims, dtype=numpy.uint32)
+            c_dims_data = self.__raw_dims.ctypes.data_as(_C.POINTER(_C.c_uint32))
             c_dims_size = _C.c_uint32(len(self.dims))
             c_dims = _C.Tensor.Dims(data=c_dims_data, size=c_dims_size)
             c_data = self.data.ctypes.data_as(_C.c_void_p)
-            self.__tmp_tensor.type = _C.c_int32(self.type)
-            self.__tmp_tensor.data = c_data
-            self.__tmp_tensor.dims = c_dims
-        return self.__tmp_tensor
+            self.__raw.type = _C.c_int32(self.type)
+            self.__raw.data = c_data
+            self.__raw.dims = c_dims
+        return self.__raw
 
     def __repr__(self):
-        return self.__data.__repr__()
+        return self.__numpy.__repr__()
 
     def __str__(self):
-        return self.__data.__str__()
+        return self.__numpy.__str__()
 
     def __nonzero__(self) -> bool:
         return not self.empty()
 
     def __array__(self) -> numpy.ndarray:
-        return self.__data
+        return self.__numpy
+
+    @property
+    def numpy(self) -> numpy.ndarray:
+        return self.__numpy
 
 
 class Package(object):

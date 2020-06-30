@@ -51,11 +51,11 @@ GetProcAddress = __KERNEL32_IMPORT("GetProcAddress", c_void_p, POINTER(c_int32),
 FreeLibrary = __KERNEL32_IMPORT("FreeLibrary", c_int32, POINTER(c_int32))
 
 
-BYTE = 0        # byte type
-FLOAT32 = 1     # float type with 4-bytes
-INT32 = 2       # signed integer type with 4-bytes
-FLOAT64 = 3     # signed float type with 8-bytes
-VOID = 404     # for non value type
+VOID = 0     # for non value type
+BYTE = 2        # byte type
+INT32 = 5       # signed integer type with 4-bytes
+FLOAT32 = 10     # float type with 4-bytes
+FLOAT64 = 11     # signed float type with 8-bytes
 
 
 FORMAT_U8RAW = 0      # byte type
