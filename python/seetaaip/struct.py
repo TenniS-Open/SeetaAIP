@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from . import _C
-from typing import List, Optional, Union, Iterable, Any, Tuple
+from typing import List, Optional, Union, Iterable, Any, Tuple, Sized
 import numpy
 from . import dtype as aip_dtype
 
@@ -58,7 +58,7 @@ class Tensor(object):
         self.__dims = []
         self.__numpy = None  # numpy
 
-        self.__raw = None   # _C.Tensor; use for import
+        self.__raw = None   # _C.Tensor; use for import and export
         self.__raw_dims = None  # numpy.ndarray; usr for export
 
         if obj is None:
@@ -227,6 +227,11 @@ class Tensor(object):
         return self.__numpy
 
 
+class Object(object):
+    # TOOD: finish Object
+    pass
+
+
 class Package(object):
     def __init__(self, obj: _C.Package):
         self.__raw = obj
@@ -281,16 +286,128 @@ class Package(object):
         return self.__raw
 
     class Handle(object):
-        def __init__(self, handle: _C.c_void_p):
+        def __init__(self, handle: _C.c_void_p = None):
+            if handle is None:
+                handle = _C.c_void_p(0)
             self.__handle = handle
+
+        def _as_parameter_(self) -> _C.c_void_p:
+            return self.handle
 
         @property
         def handle(self) -> _C.c_void_p:
             return self.__handle
 
     def error(self, handle: Optional[Handle], errcode: int) -> str:
+        assert isinstance(handle, (type(None), Package.Handle))
         ptr = handle.handle if handle else _C.c_void_p(0)
         message = self.__raw.error(ptr, errcode)
         if not message:
             return ""
         return message.decode()
+
+    def free(self, handle: Optional[Handle]):
+        assert isinstance(handle, (type(None), Package.Handle))
+        ptr = handle.handle if handle else _C.c_void_p(0)
+        self.__raw.free(ptr)
+
+    def create(self, device: Device,
+               models: Union[Sized, Iterable[str]], objects: Optional[Union[Sized, Iterable[Object]]]) -> Handle:
+        assert isinstance(device, Device)
+
+        c_handle = _C.c_void_p(0)
+        c_phandle = _C.byref(c_handle)
+        c_device = device.raw
+        c_models_tmp = [_C.c_char_p(m) for m in models]
+        c_models_tmp.append(None)
+        c_models = (_C.c_char_p * len(c_models_tmp))(*c_models_tmp)
+        if objects is None:
+            c_objects = None
+            c_objects_size = 0
+        else:
+            c_objects_tmp = [o.raw for o in objects]
+            c_objects = (_C.POINTER(_C.Object) * len(c_objects_tmp))(*c_objects_tmp)
+            c_objects_size = len(c_objects_tmp)
+
+        c_errcode = self.__raw.create(c_phandle, c_device, c_models, c_objects, c_objects_size)
+        if c_errcode != 0:
+            raise Exception("0x{}: {}".format(c_errcode, self.error(None, c_errcode)))
+
+        return Package.Handle(c_handle)
+
+
+class Engine(object):
+    AIP_VERSION = 2
+
+    def __init__(self, libname: str):
+        self.__lib = _C.DynamicLibrary(libname=libname)
+        seeta_aip_load = self.__lib.symbol(_C.seeta_aip_load_entry, "seeta_aip_load")
+        c_package = _C.Package()
+        c_package_size = _C.sizeof(_C.Package)
+        errcode = seeta_aip_load(_C.byref(c_package), c_package_size)
+        load_error_map = {
+            _C.SHAPE_LOAD_SUCCEED: "Succeed.",
+            _C.SHAPE_LOAD_SIZE_NOT_ENOUGH: "Size not enough.",
+            _C.SHAPE_LOAD_UNHANDLED_INTERNAL_ERROR: "Unhandled internal error.",
+            _C.SHAPE_LOAD_AIP_VERSION_MISMATCH: "AIP version mismatch.",
+        }
+        if errcode != 0:
+            message = load_error_map[errcode] if errcode in load_error_map else "Unknown error."
+            raise Exception("Load {} failed with errorcode({}): {}".format(libname, hex(errcode), message))
+        if c_package.aip_version != self.AIP_VERSION:
+            raise Exception("AIP version not supported, {} wanted, got {}".format(
+                self.AIP_VERSION, c_package.aip_version))
+        self.__package = Package(c_package)
+
+    def __del__(self):
+        if self.__lib is not None:
+            self.__package = None
+            self.__lib.dispose()
+            self.__lib = None
+
+    def dispose(self):
+        self.__del__()
+
+    @property
+    def package(self) -> Package:
+        return self.__package
+
+
+class Instance(object):
+    def __init__(self, lib: Union[str, Engine, Package],
+                 device: Device,
+                 models: Union[str, Iterable[str]],
+                 objects: Union[Object, Iterable[Object]] = None):
+        self.__libname = None
+        self.__engine = None
+        self.__package = None
+
+        assert isinstance(lib, (str, Engine, Package))
+        if isinstance(lib, str):
+            self.__libname = lib
+            self.__engine = Engine(self.__libname)
+            self.__package = self.__engine.package
+        elif isinstance(lib, Engine):
+            self.__package = lib.package
+        elif isinstance(lib, Package):
+            self.__package = lib
+
+        if isinstance(models, str):
+            models = [models]
+        if isinstance(objects, Object):
+            objects = [objects]
+
+        self.__handle = self.__package.create(device=device, models=models, objects=objects)
+
+    def __del__(self):
+        self.dispose()
+
+    def dispose(self):
+        if self.__handle is not None:
+            self.__package.free(self.__handle)
+            self.__handle = None
+            self.__package = None
+        if self.__engine is not None:
+            self.__engine.dispose()
+            self.__engine = None
+
