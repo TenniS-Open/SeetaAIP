@@ -318,7 +318,7 @@ class Package(object):
         c_handle = _C.c_void_p(0)
         c_phandle = _C.byref(c_handle)
         c_device = device.raw
-        c_models_tmp = [_C.c_char_p(m) for m in models]
+        c_models_tmp = [_C.c_char_p(m.encode()) for m in models]
         c_models_tmp.append(None)
         c_models = (_C.c_char_p * len(c_models_tmp))(*c_models_tmp)
         if objects is None:
@@ -381,6 +381,7 @@ class Instance(object):
         self.__libname = None
         self.__engine = None
         self.__package = None
+        self.__handle = None
 
         assert isinstance(lib, (str, Engine, Package))
         if isinstance(lib, str):
