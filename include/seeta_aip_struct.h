@@ -328,7 +328,7 @@ namespace seeta {
                     m_data.reset(new char[bytes], std::default_delete<char[]>());
                     std::memcpy(m_data.get(), m_raw.data, bytes);
                 } else {
-                    m_dims.reset();
+                    m_dims = std::make_shared<Dims>();
                     m_data.reset();
                 }
             }

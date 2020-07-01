@@ -13,6 +13,10 @@
 
 
 inline std::ostream &operator<<(std::ostream &out, const seeta::aip::Tensor &obj) {
+    if (obj.empty()) {
+        out << "null";
+        return out;
+    }
     out << "Tensor{shape=[";
     bool comma = false;
     for (auto &dim : obj.dims()) {
