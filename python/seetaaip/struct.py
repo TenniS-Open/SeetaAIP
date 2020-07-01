@@ -92,7 +92,7 @@ class Tensor(object):
                 self.__numpy = numpy.ascontiguousarray(self.__numpy,
                                                        dtype=self._narraw_numpy_dtype(self.__numpy.dtype.type))
             else:
-                self.__numpy = numpy.ascontiguousarray(obj, dtype=dtype)
+                self.__numpy = numpy.ascontiguousarray(obj, dtype=self._check_dtype_numpy(dtype))
             self.__type = self._check_dtype_aip(self.__numpy.dtype.type)
             if shape is not None:
                 self.__numpy = numpy.reshape(self.__numpy, shape)
@@ -208,6 +208,276 @@ class Tensor(object):
             self.__raw.type = _C.c_int32(self.type)
             self.__raw.data = c_data
             self.__raw.dims = c_dims
+        return self.__raw
+
+    def __repr__(self):
+        return self.__numpy.__repr__()
+
+    def __str__(self):
+        return self.__numpy.__str__()
+
+    def __nonzero__(self) -> bool:
+        return not self.empty()
+
+    def __array__(self) -> numpy.ndarray:
+        return self.__numpy
+
+    @property
+    def numpy(self) -> numpy.ndarray:
+        return self.__numpy
+
+
+class ImageData(object):
+    def __init__(self, obj: Union[_C.POINTER(_C.Tensor), _C.Tensor, numpy.ndarray, Iterable, int, float] = None,
+                 fmt: int = None, shape: Iterable[int] = None,
+                 number: int = None, width: int = None, height: int = None, channels: int = None):
+        assert isinstance(fmt, (int, type(None)))
+        if fmt is not None:
+            assert fmt in {
+                _C.FORMAT_U8RAW,
+                _C.FORMAT_U8Y,
+                _C.FORMAT_U8RGB,
+                _C.FORMAT_U8BGR,
+                _C.FORMAT_U8RGBA,
+                _C.FORMAT_U8BGRA,
+                _C.FORMAT_I32RAW,
+                _C.FORMAT_F32RAW,
+            }
+
+        self.__type = _C.BYTE
+        self.__dims = [1, 0, 0, 0]
+        self.__numpy = None  # numpy
+        self.__fmt = _C.FORMAT_U8RAW
+
+        self.__raw = None   # _C.Tensor; use for import and export
+        self.__raw_dims = None  # numpy.ndarray; usr for export
+
+        # check shape
+        if shape is not None:
+            assert number is None and width is None and height is None and channels is None, \
+                "Can not set both shape and number, width, height, channels in same time"
+            shape = list(shape)
+            assert 2 <= len(shape) <= 4
+            if len(shape) == 2:
+                shape = [1, shape[0], shape[1], 1]
+            if len(shape) == 3:
+                shape = [1, shape[0], shape[1], shape[2]]
+        if number is not None or width is not None or height is not None or channels is not None:
+            if width is None or height is None:
+                raise Exception("number, width, height, channels must be set in same time")
+            if number is None:
+                number = 1
+            if channels is None:
+                channels = 3
+            shape = [number, height, width, channels]
+
+        if obj is None:
+            if fmt is None and shape is None:
+                return
+            if shape is None:
+                shape = []
+            if fmt is None:
+                fmt = _C.FORMAT_U8RAW
+            dtype = self._fmt_to_dtype(fmt)
+            self.__fmt = fmt
+            self.__type = dtype
+            self.__dims = tuple(shape)
+            self.__numpy = numpy.zeros(self.__dims, self._check_dtype_numpy(dtype))
+        elif isinstance(obj, ImageData):
+            self.__fmt = obj.__fmt
+            self.__type = obj.__type
+            self.__dims = obj.__dims
+            self.__numpy = obj.__numpy
+            # self.__raw = obj.__raw
+        elif isinstance(obj, _C.POINTER(_C.ImageData)):
+            assert hasattr(obj, "contents")
+            contents = obj.contents
+            assert isinstance(contents, _C.ImageData)
+            self.__raw = contents
+            self._import_raw()
+        elif isinstance(obj, _C.ImageData):
+            self.__raw = obj
+            self._import_raw()
+        else:
+            if fmt is None:
+                self.__numpy = numpy.ascontiguousarray(obj)
+                self.__numpy = numpy.ascontiguousarray(self.__numpy,
+                                                       dtype=self._narraw_numpy_dtype(self.__numpy.dtype.type))
+                dtype = self._check_dtype_aip(self.__numpy.dtype.type)
+                fmt = self._dtype_to_fmt(dtype)
+            else:
+                dtype = self._fmt_to_dtype(fmt)
+                self.__numpy = numpy.ascontiguousarray(obj, dtype=self._check_dtype_numpy(dtype))
+            self.__type = self._check_dtype_aip(self.__numpy.dtype.type)
+            self.__fmt = fmt
+            if shape is not None:
+                self.__numpy = numpy.reshape(self.__numpy, shape)
+            else:
+                shape = self.__numpy.shape
+                assert 2 <= len(shape) <= 4
+                if len(shape) == 2:
+                    shape = [1, shape[0], shape[1], 1]
+                if len(shape) == 3:
+                    shape = [1, shape[0], shape[1], shape[2]]
+                self.__numpy = numpy.reshape(self.__numpy, shape)
+            self.__dims = self.__numpy.shape
+
+    def _import_raw(self):
+        c_data = self.__raw.data
+        if not c_data:
+            return
+        c_fmt = self.__raw.format
+        c_type = self._fmt_to_dtype(c_fmt)
+
+        c_dims = [self.__raw.number, self.__raw.height, self.__raw.width, self.__raw.channels]
+        dims = [int(c_dims[i]) for i in range(len(c_dims))]
+
+        c_dtype_data = _C.cast(c_data, _C.POINTER(self._to_ctype(int(c_type))))
+        self.__numpy = numpy.ctypeslib.as_array(c_dtype_data, shape=tuple(dims))
+        self.__type = int(c_type)
+        self.__fmt = int(c_fmt)
+        self.__dims = tuple(dims)
+
+    def _to_ctype(self, dtype: int) -> Any:
+        dtype_map = {
+            _C.BYTE: _C.c_uint8,
+            _C.INT32: _C.c_int32,
+            _C.FLOAT32: _C.c_float,
+            _C.FLOAT64: _C.c_double,
+        }
+        return dtype_map[dtype]
+
+    def _fmt_to_dtype(self, fmt: int) -> int:
+        fmt_map = {
+            _C.FORMAT_U8RAW: _C.BYTE,
+            _C.FORMAT_U8Y: _C.BYTE,
+            _C.FORMAT_U8RGB: _C.BYTE,
+            _C.FORMAT_U8BGR: _C.BYTE,
+            _C.FORMAT_U8RGBA: _C.BYTE,
+            _C.FORMAT_U8BGRA: _C.BYTE,
+            _C.FORMAT_I32RAW: _C.INT32,
+            _C.FORMAT_F32RAW: _C.FLOAT32,
+        }
+        return fmt_map[fmt]
+
+    def _dtype_to_fmt(self, dtype: int) -> int:
+        dtype_map = {
+            _C.BYTE: _C.FORMAT_U8RAW,
+            _C.INT32: _C.FORMAT_I32RAW,
+            _C.FLOAT32: _C.FORMAT_F32RAW,
+        }
+        return dtype_map[dtype]
+
+    def _narraw_numpy_dtype(self, dtype: Any):
+        dtype_map = {
+            numpy.uint8: numpy.uint8,
+            numpy.int32: numpy.int32,
+            numpy.float32: numpy.float32,
+            numpy.float64: numpy.float32,   # image not support float64
+            numpy.int8: numpy.int32,
+            numpy.uint32: numpy.int32,
+            numpy.int16: numpy.int32,
+            numpy.uint16: numpy.int32,
+            numpy.int64: numpy.int32,
+            numpy.uint64: numpy.int32,
+        }
+        if dtype not in dtype_map:
+            raise Exception("Not supported numpy.dtype={}".format(str(dtype.__name__)))
+
+        return dtype_map[dtype]
+
+    def _check_dtype_aip(self, dtype: Union[int, Any]) -> int:
+        if dtype is int or dtype == int:
+            return _C.INT32
+        if dtype is float or dtype == float:
+            return _C.FLOAT32
+        if isinstance(dtype, int):
+            assert dtype in {_C.BYTE, _C.INT32, _C.FLOAT32, _C.FLOAT64}, \
+                "Not supported converting aip dtype = {}".format(dtype)
+            return dtype
+        # assert isinstance(dtype, numpy.generic)
+        assert dtype in {numpy.uint8, numpy.int32, numpy.float32, numpy.float64}, \
+            "Not supported numpy.dtype={}".format(str(dtype.__name__))
+        return aip_dtype.from_numpy(dtype)
+
+    def _check_dtype_numpy(self, dtype: Union[int, Any]) -> Any:
+        if dtype is int or dtype == int:
+            return numpy.int32
+        if dtype is float or dtype == float:
+            return numpy.float32
+        if isinstance(dtype, int):
+            return aip_dtype.to_numpy(dtype)
+        # assert isinstance(dtype, numpy.generic)
+        assert dtype in {numpy.uint8, numpy.int32, numpy.float32, numpy.float64}, \
+            "Not supported numpy.dtype={}".format(str(dtype.__name__))
+        return dtype
+
+    def empty(self) -> bool:
+        return self.__numpy is not None
+
+    def __bool__(self):
+        return not self.empty()
+
+    @property
+    def type(self) -> int:
+        return self.__type
+
+    @property
+    def fmt(self) -> int:
+        return self.__fmt
+
+    @property
+    def dims(self) -> Tuple[int]:
+        return self.__dims
+
+    @property
+    def shape(self) -> Tuple[int]:
+        return self.__dims
+
+    @property
+    def number(self) -> int:
+        return self.__dims[0]
+
+    @property
+    def height(self) -> int:
+        return self.__dims[1]
+
+    @property
+    def width(self) -> int:
+        return self.__dims[2]
+
+    @property
+    def channels(self) -> int:
+        return self.__dims[3]
+
+    @property
+    def data(self) -> Optional[numpy.ndarray]:
+        return self.__numpy
+
+    @property
+    def _as_parameter_(self) -> _C.POINTER(_C.ImageData):
+        return _C.pointer(self.ref)
+
+    @property
+    def raw(self) -> _C.POINTER(_C.ImageData):
+        return self._as_parameter_
+
+    @property
+    def ref(self) -> _C.ImageData:
+        self.__raw = _C.ImageData(format=_C.FORMAT_U8RAW, data=None,
+                                  number=1, height=0, width=0, channels=0)
+        if self.__numpy is not None:
+            self.__raw_dims = numpy.ascontiguousarray(self.dims, dtype=numpy.uint32)
+            c_dims_data = self.__raw_dims.ctypes.data_as(_C.POINTER(_C.c_uint32))
+            c_dims_size = _C.c_uint32(len(self.dims))
+            c_dims = _C.Tensor.Dims(data=c_dims_data, size=c_dims_size)
+            c_data = self.data.ctypes.data_as(_C.c_void_p)
+            self.__raw.format = _C.c_int32(self.fmt)
+            self.__raw.data = c_data
+            self.__raw.number = _C.c_uint32(self.number)
+            self.__raw.height = _C.c_uint32(self.height)
+            self.__raw.width = _C.c_uint32(self.width)
+            self.__raw.channels = _C.c_uint32(self.channels)
         return self.__raw
 
     def __repr__(self):
