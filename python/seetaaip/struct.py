@@ -37,7 +37,7 @@ class Device(object):
 
     @property
     def _as_parameter_(self) -> _C.POINTER(_C.Device):
-        return _C.byref(self.__raw)
+        return _C.pointer(self.__raw)
 
     @property
     def raw(self) -> _C.POINTER(_C.Device):
@@ -190,15 +190,15 @@ class Tensor(object):
 
     @property
     def _as_parameter_(self) -> _C.POINTER(_C.Tensor):
-        return _C.byref(self.ref)
+        return _C.pointer(self.ref)
 
     @property
     def raw(self) -> _C.POINTER(_C.Tensor):
-        return _C.byref(self.ref)
+        return self._as_parameter_
 
     @property
     def ref(self) -> _C.Tensor:
-        self.__raw = _C.Tensor(type=_C.BYTE)
+        self.__raw = _C.Tensor(type=_C.VOID, data=None, dims=_C.Tensor.Dims(data=None, size=0))
         if self.__numpy is not None:
             self.__raw_dims = numpy.ascontiguousarray(self.dims, dtype=numpy.uint32)
             c_dims_data = self.__raw_dims.ctypes.data_as(_C.POINTER(_C.c_uint32))
@@ -227,9 +227,171 @@ class Tensor(object):
         return self.__numpy
 
 
+class Point(_C.Point):
+    def __init__(self, x=0, y=0):
+        super(Point, self).__init__(x=x, y=y)
+
+    def __str__(self):
+        return "({}, {})".format(self.x, self.y)
+
+    def __repr__(self):
+        return "({}, {})".format(self.x, self.y)
+
+    @staticmethod
+    def FromRaw(raw: Union[_C.POINTER(_C.Point), _C.Point]):
+        if isinstance(raw, _C.POINTER(_C.Point)):
+            raw = raw.contents
+        return Point(raw.x, raw.y)
+
+
+class Shape(object):
+    def __init__(self, shape_type: int, landmarks: Iterable[Union[Point, Tuple]],
+                 rotate: float = 0, scale: float = 1):
+        self.__shape_type = shape_type
+        self.__landmarks = []
+        self.__rotate = rotate
+        self.__scale = scale
+
+        self.__raw = None   # _C.Shape
+
+        # check tags
+        for point in landmarks:
+            if isinstance(point, Point):
+                self.__landmarks.append(point)
+                continue
+            if not isinstance(point, (Tuple, List)):
+                raise RuntimeError("param tags must be list of Point or tuple[2]")
+            if len(point) != 2:
+                raise RuntimeError("param tags must be list of Point or tuple[2]")
+            self.__landmarks.append(Point(point[0], point[1]))
+
+    @staticmethod
+    def FromRaw(raw: Union[_C.POINTER(_C.Shape), _C.Shape]):
+        if isinstance(raw, _C.POINTER(_C.Shape)):
+            raw = raw.contents
+        shape_type = raw.type
+        rotate = raw.rotate
+        scale = raw.scale
+        c_landmarks = raw.landmarks
+        landmarks = [Point.FromRaw(c_landmarks.data[i]) for i in range(c_landmarks.size)]
+        return Shape(shape_type, landmarks, rotate=rotate, scale=scale)
+
+    @property
+    def _as_parameter_(self) -> _C.POINTER(_C.Shape):
+        return _C.pointer(self.ref)
+
+    @property
+    def raw(self) -> _C.POINTER(_C.Shape):
+        return self._as_parameter_
+
+    @property
+    def ref(self) -> _C.Shape:
+        landmarks = list(self.__landmarks)
+        c_landmarks_data = (_C.Point * len(landmarks))(*landmarks)
+        c_landmarks_size = len(landmarks)
+        c_landmarks = _C.Shape.Landmarks(data=c_landmarks_data, size=c_landmarks_size)
+        self.__raw = _C.Shape(type=self.__shape_type, landmarks=c_landmarks,
+                              rotate=self.__rotate, scale=self.__scale)
+        return self.__raw
+
+
+class Tag(_C.Tag):
+    def __init__(self, label=0, value=0):
+        super(Tag, self).__init__(label=label, value=value)
+
+    def __str__(self):
+        return "({}, {})".format(self.label, self.value)
+
+    def __repr__(self):
+        return "({}, {})".format(self.label, self.value)
+
+    def __getitem__(self, item):
+        assert item in {0, 1}
+        if item == 0:
+            return self.label
+        else:
+            return self.value
+
+    def __setitem__(self, key, value):
+        assert key in {0, 1}
+        if key == 0:
+            self.label = value
+        else:
+            self.value = value
+
+    @staticmethod
+    def FromRaw(raw: Union[_C.POINTER(_C.Tag), _C.Tag]):
+        if isinstance(raw, _C.POINTER(_C.Tag)):
+            raw = raw.contents
+        return Tag(raw.label, raw.value)
+
+
 class Object(object):
-    # TOOD: finish Object
-    pass
+    def __init__(self, shape: Shape = None, tags: Iterable[Union[Tag, Tuple]] = None, extra: Union[Any, Tensor] = None):
+        assert isinstance(shape, (type(None), Shape))
+        if extra is not None and not isinstance(extra, Tensor):
+            extra = Tensor(extra)
+        if tags is None:
+            tags = []
+
+        self.__shape = shape
+        self.__extra = extra
+        self.__tags = []
+        self.__raw = None   # _C.Object
+
+        # check tags
+        for tag in tags:
+            if isinstance(tag, Tag):
+                self.__tags.append(tag)
+                continue
+            if not isinstance(tag, (Tuple, List)):
+                raise RuntimeError("param tags must be list of Tag or tuple[2]")
+            if len(tag) != 2:
+                raise RuntimeError("param tags must be list of Tag or tuple[2]")
+            self.__tags.append(Tag(tag[0], tag[1]))
+
+        self.__tmp_shape = None
+        self.__tmp_extra = None
+
+    @staticmethod
+    def FromRaw(raw: Union[_C.POINTER(_C.Object), _C.Object]):
+        if isinstance(raw, _C.POINTER(_C.Object)):
+            raw = raw.contents
+        shape = Shape.FromRaw(raw.shape)
+        extra = Tensor(raw.extra)
+        c_tags = raw.tags
+        c_tags_data = c_tags.data
+        c_tags_size = c_tags.size
+        tags = [Tag.FromRaw(c_tags_data[i]) for i in range(c_tags_size)]
+        return Object(shape=shape, tags=tags, extra=extra)
+
+    @property
+    def _as_parameter_(self) -> _C.POINTER(_C.Object):
+        return _C.pointer(self.ref)
+
+    @property
+    def raw(self) -> _C.POINTER(_C.Object):
+        return self._as_parameter_
+
+    @property
+    def ref(self) -> _C.Object:
+        tags = list(self.__tags)
+        c_tags_data = (_C.Tag * len(tags))(*tags)
+        c_tags_size = len(tags)
+        c_tags = _C.Object.TagArray(data=c_tags_data, size=c_tags_size)
+
+        self.__tmp_shape = self.__shape
+        if self.__tmp_shape is None:
+            self.__tmp_shape = Shape(_C.SHAPE_NONE, [])
+        self.__tmp_extra = self.__extra
+        if self.__tmp_extra is None:
+            self.__tmp_extra = Tensor()
+
+        c_shape = self.__tmp_shape.ref
+        c_extra = self.__tmp_extra.ref
+
+        self.__raw = _C.Object(shape=c_shape, tags=c_tags, extra=c_extra)
+        return self.__raw
 
 
 class Package(object):
@@ -275,7 +437,7 @@ class Package(object):
 
     @property
     def _as_parameter_(self) -> _C.POINTER(_C.Package):
-        return _C.byref(self.__raw)
+        return _C.pointer(self.__raw)
 
     @property
     def raw(self) -> _C.POINTER(_C.Package):
@@ -325,8 +487,8 @@ class Package(object):
             c_objects = None
             c_objects_size = 0
         else:
-            c_objects_tmp = [o.raw for o in objects]
-            c_objects = (_C.POINTER(_C.Object) * len(c_objects_tmp))(*c_objects_tmp)
+            c_objects_tmp = [o.ref for o in objects]
+            c_objects = (_C.Object * len(c_objects_tmp))(*c_objects_tmp)
             c_objects_size = len(c_objects_tmp)
 
         c_errcode = self.__raw.create(c_phandle, c_device, c_models, c_objects, c_objects_size)
