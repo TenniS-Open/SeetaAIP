@@ -226,6 +226,12 @@ class Tensor(object):
     def numpy(self) -> numpy.ndarray:
         return self.__numpy
 
+    def __getitem__(self, item):
+        return self.__numpy[item]
+
+    def __setitem__(self, key, value):
+        self.__numpy[key] = value
+
 
 class ImageData(object):
     def __init__(self, obj: Union[_C.POINTER(_C.Tensor), _C.Tensor, numpy.ndarray, Iterable, int, float] = None,
@@ -496,6 +502,12 @@ class ImageData(object):
     def numpy(self) -> numpy.ndarray:
         return self.__numpy
 
+    def __getitem__(self, item):
+        return self.__numpy[item]
+
+    def __setitem__(self, key, value):
+        self.__numpy[key] = value
+
 
 class Point(_C.Point):
     def __init__(self, x=0, y=0):
@@ -730,18 +742,24 @@ class Package(object):
         def handle(self) -> _C.c_void_p:
             return self.__handle
 
+        def __bool__(self):
+            return bool(self.__handle)
+
+        def __nonzero__(self) -> bool:
+            return not self.__bool__()
+
     def error(self, handle: Optional[Handle], errcode: int) -> str:
         assert isinstance(handle, (type(None), Package.Handle))
-        ptr = handle.handle if handle else _C.c_void_p(0)
-        message = self.__raw.error(ptr, errcode)
+        c_handle = handle.handle if handle else _C.c_void_p(0)
+        message = self.__raw.error(c_handle, errcode)
         if not message:
             return ""
         return message.decode()
 
     def free(self, handle: Optional[Handle]):
         assert isinstance(handle, (type(None), Package.Handle))
-        ptr = handle.handle if handle else _C.c_void_p(0)
-        self.__raw.free(ptr)
+        c_handle = handle.handle if handle else _C.c_void_p(0)
+        self.__raw.free(c_handle)
 
     def create(self, device: Device,
                models: Union[Sized, Iterable[str]], objects: Optional[Union[Sized, Iterable[Object]]]) -> Handle:
@@ -766,6 +784,129 @@ class Package(object):
             raise Exception("0x{}: {}".format(c_errcode, self.error(None, c_errcode)))
 
         return Package.Handle(c_handle)
+
+    def reset(self, handle: Optional[Handle]):
+        assert isinstance(handle, (type(None), Package.Handle))
+        c_handle = handle.handle if handle else _C.c_void_p(0)
+        c_errcode = self.__raw.reset(c_handle)
+        if c_errcode != 0:
+            raise Exception("0x{}: {}".format(c_errcode, self.error(None, c_errcode)))
+
+    def forward(self, handle: Optional[Handle], method_id: int,
+                images: Iterable[ImageData], objects: Iterable[Object]) -> Tuple[List[Object], List[ImageData]]:
+        assert isinstance(handle, (type(None), Package.Handle))
+        c_handle = handle.handle if handle else _C.c_void_p(0)
+
+        c_method_id = _C.c_uint32(method_id)
+        c_images_tmp = [i.ref for i in images]
+        c_images = (_C.ImageData * len(c_images_tmp))(*c_images_tmp)
+        c_images_size = len(c_images_tmp)
+        c_objects_tmp = [o.ref for o in objects]
+        c_objects = (_C.Object * len(c_objects_tmp))(*c_objects_tmp)
+        c_objects_size = len(c_objects_tmp)
+        c_out_objects = _C.POINTER(_C.Object)()
+        c_out_objects_size = _C.c_uint32(0)
+        c_out_images = _C.POINTER(_C.ImageData)()
+        c_out_images_size = _C.c_uint32(0)
+
+        c_errcode = self.__raw.forward(c_handle, c_method_id,
+                                       c_images, c_images_size, c_objects, c_objects_size,
+                                       _C.byref(c_out_objects), _C.byref(c_out_objects_size),
+                                       _C.byref(c_out_images), _C.byref(c_out_images_size))
+        if c_errcode != 0:
+            raise Exception("0x{}: {}".format(c_errcode, self.error(None, c_errcode)))
+
+        out_objects = [Object.FromRaw(c_out_objects[i]) for i in range(int(c_out_objects_size.value))]
+        out_images = [ImageData(c_out_images[i]) for i in range(int(c_out_images_size.value))]
+
+        return out_objects, out_images
+
+    def property(self, handle: Optional[Handle]) -> List[str]:
+        assert isinstance(handle, (type(None), Package.Handle))
+        c_handle = handle.handle if handle else _C.c_void_p(0)
+
+        c_properties = self.__raw.property(c_handle)
+
+        if not c_properties:
+            return []
+
+        properties = []
+
+        c_i = 0
+        while True:
+            c_prop = c_properties[c_i]
+            if not c_prop:
+                break
+            c_i += 1
+
+            properties.append(c_prop.decode())
+
+        return properties
+
+    def setd(self, handle: Optional[Handle], name: str, value: float):
+        assert isinstance(handle, (type(None), Package.Handle))
+        c_handle = handle.handle if handle else _C.c_void_p(0)
+
+        c_name = name.encode()
+        c_value = _C.c_double(value)
+
+        c_errcode = self.__raw.setd(c_handle, c_name, c_value)
+        if c_errcode != 0:
+            raise Exception("0x{}: {}".format(c_errcode, self.error(None, c_errcode)))
+
+    def getd(self, handle: Optional[Handle], name: str) -> float:
+        assert isinstance(handle, (type(None), Package.Handle))
+        c_handle = handle.handle if handle else _C.c_void_p(0)
+
+        c_name = name.encode()
+        c_value = _C.c_double()
+
+        c_errcode = self.__raw.getd(c_handle, c_name, _C.byref(c_value))
+        if c_errcode != 0:
+            raise Exception("0x{}: {}".format(c_errcode, self.error(None, c_errcode)))
+
+        return c_value.value
+
+    def set(self, handle: Optional[Handle], name: str, value: Object):
+        assert isinstance(handle, (type(None), Package.Handle))
+        c_handle = handle.handle if handle else _C.c_void_p(0)
+
+        c_name = name.encode()
+        c_value = value.ref
+
+        c_errcode = self.__raw.set(c_handle, c_name, _C.byref(c_value))
+        if c_errcode != 0:
+            raise Exception("0x{}: {}".format(c_errcode, self.error(None, c_errcode)))
+
+    def get(self, handle: Optional[Handle], name: str) -> Object:
+        assert isinstance(handle, (type(None), Package.Handle))
+        c_handle = handle.handle if handle else _C.c_void_p(0)
+
+        value = Object()
+
+        c_name = name.encode()
+        c_value = value.ref
+
+        c_errcode = self.__raw.get(c_handle, c_name, _C.byref(c_value))
+        if c_errcode != 0:
+            raise Exception("0x{}: {}".format(c_errcode, self.error(None, c_errcode)))
+
+        return Object.FromRaw(c_value)
+
+    def tag(self, handle: Optional[Handle], method_id: int, label_index: int, label_value: int) -> str:
+        assert isinstance(handle, (type(None), Package.Handle))
+        c_handle = handle.handle if handle else _C.c_void_p(0)
+
+        c_method_id = _C.c_uint32(method_id)
+        c_label_index = _C.c_uint32(label_index)
+        c_label_value = _C.c_int32(label_value)
+
+        c_tag = self.__raw.tag(c_handle, c_method_id, c_label_index, c_label_value)
+
+        if not c_tag:
+            return ""
+
+        return c_tag.decode()
 
 
 class Engine(object):
@@ -843,4 +984,59 @@ class Instance(object):
         if self.__engine is not None:
             self.__engine.dispose()
             self.__engine = None
+
+    def reset(self):
+        self.__package.reset(self.__handle)
+
+    def forward(self, method_id: int,
+                images: Iterable[Union[Any, ImageData]] = None, objects: Iterable[Object] = None) \
+            -> Tuple[List[Object], List[ImageData]]:
+        if images is None:
+            images = []
+        if objects is None:
+            objects = []
+        if isinstance(images, ImageData):
+            images = [images]
+        checked_images = []
+        for image in images:
+            if isinstance(image, ImageData):
+                checked_images.append(image)
+                continue
+            try:
+                checked_images.append(ImageData(image))
+            except:
+                raise RuntimeError("param images must be list of ImageData or Any can parse to ImageData")
+        for obj in objects:
+            assert isinstance(obj, Object), "param objects must be list of Object"
+        return self.__package.forward(self.__handle, method_id, images=checked_images, objects=objects)
+
+    def property(self) -> List[str]:
+        return self.__package.property(self.__handle)
+
+    def tag(self, method_id: int, label_index: int, label_value: int) -> str:
+        return self.__package.tag(self.__handle, method_id, label_index, label_value)
+
+    def setd(self, name: str, value: Union[bool, int, float]):
+        assert isinstance(value, (bool, int, float))
+        if isinstance(value, bool):
+            self.__package.setd(self.__handle, name, 1 if value else 0)
+            return
+        self.__package.setd(self.__handle, name, value)
+
+    def getd(self, name: str) -> float:
+        return self.__package.getd(self.__handle, name)
+
+    def set(self, name: str, value: Union[bool, int, float, Object]):
+        assert isinstance(value, (bool, int, float, Object))
+        if isinstance(value, bool):
+            self.__package.setd(self.__handle, name, 1 if value else 0)
+            return
+        if isinstance(value, (int, float)):
+            self.__package.setd(self.__handle, name, value)
+            return
+        assert isinstance(value, Object)
+        self.__package.set(self.__handle, name, value)
+
+    def get(self, name: str) -> Object:
+        return self.__package.get(self.__handle, name)
 

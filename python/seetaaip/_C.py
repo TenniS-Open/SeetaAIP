@@ -219,7 +219,7 @@ seeta_aip_forward = CFUNCTYPE(c_int32, c_void_p, c_uint32,
                               POINTER(Object), c_uint32,
                               POINTER(POINTER(Object)), POINTER(c_uint32),
                               POINTER(POINTER(ImageData)), POINTER(c_uint32))
-seeta_aip_property = CFUNCTYPE(POINTER(c_char_p), c_void_p)
+seeta_aip_property = CFUNCTYPE(POINTER(c_char_p), c_void_p)     # truly return c_char_p, null termination
 seeta_aip_setd = CFUNCTYPE(c_int32, c_void_p, c_char_p, c_double)
 seeta_aip_getd = CFUNCTYPE(c_int32, c_void_p, c_char_p, POINTER(c_double))
 seeta_aip_tag = CFUNCTYPE(c_char_p, c_void_p, c_uint32, c_uint32, c_int32)
