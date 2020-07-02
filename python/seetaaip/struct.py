@@ -559,6 +559,30 @@ class Shape(object):
         return Shape(shape_type, landmarks, rotate=rotate, scale=scale)
 
     @property
+    def type(self):
+        return self.__shape_type
+
+    @property
+    def scale(self):
+        return self.__scale
+
+    @property
+    def rotate(self):
+        return self.__rotate
+
+    @property
+    def landmarks(self):
+        return self.__landmarks
+
+    @scale.setter
+    def scale(self, value):
+        self.__scale = value
+
+    @rotate.setter
+    def rotate(self, value):
+        self.__rotate = value
+
+    @property
     def _as_parameter_(self) -> _C.POINTER(_C.Shape):
         return _C.pointer(self.ref)
 
@@ -575,6 +599,14 @@ class Shape(object):
         self.__raw = _C.Shape(type=self.__shape_type, landmarks=c_landmarks,
                               rotate=self.__rotate, scale=self.__scale)
         return self.__raw
+
+    def __str__(self):
+        points = ",".join([str(p) for p in self.__landmarks])
+        return "Shape{{type={}, landmarks=[{}], rotate={}, scale={}}}".format(
+            self.__shape_type, points, self.__rotate, self.__scale)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class Tag(_C.Tag):
@@ -648,6 +680,28 @@ class Object(object):
         return Object(shape=shape, tags=tags, extra=extra)
 
     @property
+    def tags(self):
+        return self.__tags
+
+    @property
+    def shape(self):
+        return self.__shape
+
+    @shape.setter
+    def shape(self, value):
+        assert isinstance(value, (type(None), Shape))
+        self.__shape = value
+
+    @property
+    def extra(self):
+        return self.__extra
+
+    @extra.setter
+    def extra(self, value):
+        assert isinstance(value, (type(None), Tensor))
+        self.__extra = value
+
+    @property
     def _as_parameter_(self) -> _C.POINTER(_C.Object):
         return _C.pointer(self.ref)
 
@@ -674,6 +728,16 @@ class Object(object):
 
         self.__raw = _C.Object(shape=c_shape, tags=c_tags, extra=c_extra)
         return self.__raw
+
+    def __str__(self):
+        return "Object{{shape={}, tags=[{}], extra={}}}".format(
+            self.__shape if self.__shape is not None else "null",
+            ",".join([str(tag) for tag in self.__tags]),
+            self.__extra if self.__extra is not None else "null",
+        )
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class Package(object):
