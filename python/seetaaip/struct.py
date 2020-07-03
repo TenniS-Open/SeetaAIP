@@ -1104,3 +1104,87 @@ class Instance(object):
     def get(self, name: str) -> Object:
         return self.__package.get(self.__handle, name)
 
+
+VOID = _C.VOID     # for non value type
+BYTE = _C.BYTE        # byte type
+INT32 = _C.INT32       # signed integer type with 4-bytes
+FLOAT32 = _C.FLOAT32     # float type with 4-bytes
+FLOAT64 = _C.FLOAT64     # signed float type with 8-bytes
+
+
+FORMAT_U8RAW = _C.FORMAT_U8RAW      # byte type
+FORMAT_F32RAW = _C.FORMAT_F32RAW     # float type with 4-bytes
+FORMAT_I32RAW = _C.FORMAT_I32RAW     # signed integer type with 4-bytes
+FORMAT_U8RGB = _C.FORMAT_U8RGB   # byte format for RGB888
+FORMAT_U8BGR = _C.FORMAT_U8BGR   # byte format for BGR888
+FORMAT_U8RGBA = _C.FORMAT_U8RGBA  # byte format for RGBA8888
+FORMAT_U8BGRA = _C.FORMAT_U8BGRA  # byte format for BGRA8888
+FORMAT_U8Y = _C.FORMAT_U8Y     # byte format for gray image
+
+'''
+* Unknown shape
+'''
+SHAPE_UNKNOWN = _C.SHAPE_UNKNOWN
+
+'''
+* with forced rotate=0, scale=1, size>=1
+* points represents points
+'''
+SHAPE_POINTS = _C.SHAPE_POINTS
+
+'''
+* with forced rotate=0, scale=1, size>=2
+* points represents multi lines:
+*     points[0]->points[1], points[1]->points[2], ..., points[size-2]->points[size-1]
+'''
+SHAPE_LINES = _C.SHAPE_LINES
+
+'''
+* with forced scale=1, size=2
+* rotate represents the angle of rotation around the center point.
+* points[0] represents the left-top corner
+* points[1] represents the right-bottom corner
+'''
+SHAPE_RECTANGLE = _C.SHAPE_RECTANGLE
+
+'''
+* with forced rotate=0, scale=1, size=3
+* rotate represents the angle of rotation around the center point.
+* points represents the first 3 points of parallelogram with anticlockwise
+    '''
+SHAPE_PARALLELOGRAM = _C.SHAPE_PARALLELOGRAM
+
+'''
+* with forced rotate=0, scale=1, size>=2
+* points represents multi lines with anticlockwise:
+    *     points[0]->points[1], points[1]->points[2], ...,
+*     points[size-2]->points[size-1], points[size-1]->points[0]
+'''
+SHAPE_POLYGON = _C.SHAPE_POLYGON
+
+'''
+* with forced rotate=0, size=1
+* scale represents the radius
+* points[0] represents the center
+'''
+SHAPE_CIRCLE = _C.SHAPE_CIRCLE
+
+'''
+* with forced rotate=0, scale=1, size=3
+* points[0] represents the left-top-front corner
+* points[1] represents the right-bottom-front corner
+* points[2] represents the right-top-back corner
+'''
+SHAPE_CUBE = _C.SHAPE_CUBE
+
+'''
+* Means the shape is undefined
+'''
+SHAPE_NONE = _C.SHAPE_NONE
+
+
+LOAD_SUCCEED = _C.LOAD_SUCCEED
+LOAD_SIZE_NOT_ENOUGH = _C.LOAD_SIZE_NOT_ENOUGH    # once this error return the wanted version will be set.
+LOAD_UNHANDLED_INTERNAL_ERROR = _C.LOAD_UNHANDLED_INTERNAL_ERROR   # for unknown load failed, no more information.
+LOAD_AIP_VERSION_MISMATCH = _C.LOAD_AIP_VERSION_MISMATCH   # for AIP version mismatched.
+

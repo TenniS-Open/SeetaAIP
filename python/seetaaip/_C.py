@@ -129,10 +129,10 @@ SHAPE_CUBE = 7
 SHAPE_NONE = 255
 
 
-SHAPE_LOAD_SUCCEED = 0
-SHAPE_LOAD_SIZE_NOT_ENOUGH = 0xf001    # once this error return the wanted version will be set.
-SHAPE_LOAD_UNHANDLED_INTERNAL_ERROR = 0xf002   # for unknown load failed, no more information.
-SHAPE_LOAD_AIP_VERSION_MISMATCH = 0xf003   # for AIP version mismatched.
+LOAD_SUCCEED = 0
+LOAD_SIZE_NOT_ENOUGH = 0xf001    # once this error return the wanted version will be set.
+LOAD_UNHANDLED_INTERNAL_ERROR = 0xf002   # for unknown load failed, no more information.
+LOAD_AIP_VERSION_MISMATCH = 0xf003   # for AIP version mismatched.
 
 
 class Point(Structure):
