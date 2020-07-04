@@ -3,6 +3,9 @@ project(seeta_aip)
 
 set(CMAKE_CXX_STANDARD 11)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
@@ -28,6 +31,39 @@ elseif (APPLE)
 elseif (UNIX)
     list(APPEND third dl)
 else ()
+endif ()
+
+# set java name target for debug tools, well for cmake usage
+add_executable(javaname "${CMAKE_CURRENT_SOURCE_DIR}/tools/javaname.cpp")
+
+# find jni for good
+find_package(JNI OPTIONAL_COMPONENTS)
+if (JNI_FOUND)
+    include_directories(${JAVA_INCLUDE_PATH})
+    include_directories(${JAVA_INCLUDE_PATH2})
+    message(STATUS "[STATUS] Compiling JNI module.")
+
+    include(javaname)
+
+    FILE(GLOB_RECURSE JNI_JAVA_FILES ${CMAKE_CURRENT_SOURCE_DIR}/java/*.java)
+    foreach (path ${JNI_JAVA_FILES})
+        message(STATUS ${path})
+
+        add_custom_command(OUTPUT "${path}.target"
+                COMMAND javac "${path}" -d "${CMAKE_CURRENT_SOURCE_DIR}/java/"
+                DEPENDS "${path}"
+                COMMENT "Compiling ${path}"
+                VERBATIM
+                )
+        add_custom_target(java
+                DEPENDS "${path}.target")
+
+    endforeach ()
+
+    FILE(GLOB_RECURSE JNI_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/java/*.cpp)
+    add_library(seeta_aip_java SHARED ${JNI_SRC_FILES})
+else ()
+    message(STATUS "[WARNING] Can not find JNI header, not going to compile JNI module.")
 endif ()
 
 find_package(OpenCV OPTIONAL_COMPONENTS)
