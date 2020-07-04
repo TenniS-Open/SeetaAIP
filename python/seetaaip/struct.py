@@ -983,10 +983,10 @@ class Engine(object):
         c_package_size = _C.sizeof(_C.Package)
         errcode = seeta_aip_load(_C.byref(c_package), c_package_size)
         load_error_map = {
-            _C.SHAPE_LOAD_SUCCEED: "Succeed.",
-            _C.SHAPE_LOAD_SIZE_NOT_ENOUGH: "Size not enough.",
-            _C.SHAPE_LOAD_UNHANDLED_INTERNAL_ERROR: "Unhandled internal error.",
-            _C.SHAPE_LOAD_AIP_VERSION_MISMATCH: "AIP version mismatch.",
+            _C.LOAD_SUCCEED: "Succeed.",
+            _C.LOAD_SIZE_NOT_ENOUGH: "Size not enough.",
+            _C.LOAD_UNHANDLED_INTERNAL_ERROR: "Unhandled internal error.",
+            _C.LOAD_AIP_VERSION_MISMATCH: "AIP version mismatch.",
         }
         if errcode != 0:
             message = load_error_map[errcode] if errcode in load_error_map else "Unknown error."
