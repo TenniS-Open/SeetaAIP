@@ -16,4 +16,5 @@ public class Package {
 
     public native String error(long handle);
     public native int free(long handle);
+    public native long create(String[] models, Object[] objects);
 }
