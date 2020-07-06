@@ -1,15 +1,24 @@
 # build java target
+
+# set java output package and library name
+set(JAVA_PACKAGE_NAME seeta_aip)
+
+# find jni for compile
 find_package(JNI OPTIONAL_COMPONENTS)
 if (JNI_FOUND)
     include_directories(${JAVA_INCLUDE_PATH})
     include_directories(${JAVA_INCLUDE_PATH2})
     message(STATUS "[STATUS] Compiling JNI module.")
 
+    find_package(Java REQUIRED COMPONENTS Development)
+
+    # found python to use script to help compile
     find_package (Python COMPONENTS Interpreter)
     message(STATUS "[STATUS] Found python: ${Python_EXECUTABLE}")
 
     set(JNI_HEADER_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/include")
     set(JNI_CLASS_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/class")
+    set(JNI_JAR_OUTPUT "${LIBRARY_OUTPUT_PATH}")
 
     file(MAKE_DIRECTORY ${JNI_CLASS_OUTPUT})
 
@@ -36,7 +45,7 @@ if (JNI_FOUND)
             # No output public class
             message(STATUS "[WARNING] No public class found in ${path}")
             add_custom_command(OUTPUT "${path}.private"
-                    COMMAND javac -d "${JNI_CLASS_OUTPUT}" "${path}"
+                    COMMAND ${Java_JAVAC_EXECUTABLE} -d "${JNI_CLASS_OUTPUT}" "${path}"
                     DEPENDS "${path}"
                     COMMENT "javac ${path}"
                     VERBATIM
@@ -47,7 +56,7 @@ if (JNI_FOUND)
             set(target_output_file "${JNI_CLASS_OUTPUT}/${output_file}")
 
             add_custom_command(OUTPUT "${target_output_file}"
-                    COMMAND javac -d "${JNI_CLASS_OUTPUT}" "${path}"
+                    COMMAND ${Java_JAVAC_EXECUTABLE} -d "${JNI_CLASS_OUTPUT}" "${path}"
                     DEPENDS "${path}"
                     COMMENT "javac ${path}"
                     VERBATIM
@@ -60,7 +69,7 @@ if (JNI_FOUND)
             set(target_output_header "${JNI_HEADER_OUTPUT}/${output_header}")
 
             add_custom_command(OUTPUT "${target_output_header}"
-                    COMMAND javah -d "${JNI_HEADER_OUTPUT}" -classpath "${JNI_CLASS_OUTPUT}" "${output_class}"
+                    COMMAND ${Java_JAVAH_EXECUTABLE} -d "${JNI_HEADER_OUTPUT}" -classpath "${JNI_CLASS_OUTPUT}" "${output_class}"
                     DEPENDS "${target_output_file}"
                     COMMENT "javah ${output_class}"
                     VERBATIM)
@@ -72,20 +81,31 @@ if (JNI_FOUND)
         endif()
 
     endforeach ()
-    add_custom_target(java
+    add_custom_target(javac
             DEPENDS ${java_depends})
 
-    add_custom_target(jni
+    add_custom_target(javah
             DEPENDS ${jni_depends})
 
-    add_dependencies(jni java)
+    add_dependencies(javah javac)
 
+    # set library target
     FILE(GLOB_RECURSE JNI_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
-    add_library(seeta_aip_java SHARED ${JNI_SRC_FILES})
+    add_library(${PROJECT_NAME}_java SHARED ${JNI_SRC_FILES})
+    target_include_directories(${PROJECT_NAME}_java PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_dependencies(${PROJECT_NAME}_java javah)
+    set_target_properties(${PROJECT_NAME}_java PROPERTIES OUTPUT_NAME ${JAVA_PACKAGE_NAME}_java)
 
-    target_include_directories(seeta_aip_java PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    set(target_output_jar "${JNI_JAR_OUTPUT}/${JAVA_PACKAGE_NAME}.jar")
 
-    add_dependencies(seeta_aip_java jni)
+    add_custom_command(OUTPUT "${target_output_jar}"
+            COMMAND ${Java_JAR_EXECUTABLE} -cf "${target_output_jar}" -C "${JNI_CLASS_OUTPUT}" .
+            DEPENDS javac
+            COMMENT "package class files."
+            VERBATIM)
+
+    add_custom_target(jar
+            DEPENDS "${target_output_jar}")
 else ()
     message(STATUS "[WARNING] Can not find JNI header, not going to compile JNI module.")
 endif ()
