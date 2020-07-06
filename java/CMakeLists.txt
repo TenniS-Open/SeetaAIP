@@ -116,10 +116,11 @@ if (JNI_FOUND)
 
     add_custom_command(OUTPUT "${target_output_jar}"
             COMMAND ${Java_JAR_EXECUTABLE}
-                -cf "${target_output_jar}"
+                -cvf "${target_output_jar}"
                 -C "${JNI_CLASS_OUTPUT}" .
-            DEPENDS javac
-            COMMENT "package class files."
+                ${Javac_options}
+            DEPENDS ${java_depends}
+            COMMENT "jar ${target_output_jar}"
             VERBATIM)
 
     add_custom_target(jar
