@@ -169,6 +169,9 @@ if (JNI_FOUND)
                 set(TEST_CLASSPATH "${JNI_TEST_OUTPUT}:${JNI_CLASS_OUTPUT}")
             endif()
 
+            add_custom_target("javac-${output_class}"
+                    DEPENDS "${target_output_file}")
+
             add_custom_target("java-${output_class}"
                     COMMAND ${Java_JAVA_EXECUTABLE}
                         -classpath "${TEST_CLASSPATH}"
