@@ -8,6 +8,9 @@
 #include "seeta_aip_package.h"
 #include <map>
 #include <climits>
+#include <functional>
+#include <cmath>
+#include <algorithm>
 
 namespace seeta {
     namespace aip {
@@ -166,7 +169,7 @@ namespace seeta {
                     FUNC checker, const std::string &check_message = "") {
                 PropertyGetter getter = [&value]() { return static_cast<double>(value); };
                 PropertySetter setter = [&value](double arg) { value = static_cast<T>(arg); };
-                auto fix_checker = [checker](double value) { auto tmp = checker; return bool(tmp(value)); };
+                auto fix_checker = [checker](double value) { auto tmp = checker; return bool(tmp(T(value))); };
                 bind_property(name, getter, setter, fix_checker, check_message);
             }
 
