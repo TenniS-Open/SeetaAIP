@@ -52,6 +52,7 @@ if (JNI_FOUND)
             add_custom_command(OUTPUT "${path}.private"
                     COMMAND ${Java_JAVAC_EXECUTABLE}
                         -d "${JNI_CLASS_OUTPUT}"
+                        -sourcepath "${JNI_SRC_INPUT}"
                         "${path}"
                         ${Javac_options}
                     DEPENDS "${path}"
@@ -181,6 +182,8 @@ if (JNI_FOUND)
                     COMMENT "java ${output_class}"
                     WORKING_DIRECTORY "${JNI_TEST_OUTPUT}"
                     VERBATIM)
+
+            add_dependencies("java-${output_class}" ${PROJECT_NAME}_java)
 
         endif()
     endforeach()
