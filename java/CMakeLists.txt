@@ -52,6 +52,7 @@ if (JNI_FOUND)
             add_custom_command(OUTPUT "${path}.private"
                     COMMAND ${Java_JAVAC_EXECUTABLE}
                         -d "${JNI_CLASS_OUTPUT}"
+                        -classpath "${JNI_CLASS_OUTPUT}"
                         -sourcepath "${JNI_SRC_INPUT}"
                         "${path}"
                         ${Javac_options}
@@ -67,6 +68,8 @@ if (JNI_FOUND)
             add_custom_command(OUTPUT "${target_output_file}"
                     COMMAND ${Java_JAVAC_EXECUTABLE}
                         -d "${JNI_CLASS_OUTPUT}"
+                        -classpath "${JNI_CLASS_OUTPUT}"
+                        -sourcepath "${JNI_SRC_INPUT}"
                         "${path}"
                         ${Javac_options}
                     DEPENDS "${path}"

@@ -1,9 +1,7 @@
 package com.seetatech.aip;
 
 public class Engine {
-    static {
-        System.loadLibrary("seeta_aip_java");
-    }
+    private static LoadJNI _load_jni = new LoadJNI();
 
     private long handle = 0;
 
