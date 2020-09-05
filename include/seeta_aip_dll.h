@@ -157,7 +157,7 @@ namespace seeta {
             static const char *prefix = "lib";
             static const char *suffix = ".so";
 #elif SEETA_AIP_OS_WINDOWS
-            static const char *prefix = "";
+            static const char *prefix = "lib";
             static const char *suffix = ".dll";
 #endif
             // first open library
