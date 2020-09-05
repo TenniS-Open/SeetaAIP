@@ -7,6 +7,7 @@
 
 #include "seeta_aip_package.h"
 #include <map>
+#include <functional>
 
 namespace seeta {
     namespace aip {
