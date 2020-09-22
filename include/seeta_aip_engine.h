@@ -19,7 +19,11 @@ namespace seeta {
             explicit Library(const std::string &libname) {
                 m_lib.reset(dlopen_v2(libname), dlclose);
                 if (m_lib == nullptr) {
-                    throw Exception(dlerror());
+                    auto msg = dlerror();
+                    std::ostringstream oss;
+                    oss << "Can not open find lib " << libname << " with " << msg << std::endl;
+                    std::cerr << oss.str();
+                    throw Exception(msg);
                 }
             }
 
@@ -32,7 +36,11 @@ namespace seeta {
             symbol(const std::string &name) {
                 auto func = reinterpret_cast<FUNC *>(dlsym(m_lib.get(), name.c_str()));
                 if (func == nullptr) {
-                    throw Exception(dlerror());
+                    auto msg = dlerror();
+                    std::ostringstream oss;
+                    oss << "Can not open find symbol " << name << " with " << msg << std::endl;
+                    std::cerr << oss.str();
+                    throw Exception(msg);
                 }
                 return func;
             }
@@ -230,7 +238,6 @@ namespace seeta {
             }
 
             std::vector<std::string> property() {
-                int32_t *values = nullptr;
                 auto property_names = m_aip.property(m_handle);
                 if (property_names == nullptr) return {};
                 std::vector<std::string> result;

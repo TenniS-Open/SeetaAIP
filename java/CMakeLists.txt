@@ -46,7 +46,8 @@ if (JNI_FOUND)
     file(MAKE_DIRECTORY ${JNI_CLASS_OUTPUT})
 
     set(java_depends)
-    set(jni_depends)
+    set(header_depends)
+    set(pure_java_depends)
 
     FILE(GLOB_RECURSE JNI_JAVA_FILES ${JNI_SRC_INPUT}/*.java)
     foreach (input_java ${JNI_JAVA_FILES})
@@ -96,6 +97,7 @@ if (JNI_FOUND)
                     )
             set_source_files_properties("${target_output_class}" PROPERTIES GENERATED TRUE)
             list(APPEND java_depends "${target_output_class}")
+            list(APPEND pure_java_depends "${target_output_class}")
         else()
             # Had output public class
             set(target_output_class "${JNI_CLASS_OUTPUT}/${output_class}")
@@ -144,8 +146,7 @@ if (JNI_FOUND)
             set_source_files_properties("${target_output_header}" PROPERTIES GENERATED TRUE)
 
             list(APPEND java_depends "${target_output_class}")
-            list(APPEND jni_depends "${target_output_header}")
-
+            list(APPEND header_depends "${target_output_header}")
         endif()
 
     endforeach ()
@@ -154,7 +155,7 @@ if (JNI_FOUND)
     #         DEPENDS ${java_depends})
 
     add_custom_target(javah
-            DEPENDS ${jni_depends})
+            DEPENDS ${header_depends})
 
     # add_dependencies(javah javac)
 
@@ -164,6 +165,9 @@ if (JNI_FOUND)
     target_include_directories(${PROJECT_NAME}_java PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     add_dependencies(${PROJECT_NAME}_java javah)
     set_target_properties(${PROJECT_NAME}_java PROPERTIES OUTPUT_NAME ${JAVA_PACKAGE_NAME}_java)
+    if (WIN32)
+        set_target_properties(${PROJECT_NAME}_java PROPERTIES PREFIX "")
+    endif ()
 
     set(target_output_jar "${JNI_JAR_OUTPUT}/${JAVA_PACKAGE_NAME}.jar")
 
@@ -210,7 +214,9 @@ if (JNI_FOUND)
                         -d "${JNI_TEST_OUTPUT}"
                         "${input_java}"
                         ${Javac_options}
-                    DEPENDS ${java_depends} "${input_java}"
+                    DEPENDS javah
+                        ${pure_java_depends}
+                        "${input_java}"
                     COMMENT "javac ${input_java}"
                     VERBATIM)
 
@@ -227,6 +233,7 @@ if (JNI_FOUND)
 
             add_custom_target("java-${class_signature}"
                     COMMAND ${Java_JAVA_EXECUTABLE}
+                        -Djava.library.path="${LIBRARY_OUTPUT_PATH}"
                         -classpath "${TEST_CLASSPATH}"
                         "${class_signature}"
                         ${Javac_options}

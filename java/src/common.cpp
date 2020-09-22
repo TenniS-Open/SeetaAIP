@@ -4,6 +4,8 @@
 
 #include "common.h"
 
+#include <memory>
+
 std::string jni_convert_string(JNIEnv *env, jstring jni_string) {
     std::unique_ptr<char[]> buffer;
     jclass JString_class = env->FindClass("java/lang/String");
