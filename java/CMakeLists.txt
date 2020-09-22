@@ -49,101 +49,101 @@ if (JNI_FOUND)
     set(jni_depends)
 
     FILE(GLOB_RECURSE JNI_JAVA_FILES ${JNI_SRC_INPUT}/*.java)
-    foreach (path ${JNI_JAVA_FILES})
-        # message(STATUS ${path})
+    foreach (input_java ${JNI_JAVA_FILES})
+        # message(STATUS ${input_java})
         execute_process(COMMAND
-                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--class" "${path}"
+                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--class" "${input_java}"
+                OUTPUT_VARIABLE class_signature
+                )
+        execute_process(COMMAND
+                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--file" "${input_java}"
                 OUTPUT_VARIABLE output_class
                 )
         execute_process(COMMAND
-                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--file" "${path}"
-                OUTPUT_VARIABLE output_file
-                )
-        execute_process(COMMAND
-                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--header" "${path}"
+                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--header" "${input_java}"
                 OUTPUT_VARIABLE output_header
                 )
 
-        if ("${output_class}" STREQUAL "")
+        if ("${class_signature}" STREQUAL "")
             # No output public class
-            message(STATUS "[WARNING] No public class found in ${path}")
-            add_custom_command(OUTPUT "${path}.private"
+            message(STATUS "[WARNING] No public class found in ${input_java}")
+            add_custom_command(OUTPUT "${input_java}.private"
                     COMMAND ${Java_JAVAC_EXECUTABLE}
                         -d "${JNI_CLASS_OUTPUT}"
                         -classpath "${JNI_CLASS_OUTPUT}"
                         -sourcepath "${JNI_SRC_INPUT}"
-                        "${path}"
+                        "${input_java}"
                         ${Javac_options}
-                    DEPENDS "${path}"
-                    COMMENT "javac ${path}"
+                    DEPENDS "${input_java}"
+                    COMMENT "javac ${input_java}"
                     VERBATIM
                     )
-            set_source_files_properties("${path}.private" PROPERTIES GENERATED TRUE)
-            list(APPEND java_depends "${path}.private")
+            set_source_files_properties("${input_java}.private" PROPERTIES GENERATED TRUE)
+            list(APPEND java_depends "${input_java}.private")
         elseif ("${output_header}" STREQUAL "")
             # for java file has no native method
-            set(target_output_file "${JNI_CLASS_OUTPUT}/${output_file}")
-            add_custom_command(OUTPUT "${target_output_file}"
+            set(target_output_class "${JNI_CLASS_OUTPUT}/${output_class}")
+            add_custom_command(OUTPUT "${target_output_class}"
                     COMMAND ${Java_JAVAC_EXECUTABLE}
                     -d "${JNI_CLASS_OUTPUT}"
                     -classpath "${JNI_CLASS_OUTPUT}"
                     -sourcepath "${JNI_SRC_INPUT}"
-                    "${path}"
+                    "${input_java}"
                     ${Javac_options}
-                    DEPENDS "${path}"
-                    COMMENT "javac ${path}"
+                    DEPENDS "${input_java}"
+                    COMMENT "javac ${input_java}"
                     VERBATIM
                     )
-            set_source_files_properties("${target_output_file}" PROPERTIES GENERATED TRUE)
-            list(APPEND java_depends "${target_output_file}")
+            set_source_files_properties("${target_output_class}" PROPERTIES GENERATED TRUE)
+            list(APPEND java_depends "${target_output_class}")
         else()
             # Had output public class
-            set(target_output_file "${JNI_CLASS_OUTPUT}/${output_file}")
+            set(target_output_class "${JNI_CLASS_OUTPUT}/${output_class}")
             set(target_output_header "${JNI_HEADER_OUTPUT}/${output_header}")
 
             if ("${Java_VERSION_MAJOR}" VERSION_GREATER "8.")
                 add_custom_command(
                         OUTPUT
                             "${target_output_header}"
-                            "${target_output_file}"
+                            "${target_output_class}"
                         COMMAND ${Java_JAVAC_EXECUTABLE}
                         -d "${JNI_CLASS_OUTPUT}"
                         -h "${JNI_HEADER_OUTPUT}"
                         -classpath "${JNI_CLASS_OUTPUT}"
                         -sourcepath "${JNI_SRC_INPUT}"
-                        "${path}"
+                        "${input_java}"
                         ${Javac_options}
-                        DEPENDS "${path}"
-                        COMMENT "javac -h ${path}"
+                        DEPENDS "${input_java}"
+                        COMMENT "javac -h ${input_java}"
                         VERBATIM
                         )
             else ()
-                add_custom_command(OUTPUT "${target_output_file}"
+                add_custom_command(OUTPUT "${target_output_class}"
                         COMMAND ${Java_JAVAC_EXECUTABLE}
                             -d "${JNI_CLASS_OUTPUT}"
                             -classpath "${JNI_CLASS_OUTPUT}"
                             -sourcepath "${JNI_SRC_INPUT}"
-                            "${path}"
+                            "${input_java}"
                             ${Javac_options}
-                        DEPENDS "${path}"
-                        COMMENT "javac ${path}"
+                        DEPENDS "${input_java}"
+                        COMMENT "javac ${input_java}"
                         VERBATIM
                         )
                 add_custom_command(OUTPUT "${target_output_header}"
                         COMMAND ${Java_JAVAH_EXECUTABLE}
                         -d "${JNI_HEADER_OUTPUT}"
                         -classpath "${JNI_CLASS_OUTPUT}"
-                        "${output_class}"
+                        "${class_signature}"
                         ${Javac_options}
-                        DEPENDS "${target_output_file}"
-                        COMMENT "javah ${output_class}"
+                        DEPENDS "${target_output_class}"
+                        COMMENT "javah ${class_signature}"
                         VERBATIM)
             endif ()
 
-            set_source_files_properties("${target_output_file}" PROPERTIES GENERATED TRUE)
+            set_source_files_properties("${target_output_class}" PROPERTIES GENERATED TRUE)
             set_source_files_properties("${target_output_header}" PROPERTIES GENERATED TRUE)
 
-            list(APPEND java_depends "${target_output_file}")
+            list(APPEND java_depends "${target_output_class}")
             list(APPEND jni_depends "${target_output_header}")
 
         endif()
@@ -181,40 +181,40 @@ if (JNI_FOUND)
 
     # build test files
     FILE(GLOB_RECURSE JNI_TEST_FILES ${JNI_TEST_INPUT}/*.java)
-    foreach (path ${JNI_TEST_FILES})
+    foreach (input_java ${JNI_TEST_FILES})
         # build test script
         execute_process(COMMAND
-                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--class" "${path}"
+                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--class" "${input_java}"
+                OUTPUT_VARIABLE class_signature
+                )
+        execute_process(COMMAND
+                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--file" "${input_java}"
                 OUTPUT_VARIABLE output_class
                 )
         execute_process(COMMAND
-                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--file" "${path}"
-                OUTPUT_VARIABLE output_file
-                )
-        execute_process(COMMAND
-                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--header" "${path}"
+                "${Python_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../script/javaname.py" "--header" "${input_java}"
                 OUTPUT_VARIABLE output_header
                 )
 
-        if ("${output_class}" STREQUAL "")
+        if ("${class_signature}" STREQUAL "")
             # No output public class
-            message(STATUS "[WARNING] No public class found in ${path}")
+            message(STATUS "[WARNING] No public class found in ${input_java}")
         else()
             # Had output public class
-            set(target_output_file "${JNI_TEST_OUTPUT}/${output_file}")
+            set(target_output_class "${JNI_TEST_OUTPUT}/${output_class}")
 
-            add_custom_command(OUTPUT "${target_output_file}"
+            add_custom_command(OUTPUT "${target_output_class}"
                     COMMAND ${Java_JAVAC_EXECUTABLE}
                         -classpath "${JNI_CLASS_OUTPUT}"
                         -sourcepath "${JNI_SRC_INPUT}"
                         -d "${JNI_TEST_OUTPUT}"
-                        "${path}"
+                        "${input_java}"
                         ${Javac_options}
-                    DEPENDS ${java_depends} "${path}"
-                    COMMENT "javac ${path}"
+                    DEPENDS ${java_depends} "${input_java}"
+                    COMMENT "javac ${input_java}"
                     VERBATIM)
 
-            set_source_files_properties("${target_output_file}" PROPERTIES GENERATED TRUE)
+            set_source_files_properties("${target_output_class}" PROPERTIES GENERATED TRUE)
 
             if (WIN32)
                 set(TEST_CLASSPATH "${JNI_TEST_OUTPUT};${JNI_CLASS_OUTPUT}")
@@ -222,21 +222,21 @@ if (JNI_FOUND)
                 set(TEST_CLASSPATH "${JNI_TEST_OUTPUT}:${JNI_CLASS_OUTPUT}")
             endif()
 
-            add_custom_target("javac-${output_class}"
-                    DEPENDS "${target_output_file}")
+            add_custom_target("javac-${class_signature}"
+                    DEPENDS "${target_output_class}")
 
-            add_custom_target("java-${output_class}"
+            add_custom_target("java-${class_signature}"
                     COMMAND ${Java_JAVA_EXECUTABLE}
                         -classpath "${TEST_CLASSPATH}"
-                        "${output_class}"
+                        "${class_signature}"
                         ${Javac_options}
-                    DEPENDS "javac-${output_class}"
+                    DEPENDS "javac-${class_signature}"
                         ${PROJECT_NAME}_java
-                    COMMENT "java ${output_class}"
+                    COMMENT "java ${class_signature}"
                     WORKING_DIRECTORY "${JNI_TEST_OUTPUT}"
                     VERBATIM)
 
-            add_dependencies("java-${output_class}" ${PROJECT_NAME}_java)
+            add_dependencies("java-${class_signature}" ${PROJECT_NAME}_java)
 
         endif()
     endforeach()
