@@ -78,7 +78,24 @@ if (JNI_FOUND)
                     COMMENT "javac ${path}"
                     VERBATIM
                     )
+            set_source_files_properties("${path}.private" PROPERTIES GENERATED TRUE)
             list(APPEND java_depends "${path}.private")
+        elseif ("${output_header}" STREQUAL "")
+            # for java file has no native method
+            set(target_output_file "${JNI_CLASS_OUTPUT}/${output_file}")
+            add_custom_command(OUTPUT "${target_output_file}"
+                    COMMAND ${Java_JAVAC_EXECUTABLE}
+                    -d "${JNI_CLASS_OUTPUT}"
+                    -classpath "${JNI_CLASS_OUTPUT}"
+                    -sourcepath "${JNI_SRC_INPUT}"
+                    "${path}"
+                    ${Javac_options}
+                    DEPENDS "${path}"
+                    COMMENT "javac ${path}"
+                    VERBATIM
+                    )
+            set_source_files_properties("${target_output_file}" PROPERTIES GENERATED TRUE)
+            list(APPEND java_depends "${target_output_file}")
         else()
             # Had output public class
             set(target_output_file "${JNI_CLASS_OUTPUT}/${output_file}")
@@ -87,8 +104,8 @@ if (JNI_FOUND)
             if ("${Java_VERSION_MAJOR}" VERSION_GREATER "8.")
                 add_custom_command(
                         OUTPUT
-                            "${target_output_file}"
                             "${target_output_header}"
+                            "${target_output_file}"
                         COMMAND ${Java_JAVAC_EXECUTABLE}
                         -d "${JNI_CLASS_OUTPUT}"
                         -h "${JNI_HEADER_OUTPUT}"
@@ -133,13 +150,13 @@ if (JNI_FOUND)
 
     endforeach ()
 
-    add_custom_target(javac
-            DEPENDS ${java_depends})
+    # add_custom_target(javac
+    #         DEPENDS ${java_depends})
 
     add_custom_target(javah
             DEPENDS ${jni_depends})
 
-    add_dependencies(javah javac)
+    # add_dependencies(javah javac)
 
     # set library target
     FILE(GLOB_RECURSE JNI_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
@@ -213,7 +230,8 @@ if (JNI_FOUND)
                         -classpath "${TEST_CLASSPATH}"
                         "${output_class}"
                         ${Javac_options}
-                    DEPENDS "${target_output_file}"
+                    DEPENDS "javac-${output_class}"
+                        ${PROJECT_NAME}_java
                     COMMENT "java ${output_class}"
                     WORKING_DIRECTORY "${JNI_TEST_OUTPUT}"
                     VERBATIM)

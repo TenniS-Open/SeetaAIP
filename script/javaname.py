@@ -59,12 +59,15 @@ if __name__ == '__main__':
 
     regex_package = re.compile(r"package\s+([_A-za-z][\._A-za-z0-9]+)\s*;")
     regex_public_class = re.compile(r"[^\{]*class\s+([_A-za-z][_A-za-z0-9]+)\s*\{")
+    regex_native = re.compile(r"(^|\s)+native\s+")\
 
     all_package = re.findall(regex_package, content)
     all_public_class = re.findall(regex_public_class, content)
+    all_native = re.findall(regex_native, content)
 
     all_package = list(map(str, all_package))
     all_public_class = list(map(str, all_public_class))
+    all_native = list(map(str, all_native))
 
     if len(all_package) > 1:
         sys.stderr.write("Find duplicate package names: {}\n".format(all_package))
@@ -93,6 +96,8 @@ if __name__ == '__main__':
         sys.stdout.write(name_file)
         exit(0)
     elif output_option == OPTION_HEADER:
+        if len(all_native) == 0:
+            exit(0)
         name_header = name_class.replace(".", "_") + ".h"
         sys.stdout.write(name_header)
         exit(0)
