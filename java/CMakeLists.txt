@@ -11,6 +11,24 @@ if (JNI_FOUND)
     message(STATUS "[STATUS] Compiling JNI module.")
 
     find_package(Java REQUIRED COMPONENTS Development)
+    message(STATUS "Found Java ${Java_VERSION_MAJOR}")
+
+
+    if (NOT Java_JAVA_EXECUTABLE)
+        message(FATAL_ERROR "Can not found java.")
+    endif ()
+    if (NOT Java_JAVAC_EXECUTABLE)
+        message(FATAL_ERROR "Can not found javac.")
+    endif ()
+
+    # check java version
+    if ("${Java_VERSION_MAJOR}" VERSION_GREATER "8.")
+        message(STATUS "Using javac -h instead javah")
+    else ()
+        if (NOT Java_JAVAH_EXECUTABLE)
+            message(FATAL_ERROR "Can not found javah.")
+        endif ()
+    endif ()
 
     # found python to use script to help compile
     find_package (Python COMPONENTS Interpreter)
@@ -64,37 +82,51 @@ if (JNI_FOUND)
         else()
             # Had output public class
             set(target_output_file "${JNI_CLASS_OUTPUT}/${output_file}")
+            set(target_output_header "${JNI_HEADER_OUTPUT}/${output_header}")
 
-            add_custom_command(OUTPUT "${target_output_file}"
-                    COMMAND ${Java_JAVAC_EXECUTABLE}
+            if ("${Java_VERSION_MAJOR}" VERSION_GREATER "8.")
+                add_custom_command(
+                        OUTPUT
+                            "${target_output_file}"
+                            "${target_output_header}"
+                        COMMAND ${Java_JAVAC_EXECUTABLE}
                         -d "${JNI_CLASS_OUTPUT}"
+                        -h "${JNI_HEADER_OUTPUT}"
                         -classpath "${JNI_CLASS_OUTPUT}"
                         -sourcepath "${JNI_SRC_INPUT}"
                         "${path}"
                         ${Javac_options}
-                    DEPENDS "${path}"
-                    COMMENT "javac ${path}"
-                    VERBATIM
-                    )
-
-            set_source_files_properties("${target_output_file}" PROPERTIES GENERATED TRUE)
-
-            list(APPEND java_depends "${target_output_file}")
-
-            set(target_output_header "${JNI_HEADER_OUTPUT}/${output_header}")
-
-            add_custom_command(OUTPUT "${target_output_header}"
-                    COMMAND ${Java_JAVAH_EXECUTABLE}
+                        DEPENDS "${path}"
+                        COMMENT "javac -h ${path}"
+                        VERBATIM
+                        )
+            else ()
+                add_custom_command(OUTPUT "${target_output_file}"
+                        COMMAND ${Java_JAVAC_EXECUTABLE}
+                            -d "${JNI_CLASS_OUTPUT}"
+                            -classpath "${JNI_CLASS_OUTPUT}"
+                            -sourcepath "${JNI_SRC_INPUT}"
+                            "${path}"
+                            ${Javac_options}
+                        DEPENDS "${path}"
+                        COMMENT "javac ${path}"
+                        VERBATIM
+                        )
+                add_custom_command(OUTPUT "${target_output_header}"
+                        COMMAND ${Java_JAVAH_EXECUTABLE}
                         -d "${JNI_HEADER_OUTPUT}"
                         -classpath "${JNI_CLASS_OUTPUT}"
                         "${output_class}"
                         ${Javac_options}
-                    DEPENDS "${target_output_file}"
-                    COMMENT "javah ${output_class}"
-                    VERBATIM)
+                        DEPENDS "${target_output_file}"
+                        COMMENT "javah ${output_class}"
+                        VERBATIM)
+            endif ()
 
+            set_source_files_properties("${target_output_file}" PROPERTIES GENERATED TRUE)
             set_source_files_properties("${target_output_header}" PROPERTIES GENERATED TRUE)
 
+            list(APPEND java_depends "${target_output_file}")
             list(APPEND jni_depends "${target_output_header}")
 
         endif()

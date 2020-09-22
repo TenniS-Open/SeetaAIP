@@ -12,8 +12,15 @@ public class Engine {
         this.construct(libname);
     }
 
-    protected void finalize() {
-        this.destruct();
+    @Deprecated
+    protected void finalize() throws Throwable {
+        try {
+            this.destruct();
+        } catch(Throwable t){
+            throw t;
+        } finally {
+            super.finalize();
+        }
     }
 
     public void dispose() {
