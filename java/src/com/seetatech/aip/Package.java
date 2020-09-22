@@ -11,11 +11,15 @@ public class Package {
         this.construct(libname);
     }
 
-    private Package() {}    // for JNI constrution use
+    public Package(long handle) {
+        this.construct(handle);
+    }
 
     protected void finalize() {
         this.destruct();
     }
+
+    public void dispose() { this.destruct(); }
 
     public native String error(long handle);
     public native int free(long handle);

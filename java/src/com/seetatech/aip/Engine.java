@@ -16,5 +16,9 @@ public class Engine {
         this.destruct();
     }
 
+    public void dispose() {
+        this.destruct();
+    }
+
     public native Package load();
 }

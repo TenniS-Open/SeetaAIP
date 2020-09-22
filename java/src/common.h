@@ -9,6 +9,8 @@
 #include <string>
 #include <functional>
 
+class JNIExceptionCheck : public std::exception {};
+
 template <typename T>
 class Defer {
 public:
@@ -48,6 +50,15 @@ inline auto new_defer(FUNC func, Args &&...args) -> Defer<decltype(std::bind(fun
 #define __javac_defer_name __javac_concat(__javac_defer_, __LINE__)
 
 #define defer(func, ...) auto __javac_defer_name = new_defer(func, ## __VA_ARGS__)
+
+inline std::string jni_package() {
+    return "com/seetatech/aip/";
+}
+
+inline jclass jni_find_class(JNIEnv *env, const std::string &classname) {
+    auto fullname = jni_package() + classname;
+    return env->FindClass(fullname.c_str());
+}
 
 std::string jni_convert_string(JNIEnv *env, jstring jni_string);
 
