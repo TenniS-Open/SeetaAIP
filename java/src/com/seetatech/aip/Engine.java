@@ -4,6 +4,7 @@ public class Engine {
     private static LoadJNI _load_jni = new LoadJNI();
 
     private long handle = 0;
+    private Package aip;
 
     private native void construct(String libname);
     private native void destruct();
@@ -27,5 +28,5 @@ public class Engine {
         this.destruct();
     }
 
-    public native Package load();
+    public Package getAIP() { return aip; }
 }

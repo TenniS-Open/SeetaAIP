@@ -31,3 +31,7 @@ std::string jni_convert_string(JNIEnv *env, jstring jni_string) {
 
     return buffer.get();
 }
+
+AutoJObject Java_convert_string(JNIEnv *env, const std::string &str) {
+    return AutoJObject(env, env->NewStringUTF(str.c_str()));
+}

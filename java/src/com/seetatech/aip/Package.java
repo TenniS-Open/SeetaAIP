@@ -1,32 +1,19 @@
 package com.seetatech.aip;
 
 public class Package {
-    private long handle = 0;
+    private byte[] cdata;
 
-    private native void construct(String libname);
-    private native void construct(long handle);
-    private native void destruct();
+    private native void construct(byte[] cdata);
 
-    public Package(String libname) {
-        this.construct(libname);
+    public Package(byte[] cdata) {
+        this.construct(cdata);
     }
 
-    public Package(long handle) {
-        this.construct(handle);
-    }
-
-    @Deprecated
-    protected void finalize() throws Throwable {
-        try {
-            this.destruct();
-        } catch(Throwable t){
-            throw t;
-        } finally {
-            super.finalize();
-        }
-    }
-
-    public void dispose() { this.destruct(); }
+    public String description;
+    public String mID;
+    public String sID;
+    public String version;
+    public String[] support;
 
     public native String error(long handle);
     public native int free(long handle);
