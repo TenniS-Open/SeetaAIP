@@ -11,7 +11,7 @@
 
 namespace seeta {
     namespace aip {
-        namespace cv {
+        namespace opencv {
             class ImageData : public Wrapper<SeetaAIPImageData> {
             public:
                 using self = ImageData;
