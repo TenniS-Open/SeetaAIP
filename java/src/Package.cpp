@@ -2,7 +2,7 @@
 // Created by kier on 2020/7/3.
 //
 
-#include "com_seetatech_aip_Package.h"
+#include "../include/seeta_aip_Package.h"
 
 #include "common.h"
 #include "seeta_aip.h"
@@ -21,14 +21,16 @@ static inline int array_size(T *array, K env_val) {
 
 
 /*
- * Class:     com_seetatech_aip_Package
+ * Class:     seeta_aip_Package
  * Method:    construct
  * Signature: ([B)V
  */
-JNIEXPORT void JNICALL Java_com_seetatech_aip_Package_construct
+JNIEXPORT void JNICALL Java_seeta_aip_Package_construct
         (JNIEnv *env, jobject self, jbyteArray cdata) {
     jclass self_class = env->GetObjectClass(self);
     jfieldID self_field_cdata = env->GetFieldID(self_class, "cdata", "[B");
+    jfieldID self_field_aip_version = env->GetFieldID(self_class, "aip_version", "I");
+    jfieldID self_field_module = env->GetFieldID(self_class, "module", "Ljava/lang/String;");
     jfieldID self_field_description = env->GetFieldID(self_class, "description", "Ljava/lang/String;");
     jfieldID self_field_mID = env->GetFieldID(self_class, "mID", "Ljava/lang/String;");
     jfieldID self_field_sID = env->GetFieldID(self_class, "sID", "Ljava/lang/String;");
@@ -42,6 +44,8 @@ JNIEXPORT void JNICALL Java_com_seetatech_aip_Package_construct
     defer(&JNIEnv::ReleaseByteArrayElements, env, cdata, native_cdata, 0);
     auto &aip = *reinterpret_cast<SeetaAIP*>(native_cdata);
 
+    env->SetIntField(self, self_field_aip_version, aip.aip_version);
+    env->SetObjectField(self, self_field_module, Java_convert_string(env, aip.module));
     env->SetObjectField(self, self_field_description, Java_convert_string(env, aip.description));
     env->SetObjectField(self, self_field_mID, Java_convert_string(env, aip.mID));
     env->SetObjectField(self, self_field_sID, Java_convert_string(env, aip.sID));

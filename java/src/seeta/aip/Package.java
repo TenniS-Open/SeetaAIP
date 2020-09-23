@@ -1,4 +1,4 @@
-package com.seetatech.aip;
+package seeta.aip;
 
 public class Package {
     private byte[] cdata;
@@ -9,6 +9,8 @@ public class Package {
         this.construct(cdata);
     }
 
+    public int aip_version;
+    public String module;
     public String description;
     public String mID;
     public String sID;
@@ -16,6 +18,7 @@ public class Package {
     public String[] support;
 
     public native String error(long handle);
+    public native long create(String[] models, Object[] objects) throws seeta.aip.Exception;
     public native int free(long handle);
-    public native long create(String[] models, Object[] objects);
+    public native String[] property(long handle) throws seeta.aip.Exception;
 }

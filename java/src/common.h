@@ -51,7 +51,7 @@ inline auto new_defer(FUNC func, Args &&...args) -> Defer<decltype(std::bind(fun
 
 #define defer(func, ...) auto __javac_defer_name = new_defer(func, ## __VA_ARGS__)
 
-#define JNI_PACKAGE "com/seetatech/aip/"
+#define JNI_PACKAGE "seeta/aip/"
 
 using JNIEnvPtr = JNIEnv *;
 

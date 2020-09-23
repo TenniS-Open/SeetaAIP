@@ -6,6 +6,8 @@
 #define _INC_SEETA_AIP_ENGINE_H
 
 #include <memory>
+#include <iostream>
+
 #include "seeta_aip.h"
 #include "seeta_aip_dll.h"
 #include "seeta_aip_struct.h"

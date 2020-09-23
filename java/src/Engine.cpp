@@ -2,15 +2,13 @@
 // Created by kier on 2020/7/3.
 //
 
-#include <iostream>
-#include "com_seetatech_aip_Engine.h"
+#include "../include/seeta_aip_Engine.h"
+
 #include "common.h"
-
 #include "seeta_aip_engine.h"
-
 #include "native.h"
 
-JNIEXPORT void JNICALL Java_com_seetatech_aip_Engine_construct
+JNIEXPORT void JNICALL Java_seeta_aip_Engine_construct
         (JNIEnv *env, jobject self, jstring libname) {
     jclass self_class = env->GetObjectClass(self);
     jfieldID self_field_handle = env->GetFieldID(self_class, "handle", "J");
@@ -25,7 +23,6 @@ JNIEXPORT void JNICALL Java_com_seetatech_aip_Engine_construct
         auto java_cdata = env->NewByteArray(sizeof(aip));
         defer(&JNIEnv::DeleteLocalRef, env, java_cdata);
         env->SetByteArrayRegion(java_cdata, 0, sizeof(aip), reinterpret_cast<jbyte*>(&aip));
-
 
         auto Package_class = jni_find_class(env, "Package");
         auto Package_init = env->GetMethodID(Package_class, "<init>", "([B)V");
@@ -48,7 +45,7 @@ JNIEXPORT void JNICALL Java_com_seetatech_aip_Engine_construct
     }
 }
 
-JNIEXPORT void JNICALL Java_com_seetatech_aip_Engine_destruct
+JNIEXPORT void JNICALL Java_seeta_aip_Engine_destruct
         (JNIEnv *env, jobject self) {
     jclass self_class = env->GetObjectClass(self);
     jfieldID self_field_handle = env->GetFieldID(self_class, "handle", "J");

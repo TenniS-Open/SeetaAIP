@@ -1,11 +1,12 @@
-import com.seetatech.aip.Engine;
+import seeta.aip.Engine;
+import seeta.aip.Exception;
 
 public class Test {
-    public static void main(String[] argv) {
+    public static void main(String[] argv) throws seeta.aip.Exception {
         System.out.println("Hey, I'm running!");
 
         Engine a = new Engine("../../lib/copy");
-        com.seetatech.aip.Package aip = a.getAIP();
+        seeta.aip.Package aip = a.getAIP();
 
         System.out.printf("AIP's description: %s\n", aip.description);
         System.out.printf("AIP's mID: %s\n", aip.mID);

@@ -1,4 +1,4 @@
-package com.seetatech.aip;
+package seeta.aip;
 
 public class LoadJNI {
     static {

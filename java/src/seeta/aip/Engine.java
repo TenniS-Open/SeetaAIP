@@ -1,4 +1,4 @@
-package com.seetatech.aip;
+package seeta.aip;
 
 public class Engine {
     private static LoadJNI _load_jni = new LoadJNI();
@@ -6,10 +6,10 @@ public class Engine {
     private long handle = 0;
     private Package aip;
 
-    private native void construct(String libname);
+    private native void construct(String libname) throws seeta.aip.Exception;
     private native void destruct();
 
-    public Engine(String libname) {
+    public Engine(String libname) throws seeta.aip.Exception {
         this.construct(libname);
     }
 
