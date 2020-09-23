@@ -45,18 +45,18 @@ JNIEXPORT void JNICALL Java_seeta_aip_Package_construct
     auto &aip = *reinterpret_cast<SeetaAIP*>(native_cdata);
 
     env->SetIntField(self, self_field_aip_version, aip.aip_version);
-    env->SetObjectField(self, self_field_module, Java_convert_string(env, aip.module));
-    env->SetObjectField(self, self_field_description, Java_convert_string(env, aip.description));
-    env->SetObjectField(self, self_field_mID, Java_convert_string(env, aip.mID));
-    env->SetObjectField(self, self_field_sID, Java_convert_string(env, aip.sID));
-    env->SetObjectField(self, self_field_version, Java_convert_string(env, aip.version));
+    env->SetObjectField(self, self_field_module, jni_convert_string(env, aip.module));
+    env->SetObjectField(self, self_field_description, jni_convert_string(env, aip.description));
+    env->SetObjectField(self, self_field_mID, jni_convert_string(env, aip.mID));
+    env->SetObjectField(self, self_field_sID, jni_convert_string(env, aip.sID));
+    env->SetObjectField(self, self_field_version, jni_convert_string(env, aip.version));
 
     jclass JString_class = env->FindClass("java/lang/String");
     auto support_size = array_size(aip.support, nullptr);
     auto jni_support = env->NewObjectArray(support_size, JString_class, nullptr);
     defer(&JNIEnv::DeleteLocalRef, env, jni_support);
     for (int i = 0; i < support_size; ++i) {
-        env->SetObjectArrayElement(jni_support, i, Java_convert_string(env, aip.support[i]));
+        env->SetObjectArrayElement(jni_support, i, jni_convert_string(env, aip.support[i]));
     }
     env->SetObjectField(self, self_field_support, jni_support);
 }

@@ -40,6 +40,8 @@ JNIEXPORT void JNICALL Java_seeta_aip_Engine_construct
         case4engine.release();
     } catch (const JNIExceptionCheck &) {
         return;
+    }  catch (const seeta::aip::Exception &e) {
+        jni_throw_aip_exception(env, e.errcode(), e.what());
     } catch (const std::exception &e) {
         jni_throw(env, e.what());
     }

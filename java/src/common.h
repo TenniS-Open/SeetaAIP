@@ -127,12 +127,14 @@ inline jclass jni_find_class(JNIEnv *env, const std::string &classname) {
 
 inline void jni_throw(JNIEnv* env, const std::string &msg)
 {
-    jclass Exception_class = env->FindClass("java/lang/Exception");
+    jclass Exception_class = env->FindClass("java/lang/RuntimeException");
     env->ThrowNew(Exception_class, msg.c_str());
 }
 
+void jni_throw_aip_exception(JNIEnv* env, int errcode, const std::string &msg);
+
 std::string jni_convert_string(JNIEnv *env, jstring jni_string);
-AutoJObject Java_convert_string(JNIEnv *env, const std::string& str);
+AutoJObject jni_convert_string(JNIEnv *env, const std::string& str);
 
 
 

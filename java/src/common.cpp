@@ -32,6 +32,15 @@ std::string jni_convert_string(JNIEnv *env, jstring jni_string) {
     return buffer.get();
 }
 
-AutoJObject Java_convert_string(JNIEnv *env, const std::string &str) {
+AutoJObject jni_convert_string(JNIEnv *env, const std::string &str) {
     return AutoJObject(env, env->NewStringUTF(str.c_str()));
+}
+
+void jni_throw_aip_exception(JNIEnv *env, int errcode, const std::string &msg) {
+    auto exception_class = jni_find_class(env, "Exception");
+    auto exception_init = env->GetMethodID(exception_class, "<init>", "(ILjava/lang/String;)V");
+    auto exception = env->NewObject(exception_class, exception_init,
+                                    errcode, jni_convert_string(env, msg).get());
+    defer(&JNIEnv::DeleteLocalRef, env, exception);
+    env->Throw(reinterpret_cast<jthrowable>(exception));
 }

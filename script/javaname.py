@@ -58,7 +58,7 @@ if __name__ == '__main__':
     filename = os.path.splitext(os.path.split(java_filename)[-1])[0]
 
     regex_package = re.compile(r"package\s+([_A-za-z][\._A-za-z0-9]+)\s*;")
-    regex_public_class = re.compile(r"[^\{]*class\s+([_A-za-z][_A-za-z0-9]+)\s*\{")
+    regex_public_class = re.compile(r"[^\{]*class\s+([_A-za-z][_A-za-z0-9]+)[\s\}]+")
     regex_native = re.compile(r"(^|\s)+native\s+")\
 
     all_package = re.findall(regex_package, content)
