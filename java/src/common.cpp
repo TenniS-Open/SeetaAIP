@@ -44,3 +44,14 @@ void jni_throw_aip_exception(JNIEnv *env, int errcode, const std::string &msg) {
     defer(&JNIEnv::DeleteLocalRef, env, exception);
     env->Throw(reinterpret_cast<jthrowable>(exception));
 }
+
+std::vector<std::string> jni_convert_array_string(JNIEnv *env, jobjectArray jni_array) {
+    std::vector<std::string> native_array;
+    auto N = env->GetArrayLength(jni_array);
+    native_array.reserve(N);
+    for (jsize i = 0; i < N; ++i) {
+        auto obj = env->GetObjectArrayElement(jni_array, i);
+        native_array.emplace_back(jni_convert_string(env, reinterpret_cast<jstring>(obj)));
+    }
+    return native_array;
+}

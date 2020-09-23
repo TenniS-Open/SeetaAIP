@@ -8,6 +8,7 @@
 #include <jni.h>
 #include <string>
 #include <functional>
+#include <vector>
 
 class JNIExceptionCheck : public std::exception {};
 
@@ -135,6 +136,8 @@ void jni_throw_aip_exception(JNIEnv* env, int errcode, const std::string &msg);
 
 std::string jni_convert_string(JNIEnv *env, jstring jni_string);
 AutoJObject jni_convert_string(JNIEnv *env, const std::string& str);
+
+std::vector<std::string> jni_convert_array_string(JNIEnv *env, jobjectArray jni_array);
 
 
 

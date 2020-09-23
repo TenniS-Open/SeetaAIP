@@ -4,8 +4,10 @@
 
 #include "../include/seeta_aip_Package.h"
 
+#include "native.h"
 #include "common.h"
 #include "seeta_aip.h"
+
 #include <iostream>
 
 template <typename T, typename K,
@@ -61,3 +63,39 @@ JNIEXPORT void JNICALL Java_seeta_aip_Package_construct
     env->SetObjectField(self, self_field_support, jni_support);
 }
 
+/*
+ * Class:     seeta_aip_Package
+ * Method:    error
+ * Signature: (JI)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_seeta_aip_Package_error
+        (JNIEnv *env, jobject self, jlong handle, jint errorCode) {
+    auto instance = reinterpret_cast<NativeInstance*>(handle);
+    try {
+        return jni_convert_string(env, instance->error(errorCode)).release<jstring>();
+    } catch (const JNIExceptionCheck &) {
+    }  catch (const seeta::aip::Exception &e) {
+        jni_throw_aip_exception(env, e.errcode(), e.what());
+    } catch (const std::exception &e) {
+        jni_throw(env, e.what());
+    }
+    return nullptr;
+}
+
+/*
+ * Class:     seeta_aip_Package
+ * Method:    create
+ * Signature: ([Ljava/lang/String;[Lseeta/aip/Object;)J
+ */
+JNIEXPORT jlong JNICALL Java_seeta_aip_Package_create
+        (JNIEnv *env, jobject self, jobjectArray models, jobjectArray objects) {
+//    try {
+//        return jni_convert_string(env, instance->error(errorCode)).release<jstring>();
+//    } catch (const JNIExceptionCheck &) {
+//    }  catch (const seeta::aip::Exception &e) {
+//        jni_throw_aip_exception(env, e.errcode(), e.what());
+//    } catch (const std::exception &e) {
+//        jni_throw(env, e.what());
+//    }
+    return 0;
+}

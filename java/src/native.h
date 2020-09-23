@@ -8,6 +8,8 @@
 #include "seeta_aip_engine.h"
 
 using NativeEngine = seeta::aip::Engine;
+using NativeInstance = seeta::aip::Instance;
+
 //
 //class NativeEngine {
 //public:
