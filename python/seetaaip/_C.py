@@ -46,7 +46,7 @@ def __KERNEL32_IMPORT(sym, restype=None, *argtypes):
     return f
 
 
-LoadLibrary = __KERNEL32_IMPORT("LoadLibrary", POINTER(c_int32), c_char_p)
+LoadLibrary = __KERNEL32_IMPORT("LoadLibraryA", POINTER(c_int32), c_char_p)
 GetProcAddress = __KERNEL32_IMPORT("GetProcAddress", c_void_p, POINTER(c_int32), c_char_p)
 FreeLibrary = __KERNEL32_IMPORT("FreeLibrary", c_int32, POINTER(c_int32))
 

@@ -641,6 +641,8 @@ class Tag(_C.Tag):
 
 
 class Object(object):
+    Tag = Tag
+
     def __init__(self, shape: Shape = None, tags: Iterable[Union[Tag, Tuple]] = None, extra: Union[Any, Tensor] = None):
         assert isinstance(shape, (type(None), Shape))
         if extra is not None and not isinstance(extra, Tensor):
@@ -977,6 +979,7 @@ class Engine(object):
     AIP_VERSION = 2
 
     def __init__(self, libname: str):
+        self.__lib = None
         self.__lib = _C.DynamicLibrary(libname=libname)
         seeta_aip_load = self.__lib.symbol(_C.seeta_aip_load_entry, "seeta_aip_load")
         c_package = _C.Package()

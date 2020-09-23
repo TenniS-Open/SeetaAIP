@@ -13,6 +13,10 @@ extern "C" SEETA_AIP_API int *LoadLibrary(const char *libname) {
     return reinterpret_cast<int *>(seeta::aip::dlopen_v2(libname));
 }
 
+extern "C" SEETA_AIP_API int *LoadLibraryA(const char *libname) {
+    return reinterpret_cast<int *>(seeta::aip::dlopen_v2(libname));
+}
+
 extern "C" SEETA_AIP_API int *GetProcAddress(int *lib, const char *symbol) {
     return reinterpret_cast<int *>(seeta::aip::dlsym(lib, symbol));
 }
