@@ -4,9 +4,12 @@
 
 #include "../include/seeta_aip_Package.h"
 
-#include "native.h"
-#include "common.h"
 #include "seeta_aip.h"
+
+#include "native.h"
+#include "JString.h"
+#include "JStruct.h"
+#include "JException.h"
 
 #include <iostream>
 
@@ -70,7 +73,7 @@ JNIEXPORT void JNICALL Java_seeta_aip_Package_construct
  */
 JNIEXPORT jstring JNICALL Java_seeta_aip_Package_error
         (JNIEnv *env, jobject self, jlong handle, jint errorCode) {
-    auto instance = reinterpret_cast<NativeInstance*>(handle);
+    auto instance = (NativeInstance*)(handle);
     try {
         return jni_convert_string(env, instance->error(errorCode)).release<jstring>();
     } catch (const JNIExceptionCheck &) {
@@ -85,17 +88,39 @@ JNIEXPORT jstring JNICALL Java_seeta_aip_Package_error
 /*
  * Class:     seeta_aip_Package
  * Method:    create
- * Signature: ([Ljava/lang/String;[Lseeta/aip/Object;)J
+ * Signature: (Lseeta/aip/Device;[Ljava/lang/String;[Lseeta/aip/Object;)J
  */
 JNIEXPORT jlong JNICALL Java_seeta_aip_Package_create
-        (JNIEnv *env, jobject self, jobjectArray models, jobjectArray objects) {
-//    try {
-//        return jni_convert_string(env, instance->error(errorCode)).release<jstring>();
-//    } catch (const JNIExceptionCheck &) {
-//    }  catch (const seeta::aip::Exception &e) {
-//        jni_throw_aip_exception(env, e.errcode(), e.what());
-//    } catch (const std::exception &e) {
-//        jni_throw(env, e.what());
-//    }
+        (JNIEnv *env, jobject self, jobject device, jobjectArray models, jobjectArray objects) {
+    jclass self_class = env->GetObjectClass(self);
+    jfieldID self_field_cdata = env->GetFieldID(self_class, "cdata", "[B");
+    auto jni_cdata = reinterpret_cast<jbyteArray>(env->GetObjectField(self_class, self_field_cdata));
+    jbyte* native_cdata = env->GetByteArrayElements(jni_cdata, JNI_FALSE);
+    defer(&JNIEnv::ReleaseByteArrayElements, env, jni_cdata, native_cdata, 0);
+    auto &aip = *reinterpret_cast<SeetaAIP*>(native_cdata);
+    try {
+        auto native_device = JDevice(env).convert(device);
+        auto native_models = JString(env).convert_array(models);
+        auto native_objects = JAIPObject(env).convert_array(objects);
+        std::unique_ptr<NativeInstance> native_instance(
+                new NativeInstance(aip, native_device, native_models, native_objects));
+        return (jlong)(native_instance.release());
+    } catch (const JNIExceptionCheck &) {
+    }  catch (const seeta::aip::Exception &e) {
+        jni_throw_aip_exception(env, e.errcode(), e.what());
+    } catch (const std::exception &e) {
+        jni_throw(env, e.what());
+    }
     return 0;
+}
+/*
+ * Class:     seeta_aip_Package
+ * Method:    free
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_seeta_aip_Package_free
+        (JNIEnv *env, jobject self, jlong handle) {
+    auto instance = (NativeInstance*)(handle);
+    if (!instance) return;
+    delete instance;
 }

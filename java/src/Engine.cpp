@@ -5,6 +5,9 @@
 #include "../include/seeta_aip_Engine.h"
 
 #include "common.h"
+#include "JString.h"
+#include "JException.h"
+
 #include "seeta_aip_engine.h"
 #include "native.h"
 
@@ -24,7 +27,7 @@ JNIEXPORT void JNICALL Java_seeta_aip_Engine_construct
         defer(&JNIEnv::DeleteLocalRef, env, java_cdata);
         env->SetByteArrayRegion(java_cdata, 0, sizeof(aip), reinterpret_cast<jbyte*>(&aip));
 
-        auto Package_class = jni_find_class(env, "Package");
+        auto Package_class = env->FindClass(JNI_PACKAGE "Package");
         auto Package_init = env->GetMethodID(Package_class, "<init>", "([B)V");
         auto jni_package = env->NewObject(Package_class, Package_init, java_cdata);
         if (env->ExceptionCheck()) throw JNIExceptionCheck();
@@ -33,7 +36,7 @@ JNIEXPORT void JNICALL Java_seeta_aip_Engine_construct
         env->SetObjectField(self, self_field_aip, jni_package);
         if (env->ExceptionCheck()) return;
 
-        auto native_handle = reinterpret_cast<jlong>(native_engine);
+        auto native_handle = (jlong)(native_engine);
         env->SetLongField(self, self_field_handle, native_handle);
         if (env->ExceptionCheck()) return;
 
@@ -53,7 +56,7 @@ JNIEXPORT void JNICALL Java_seeta_aip_Engine_destruct
     jfieldID self_field_handle = env->GetFieldID(self_class, "handle", "J");
 
     auto native_handle = env->GetLongField(self, self_field_handle);
-    auto native_engine = reinterpret_cast<NativeEngine *>(native_handle);
+    auto native_engine = (NativeEngine *)(native_handle);
     if (!native_engine) return;
 
     delete native_engine;
