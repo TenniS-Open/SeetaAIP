@@ -33,7 +33,7 @@ public:
     template <typename T, typename=typename std::enable_if<
             !std::is_same<T, NativeObject>::value &&
             std::is_integral<T>::value &&
-            sizeof(T) == 4>::type>
+            sizeof(T) == sizeof(NativeObject)>::type>
     AutoJObject convert_array(const std::vector<T> &array) const {
         return convert_array(
                 reinterpret_cast<const NativeObject *>(array.data()),
@@ -43,7 +43,7 @@ public:
     template <typename T, typename=typename std::enable_if<
             !std::is_same<T, NativeObject>::value &&
             std::is_integral<T>::value &&
-            sizeof(T) == 4>::type>
+            sizeof(T) == sizeof(NativeObject)>::type>
     AutoJObject convert_array(const T *data, jsize N) const {
         return convert_array(
                 reinterpret_cast<const NativeObject *>(data),
@@ -61,7 +61,7 @@ public:
     template <typename T, typename=typename std::enable_if<
             !std::is_same<T, NativeObject>::value &&
             std::is_integral<T>::value &&
-            sizeof(T) == 4>::type>
+            sizeof(T) == sizeof(NativeObject)>::type>
     std::vector<T> convert_array(jintArray array) const {
         if (!array) return {};
         auto N = env->GetArrayLength(array);
@@ -97,7 +97,7 @@ public:
     template <typename T, typename=typename std::enable_if<
             !std::is_same<T, NativeObject>::value &&
             std::is_integral<T>::value &&
-            sizeof(T) == 1>::type>
+            sizeof(T) == sizeof(NativeObject)>::type>
     AutoJObject convert_array(const std::vector<T> &array) const {
         return convert_array(
                 reinterpret_cast<const NativeObject *>(array.data()),
@@ -107,7 +107,7 @@ public:
     template <typename T, typename=typename std::enable_if<
             !std::is_same<T, NativeObject>::value &&
             std::is_integral<T>::value &&
-            sizeof(T) == 1>::type>
+            sizeof(T) == sizeof(NativeObject)>::type>
     AutoJObject convert_array(const T *data, jsize N) const {
         return convert_array(
                 reinterpret_cast<const NativeObject *>(data),
@@ -125,7 +125,7 @@ public:
     template <typename T, typename=typename std::enable_if<
             !std::is_same<T, NativeObject>::value &&
             std::is_integral<T>::value &&
-            sizeof(T) == 1>::type>
+            sizeof(T) == sizeof(NativeObject)>::type>
     std::vector<T> convert_array(jbyteArray array) const {
         if (!array) return {};
         auto N = env->GetArrayLength(array);

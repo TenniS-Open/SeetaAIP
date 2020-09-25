@@ -11,7 +11,7 @@ if (JNI_FOUND)
     message(STATUS "[STATUS] Compiling JNI module.")
 
     find_package(Java REQUIRED COMPONENTS Development)
-    message(STATUS "Found Java ${Java_VERSION_MAJOR}")
+    message(STATUS "Found Java ${Java_VERSION}")
 
 
     if (NOT Java_JAVA_EXECUTABLE)
@@ -233,7 +233,7 @@ if (JNI_FOUND)
 
             add_custom_target("java-${class_signature}"
                     COMMAND ${Java_JAVA_EXECUTABLE}
-                        -Djava.library.path="${LIBRARY_OUTPUT_PATH}"
+                        "-Djava.library.path=${LIBRARY_OUTPUT_PATH}"
                         -classpath "${TEST_CLASSPATH}"
                         "${class_signature}"
                         ${Javac_options}
