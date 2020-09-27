@@ -1,11 +1,14 @@
 import seeta.aip.Engine;
 import seeta.aip.Exception;
+import seeta.aip.Device;
+import seeta.aip.Object;
+import seeta.aip.ImageData;
 
 public class Test {
     public static void main(String[] argv) throws seeta.aip.Exception {
         System.out.println("Hey, I'm running!");
 
-        Engine a = new Engine("../../lib/copy");
+        Engine a = new Engine("../../lib/log");
         seeta.aip.Package aip = a.getAIP();
 
         System.out.printf("AIP's description: %s\n", aip.description);
@@ -21,6 +24,9 @@ public class Test {
         }
         System.out.println("]");
 
+        long handle = aip.create(new Device("cpu"), new String[]{"A"}, new Object[0]);
+        aip.forward(handle, 0, new ImageData[]{new ImageData(new byte[]{1, 2, 3}, 1, 1, 1, 3)}, new Object[]{new Object()});
+        aip.free(handle);
 
         a.dispose();
     }
