@@ -457,7 +457,7 @@ namespace seeta {
                 this->m_raw.number = number;
                 this->m_raw.width = width;
                 this->m_raw.height = height;
-                this->m_raw.channels = channels;
+                this->m_raw.channels = GetChannels(format, channels);
                 auto bytes = this->bytes();
                 m_data.reset(new char[bytes], std::default_delete<char[]>());
                 if (data) {
@@ -471,6 +471,24 @@ namespace seeta {
                       uint32_t channels,
                       void *data = nullptr)
                       : self(format, 1, width, height, channels, data) {
+            }
+
+            static int GetChannels(SEETA_AIP_IMAGE_FORMAT format, int channels) {
+                switch (format) {
+                    default:
+                    case SEETA_AIP_FORMAT_U8RAW:
+                    case SEETA_AIP_FORMAT_F32RAW:
+                    case SEETA_AIP_FORMAT_I32RAW:
+                        return channels;
+                    case SEETA_AIP_FORMAT_U8RGB:
+                    case SEETA_AIP_FORMAT_U8BGR:
+                        return 3;
+                    case SEETA_AIP_FORMAT_U8RGBA:
+                    case SEETA_AIP_FORMAT_U8BGRA:
+                        return 4;
+                    case SEETA_AIP_FORMAT_U8Y:
+                        return 1;
+                }
             }
 
             static SEETA_AIP_VALUE_TYPE GetType(SEETA_AIP_IMAGE_FORMAT format) {
