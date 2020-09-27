@@ -107,7 +107,7 @@ public:
 
     virtual NativeObject convert(jobject object) const = 0;
 
-    AutoJObject convert_array(const std::vector<NativeObject> &array) {
+    AutoJObject convert_array(const std::vector<NativeObject> &array) const {
         auto N = jsize(array.size());
         AutoJObject result(env, env->NewObjectArray(N, clazz, nullptr));
         for (jsize i = 0; i < N; ++i) {
@@ -116,7 +116,16 @@ public:
         return result;
     }
 
-    std::vector<NativeObject> convert_array(jobjectArray array) {
+    AutoJObject convert_array(const NativeObject *array, jsize N) const {
+        if (!array) N = 0;
+        AutoJObject result(env, env->NewObjectArray(N, clazz, nullptr));
+        for (jsize i = 0; i < N; ++i) {
+            env->SetObjectArrayElement(result.get<jobjectArray>(), i, convert(array[i]));
+        }
+        return result;
+    }
+
+    std::vector<NativeObject> convert_array(jobjectArray array) const {
         std::vector<NativeObject> native_array;
         auto N = env->GetArrayLength(array);
         native_array.reserve(N);
@@ -128,4 +137,3 @@ public:
         return native_array;
     }
 };
-

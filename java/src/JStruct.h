@@ -30,8 +30,7 @@ public:
 class JShapeType : public JEnum {
 public:
     explicit JShapeType(JNIEnv *env)
-    : JEnum(env, JNI_PACKAGE "ShapeType")
-    {
+            : JEnum(env, JNI_PACKAGE "ShapeType") {
         this->bind("Unknown", SEETA_AIP_UNKNOWN_SHAPE);
         this->bind("Points", SEETA_AIP_POINTS);
         this->bind("Lines", SEETA_AIP_LINES);
@@ -50,6 +49,7 @@ public:
     jfieldID landmarks;
     jfieldID rotate;
     jfieldID scale;
+
     explicit JShape(JNIEnv *env)
             : JConverter(env, JNI_PACKAGE "Shape") {
         type = env->GetFieldID(clazz, "type", "L" JNI_PACKAGE "ShapeType;");
@@ -58,14 +58,14 @@ public:
         scale = env->GetFieldID(clazz, "scale", "F");
     }
 
-    AutoJObject convert(const NativeObject &object) const final {
+    AutoJObject convert(const SeetaAIPShape &object) const {
         JShapeType clazz_shape_type(env);
         JPoint clazz_point(env);
 
-        auto java_type = clazz_shape_type.convert(int(object.type()));
-        auto java_landmarks = clazz_point.convert_array(object.landmarks());
-        auto java_rotate = jfloat(object.rotate());
-        auto java_scale = jfloat(object.scale());
+        auto java_type = clazz_shape_type.convert(int(object.type));
+        auto java_landmarks = clazz_point.convert_array(object.landmarks.data, jsize(object.landmarks.size));
+        auto java_rotate = jfloat(object.rotate);
+        auto java_scale = jfloat(object.scale);
 
         auto java_shape = AutoJObject(env, construct());
         env->SetObjectField(java_shape, type, java_type);
@@ -76,17 +76,32 @@ public:
         return java_shape;
     }
 
+    AutoJObject convert(const NativeObject &object) const final {
+        return convert(SeetaAIPShape(object));
+    }
+
+    using JConverter::convert_array;
+
+    AutoJObject convert_array(const SeetaAIPShape *array, jsize N) const {
+        if (!array) N = 0;
+        AutoJObject result(env, env->NewObjectArray(N, clazz, nullptr));
+        for (jsize i = 0; i < N; ++i) {
+            env->SetObjectArrayElement(result.get<jobjectArray>(), i, convert(array[i]));
+        }
+        return result;
+    }
+
     NativeObject convert(jobject object) const final {
         JShapeType clazz_shape_type(env);
         JPoint clazz_point(env);
-        
+
         auto java_type = env->GetObjectField(object, type);
         defer(&JNIEnv::DeleteLocalRef, env, java_type);
         auto java_landmarks = env->GetObjectField(object, landmarks);
         defer(&JNIEnv::DeleteLocalRef, env, java_landmarks);
         auto java_rotate = env->GetFloatField(object, rotate);
         auto java_scale = env->GetFloatField(object, scale);
-        
+
         auto native_type = clazz_shape_type.convert(java_type);
         auto native_landmarks = clazz_point.convert_array(reinterpret_cast<jobjectArray>(java_landmarks));
         auto native_rotate = float(java_rotate);
@@ -105,8 +120,7 @@ public:
 class JValueType : public JEnum {
 public:
     explicit JValueType(JNIEnv *env)
-            : JEnum(env, JNI_PACKAGE "ValueType")
-    {
+            : JEnum(env, JNI_PACKAGE "ValueType") {
         this->bind("Void", SEETA_AIP_VALUE_VOID);
         this->bind("Byte", SEETA_AIP_VALUE_BYTE);
         this->bind("Int", SEETA_AIP_VALUE_INT32);
@@ -134,47 +148,63 @@ public:
         dims = env->GetFieldID(clazz, "dims", "[I");
     }
 
-    AutoJObject convert(const NativeObject &object) const final {
+    AutoJObject convert(const SeetaAIPObject::Extra &object) const {
         JValueType clazz_value_type(env);
 
-        auto java_type = clazz_value_type.convert(int(object.type()));
-        auto java_dims = JInt(env).convert_array(object.dims());
+        auto java_type = clazz_value_type.convert(int(object.type));
+        auto java_dims = JInt(env).convert_array(object.dims.data, object.dims.size);
 
         auto java_tensor = AutoJObject(env, construct());
-        auto &native_dims = object.dims();
         auto N = jsize(std::accumulate(
-                native_dims.begin(), native_dims.end(),
+                object.dims.data, object.dims.data + object.dims.size,
                 1, std::multiplies<uint32_t>()));
 
         env->SetObjectField(java_tensor, type, java_type);
         env->SetObjectField(java_tensor, dims, java_dims);
 
-        switch (object.type()) {
+        switch (object.type) {
             default:
                 break;
             case SEETA_AIP_VALUE_BYTE:
+                static_assert(sizeof(jbyte) == 1, "jbyte must be int8_t or uint8_t");
                 env->SetObjectField(
                         java_tensor, data_byte,
-                        JByte(env).convert_array(object.data<jbyte>(), N));
+                    JByte(env).convert_array(reinterpret_cast<const uint8_t*>(object.data), N));
                 break;
             case SEETA_AIP_VALUE_INT32:
+                static_assert(sizeof(jint) == 4, "jint must be int32_t or uint32_t");
                 env->SetObjectField(
                         java_tensor, data_int,
-                        JInt(env).convert_array(object.data<jint>(), N));
+                        JInt(env).convert_array(reinterpret_cast<const uint32_t*>(object.data), N));
                 break;
             case SEETA_AIP_VALUE_FLOAT32:
                 env->SetObjectField(
                         java_tensor, data_float,
-                        JFloat(env).convert_array(object.data<jfloat>(), N));
+                        JFloat(env).convert_array(reinterpret_cast<const float*>(object.data), N));
                 break;
             case SEETA_AIP_VALUE_FLOAT64:
                 env->SetObjectField(
                         java_tensor, data_double,
-                        JDouble(env).convert_array(object.data<jdouble>(), N));
+                        JDouble(env).convert_array(reinterpret_cast<const double*>(object.data), N));
                 break;
         }
 
         return java_tensor;
+    }
+
+    AutoJObject convert(const NativeObject &object) const final {
+        return convert(SeetaAIPObject::Extra(object));
+    }
+
+    using JConverter::convert_array;
+
+    AutoJObject convert_array(const SeetaAIPObject::Extra *array, jsize N) const {
+        if (!array) N = 0;
+        AutoJObject result(env, env->NewObjectArray(N, clazz, nullptr));
+        for (jsize i = 0; i < N; ++i) {
+            env->SetObjectArrayElement(result.get<jobjectArray>(), i, convert(array[i]));
+        }
+        return result;
     }
 
     NativeObject convert(jobject object) const final {
@@ -198,29 +228,27 @@ public:
         switch (native_type) {
             default:
                 break;
-            case SEETA_AIP_VALUE_BYTE:
-            {
+            case SEETA_AIP_VALUE_BYTE: {
+                static_assert(sizeof(jbyte) == 1, "jbyte must be int8_t or uint8_t");
                 auto java_data = reinterpret_cast<jbyteArray>(env->GetObjectField(object, data_byte));
                 defer_delete_local_ref(env, java_data);
                 env->GetByteArrayRegion(java_data, 0, N, result.data<jbyte>());
                 break;
             }
-            case SEETA_AIP_VALUE_INT32:
-            {
+            case SEETA_AIP_VALUE_INT32: {
+                static_assert(sizeof(jint) == 4, "jint must be int32_t or uint32_t");
                 auto java_data = reinterpret_cast<jintArray>(env->GetObjectField(object, data_int));
                 defer_delete_local_ref(env, java_data);
                 env->GetIntArrayRegion(java_data, 0, N, result.data<jint>());
                 break;
             }
-            case SEETA_AIP_VALUE_FLOAT32:
-            {
+            case SEETA_AIP_VALUE_FLOAT32: {
                 auto java_data = reinterpret_cast<jfloatArray>(env->GetObjectField(object, data_float));
                 defer_delete_local_ref(env, java_data);
                 env->GetFloatArrayRegion(java_data, 0, N, result.data<jfloat>());
                 break;
             }
-            case SEETA_AIP_VALUE_FLOAT64:
-            {
+            case SEETA_AIP_VALUE_FLOAT64: {
                 auto java_data = reinterpret_cast<jdoubleArray>(env->GetObjectField(object, data_double));
                 defer_delete_local_ref(env, java_data);
                 env->GetDoubleArrayRegion(java_data, 0, N, result.data<jdouble>());
@@ -253,12 +281,12 @@ public:
     }
 };
 
-
 class JAIPObject : public JConverter<seeta::aip::Object> {
 public:
     jfieldID shape;
     jfieldID tags;
     jfieldID extra;
+
     explicit JAIPObject(JNIEnv *env)
             : JConverter(env, JNI_PACKAGE "Object") {
         shape = env->GetFieldID(clazz, "shape", "L" JNI_PACKAGE "Shape;");
@@ -266,14 +294,14 @@ public:
         extra = env->GetFieldID(clazz, "extra", "L" JNI_PACKAGE "Tensor;");
     }
 
-    AutoJObject convert(const NativeObject &object) const final {
+    AutoJObject convert(const SeetaAIPObject &object) const {
         JShape clazz_shape(env);
         JTag clazz_tag(env);
         JTensor clazz_tensor(env);
 
-        auto java_shape = clazz_shape.convert(object.shape());
-        auto java_tags = clazz_tag.convert_array(object.tags());
-        auto java_extra = clazz_tensor.convert(object.extra());
+        auto java_shape = clazz_shape.convert(object.shape);
+        auto java_tags = clazz_tag.convert_array(object.tags.data, object.tags.size);
+        auto java_extra = clazz_tensor.convert(object.extra);
 
         auto java_object = AutoJObject(env, construct());
         env->SetObjectField(java_object, shape, java_shape);
@@ -281,6 +309,21 @@ public:
         env->SetObjectField(java_object, extra, java_extra);
 
         return java_object;
+    }
+
+    AutoJObject convert(const NativeObject &object) const final {
+        return convert(SeetaAIPObject(object));
+    }
+
+    using JConverter::convert_array;
+
+    AutoJObject convert_array(const SeetaAIPObject *array, jsize N) const {
+        if (!array) N = 0;
+        AutoJObject result(env, env->NewObjectArray(N, clazz, nullptr));
+        for (jsize i = 0; i < N; ++i) {
+            env->SetObjectArrayElement(result.get<jobjectArray>(), i, convert(array[i]));
+        }
+        return result;
     }
 
     NativeObject convert(jobject object) const final {
@@ -317,11 +360,15 @@ public:
         id = GetFieldID("id", "I");
     }
 
-    AutoJObject convert(const NativeObject &object) const final {
+    AutoJObject convert(const SeetaAIPDevice &object) const {
         return AutoJObject(
                 env, construct("(Ljava/lang/String;I)V",
-                               jobject(JString(env).convert(object.device())),
-                               jint(object.id())));
+                               jobject(JString(env).convert(object.device)),
+                               jint(object.id)));
+    }
+
+    AutoJObject convert(const NativeObject &object) const final {
+        return convert(SeetaAIPDevice(object));
     }
 
     NativeObject convert(jobject object) const final {
@@ -331,3 +378,191 @@ public:
                 env->GetIntField(object, id)};
     }
 };
+
+class JImageFormat : public JEnum {
+public:
+    explicit JImageFormat(JNIEnv *env)
+            : JEnum(env, JNI_PACKAGE "ImageFormat") {
+        this->bind("U8Raw", SEETA_AIP_FORMAT_U8RAW);
+        this->bind("F32Raw", SEETA_AIP_FORMAT_F32RAW);
+        this->bind("I32Raw", SEETA_AIP_FORMAT_I32RAW);
+        this->bind("U8Rgb", SEETA_AIP_FORMAT_U8RGB);
+        this->bind("U8Bgr", SEETA_AIP_FORMAT_U8BGR);
+        this->bind("U8Rgba", SEETA_AIP_FORMAT_U8RGBA);
+        this->bind("U8Bgra", SEETA_AIP_FORMAT_U8BGRA);
+        this->bind("U8Y", SEETA_AIP_FORMAT_U8Y);
+    }
+};
+
+class JImageData : public JConverter<seeta::aip::ImageData> {
+public:
+    jfieldID format;
+    jfieldID type;
+    jfieldID data_float;
+    jfieldID data_byte;
+    jfieldID data_int;
+    jfieldID number;
+    jfieldID height;
+    jfieldID width;
+    jfieldID channels;
+
+
+    explicit JImageData(JNIEnv *env)
+            : JConverter(env, JNI_PACKAGE "ImageData") {
+        format = env->GetFieldID(clazz, "format", "L" JNI_PACKAGE "ImageFormat;");
+        type = env->GetFieldID(clazz, "type", "L" JNI_PACKAGE "ValueType;");
+        data_float = env->GetFieldID(clazz, "data_float", "[F");
+        data_byte = env->GetFieldID(clazz, "data_byte", "[B");
+        data_int = env->GetFieldID(clazz, "data_int", "[I");
+        number = env->GetFieldID(clazz, "number", "I");
+        height = env->GetFieldID(clazz, "height", "I");
+        width = env->GetFieldID(clazz, "width", "I");
+        channels = env->GetFieldID(clazz, "channels", "I");
+    }
+
+    AutoJObject convert(const SeetaAIPImageData &object) const {
+        JImageFormat clazz_image_format(env);
+        JValueType clazz_value_type(env);
+
+        auto native_type = seeta::aip::ImageData::GetType(SEETA_AIP_IMAGE_FORMAT(object.format));
+        auto java_format = clazz_image_format.convert(object.format);
+        auto java_type = clazz_value_type.convert(native_type);
+        auto java_number = jint(object.number);
+        auto java_height = jint(object.height);
+        auto java_width = jint(object.width);
+        auto java_channels = jint(object.channels);
+
+        auto N = jsize(java_number * java_height * java_width * java_channels);
+
+        auto java_image = AutoJObject(env, construct());
+
+        env->SetObjectField(java_image, format, java_format);
+        env->SetObjectField(java_image, type, java_type);
+        env->SetIntField(java_image, number, java_number);
+        env->SetIntField(java_image, height, java_height);
+        env->SetIntField(java_image, width, java_width);
+        env->SetIntField(java_image, channels, java_channels);
+
+        switch (native_type) {
+            default:
+                break;
+            case SEETA_AIP_VALUE_BYTE:
+                static_assert(sizeof(jbyte) == 1, "jbyte must be int8_t or uint8_t");
+                env->SetObjectField(
+                        java_image, data_byte,
+                        JByte(env).convert_array(reinterpret_cast<const uint8_t*>(object.data), N));
+                break;
+            case SEETA_AIP_VALUE_INT32:
+                static_assert(sizeof(jint) == 4, "jint must be int32_t or uint32_t");
+                env->SetObjectField(
+                        java_image, data_int,
+                        JInt(env).convert_array(reinterpret_cast<const uint32_t*>(object.data), N));
+                break;
+            case SEETA_AIP_VALUE_FLOAT32:
+                env->SetObjectField(
+                        java_image, data_float,
+                        JFloat(env).convert_array(reinterpret_cast<const float*>(object.data), N));
+                break;
+        }
+
+        return java_image;
+    }
+
+    AutoJObject convert(const NativeObject &object) const final {
+        return convert(SeetaAIPImageData(object));
+    }
+
+    using JConverter::convert_array;
+
+    AutoJObject convert_array(const SeetaAIPImageData *array, jsize N) const {
+        AutoJObject result(env, env->NewObjectArray(N, clazz, nullptr));
+        for (jsize i = 0; i < N; ++i) {
+            env->SetObjectArrayElement(result.get<jobjectArray>(), i, convert(array[i]));
+        }
+        return result;
+    }
+
+    NativeObject convert(jobject object) const final {
+        if (!object) return NativeObject();
+
+        JImageFormat clazz_image_format(env);
+
+        auto java_format = env->GetObjectField(object, format);
+        defer(&JNIEnv::DeleteLocalRef, env, java_format);
+        auto java_type = env->GetObjectField(object, type);
+        defer(&JNIEnv::DeleteLocalRef, env, java_type);
+        auto java_number = env->GetIntField(object, number);
+        auto java_height = env->GetIntField(object, height);
+        auto java_width = env->GetIntField(object, width);
+        auto java_channels = env->GetIntField(object, channels);
+
+        auto native_format = clazz_image_format.convert(java_format);
+
+        auto N = jsize(java_number * java_height * java_width * java_channels);
+
+        auto result = NativeObject(SEETA_AIP_IMAGE_FORMAT(native_format),
+                                   uint32_t(java_number),
+                                   uint32_t(java_height),
+                                   uint32_t(java_width),
+                                   uint32_t(java_channels));
+        auto native_type = result.type();
+
+        switch (native_type) {
+            default:
+                break;
+            case SEETA_AIP_VALUE_BYTE: {
+                static_assert(sizeof(jbyte) == 1, "jbyte must be int8_t or uint8_t");
+                auto java_data = reinterpret_cast<jbyteArray>(env->GetObjectField(object, data_byte));
+                defer_delete_local_ref(env, java_data);
+                env->GetByteArrayRegion(java_data, 0, N, result.data<jbyte>());
+                break;
+            }
+            case SEETA_AIP_VALUE_INT32: {
+                static_assert(sizeof(jint) == 4, "jint must be int32_t or uint32_t");
+                auto java_data = reinterpret_cast<jintArray>(env->GetObjectField(object, data_int));
+                defer_delete_local_ref(env, java_data);
+                env->GetIntArrayRegion(java_data, 0, N, result.data<jint>());
+                break;
+            }
+            case SEETA_AIP_VALUE_FLOAT32: {
+                auto java_data = reinterpret_cast<jfloatArray>(env->GetObjectField(object, data_float));
+                defer_delete_local_ref(env, java_data);
+                env->GetFloatArrayRegion(java_data, 0, N, result.data<jfloat>());
+                break;
+            }
+        }
+
+        return result;
+    }
+};
+
+class JResult : public JConverter<seeta::aip::Instance::Result> {
+public:
+    jfieldID images;
+    jfieldID objects;
+
+    explicit JResult(JNIEnv *env)
+            : JConverter(env, JNI_PACKAGE "Result") {
+        images = env->GetFieldID(clazz, "images", "[L" JNI_PACKAGE "ImageData;");
+        objects = env->GetFieldID(clazz, "objects", "[L" JNI_PACKAGE "Object;");
+    }
+
+    AutoJObject convert(const NativeObject &object) const final {
+        JImageData clazz_image(env);
+        JAIPObject clazz_object(env);
+
+        auto java_images = clazz_image.convert_array(object.images.data, jsize(object.images.size));
+        auto java_objects = clazz_object.convert_array(object.objects.data, jsize(object.objects.size));
+
+        auto java_result = AutoJObject(env, construct());
+        env->SetObjectField(java_result, images, java_images);
+        env->SetObjectField(java_result, objects, java_objects);
+
+        return java_result;
+    }
+
+    NativeObject convert(jobject object) const final {
+        throw seeta::aip::Exception("Not implement convert seeta.aip.Result");
+    }
+};
+

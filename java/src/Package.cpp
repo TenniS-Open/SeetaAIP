@@ -124,3 +124,171 @@ JNIEXPORT void JNICALL Java_seeta_aip_Package_free
     if (!instance) return;
     delete instance;
 }
+
+/*
+ * Class:     seeta_aip_Package
+ * Method:    property
+ * Signature: (J)[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_seeta_aip_Package_property
+        (JNIEnv *env, jobject self, jlong handle) {
+    auto instance = (NativeInstance*)(handle);
+    try {
+        JString clazz_string(env);
+        return clazz_string.convert_array(instance->property()).release<jobjectArray>();
+    } catch (const JNIExceptionCheck &) {
+    }  catch (const seeta::aip::Exception &e) {
+        jni_throw_aip_exception(env, e.errcode(), e.what());
+    } catch (const std::exception &e) {
+        jni_throw(env, e.what());
+    }
+    return nullptr;
+}
+
+
+/*
+ * Class:     seeta_aip_Package
+ * Method:    setd
+ * Signature: (JLjava/lang/String;D)V
+ */
+JNIEXPORT void JNICALL Java_seeta_aip_Package_setd
+        (JNIEnv *env, jobject self, jlong handle, jstring name, jdouble value) {
+    auto instance = (NativeInstance*)(handle);
+    try {
+        JString clazz_string(env);
+        instance->setd(clazz_string.convert(name), double(value));
+    } catch (const JNIExceptionCheck &) {
+    }  catch (const seeta::aip::Exception &e) {
+        jni_throw_aip_exception(env, e.errcode(), e.what());
+    } catch (const std::exception &e) {
+        jni_throw(env, e.what());
+    }
+}
+
+/*
+ * Class:     seeta_aip_Package
+ * Method:    getd
+ * Signature: (JLjava/lang/String;)D
+ */
+JNIEXPORT jdouble JNICALL Java_seeta_aip_Package_getd
+        (JNIEnv *env, jobject self, jlong handle, jstring name) {
+    auto instance = (NativeInstance*)(handle);
+    try {
+        JString clazz_string(env);
+        return jdouble(instance->getd(clazz_string.convert(name)));
+    } catch (const JNIExceptionCheck &) {
+    }  catch (const seeta::aip::Exception &e) {
+        jni_throw_aip_exception(env, e.errcode(), e.what());
+    } catch (const std::exception &e) {
+        jni_throw(env, e.what());
+    }
+    return 0;
+}
+
+/*
+ * Class:     seeta_aip_Package
+ * Method:    reset
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_seeta_aip_Package_reset
+        (JNIEnv *env, jobject self, jlong handle) {
+    auto instance = (NativeInstance*)(handle);
+    try {
+        instance->reset();
+    } catch (const JNIExceptionCheck &) {
+    }  catch (const seeta::aip::Exception &e) {
+        jni_throw_aip_exception(env, e.errcode(), e.what());
+    } catch (const std::exception &e) {
+        jni_throw(env, e.what());
+    }
+}
+
+/*
+ * Class:     seeta_aip_Package
+ * Method:    forward
+ * Signature: (JI[Lseeta/aip/ImageData;[Lseeta/aip/Object;)Lseeta/aip/Result;
+ */
+JNIEXPORT jobject JNICALL Java_seeta_aip_Package_forward
+        (JNIEnv *env, jobject self, jlong handle, jint methodID, jobjectArray images, jobjectArray objects) {
+    auto instance = (NativeInstance*)(handle);
+    try {
+        auto native_method_id = uint32_t(methodID);
+        auto native_images = JImageData(env).convert_array(images);
+        auto native_objects = JAIPObject(env).convert_array(objects);
+        auto result = instance->forward(native_method_id,
+                                        native_images,
+                                        native_objects);
+        return JResult(env).convert(result).release();
+    } catch (const JNIExceptionCheck &) {
+    }  catch (const seeta::aip::Exception &e) {
+        jni_throw_aip_exception(env, e.errcode(), e.what());
+    } catch (const std::exception &e) {
+        jni_throw(env, e.what());
+    }
+    return nullptr;
+}
+
+/*
+ * Class:     seeta_aip_Package
+ * Method:    tag
+ * Signature: (JIII)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_seeta_aip_Package_tag
+        (JNIEnv *env, jobject self, jlong handle, jint methodID, jint labelIndex, jint labelValue) {
+    auto instance = (NativeInstance*)(handle);
+    try {
+        auto native_method_id = uint32_t(methodID);
+        auto native_index = uint32_t(labelIndex);
+        auto native_value = int32_t(labelValue);
+        return JString(env).convert(instance->tag(
+                native_method_id, native_index, native_value
+                )).release<jstring>();
+    } catch (const JNIExceptionCheck &) {
+    }  catch (const seeta::aip::Exception &e) {
+        jni_throw_aip_exception(env, e.errcode(), e.what());
+    } catch (const std::exception &e) {
+        jni_throw(env, e.what());
+    }
+    return nullptr;
+}
+
+/*
+ * Class:     seeta_aip_Package
+ * Method:    set
+ * Signature: (JLjava/lang/String;Lseeta/aip/Object;)V
+ */
+JNIEXPORT void JNICALL Java_seeta_aip_Package_set
+        (JNIEnv *env, jobject self, jlong handle, jstring name, jobject value) {
+    auto instance = (NativeInstance*)(handle);
+    try {
+        auto native_name = JString(env).convert(name);
+        auto native_value = JAIPObject(env).convert(value);
+        instance->set(native_name, native_value);
+    } catch (const JNIExceptionCheck &) {
+    }  catch (const seeta::aip::Exception &e) {
+        jni_throw_aip_exception(env, e.errcode(), e.what());
+    } catch (const std::exception &e) {
+        jni_throw(env, e.what());
+    }
+}
+
+/*
+ * Class:     seeta_aip_Package
+ * Method:    get
+ * Signature: (JLjava/lang/String;)Lseeta/aip/Object;
+ */
+JNIEXPORT jobject JNICALL Java_seeta_aip_Package_get
+        (JNIEnv *env, jobject self, jlong handle, jstring name) {
+    auto instance = (NativeInstance*)(handle);
+    try {
+        auto native_name = JString(env).convert(name);
+        auto native_value = instance->get(native_name);
+        return JAIPObject(env).convert(native_value).release();
+    } catch (const JNIExceptionCheck &) {
+    }  catch (const seeta::aip::Exception &e) {
+        jni_throw_aip_exception(env, e.errcode(), e.what());
+    } catch (const std::exception &e) {
+        jni_throw(env, e.what());
+    }
+    return nullptr;
+}
