@@ -71,122 +71,8 @@ public:
     template <int A>
     void rotate(const SeetaAIPImageData &src, seeta::aip::ImageData &dst);
 
-    template <>
-    void rotate<0>(const SeetaAIPImageData &src, seeta::aip::ImageData &dst) {
-        dst = seeta::aip::ImageData(SEETA_AIP_IMAGE_FORMAT(src.format),
-                src.number, src.width, src.height, src.channels, src.data);
-    }
-
-    template <>
-    void rotate<90>(const SeetaAIPImageData &src, seeta::aip::ImageData &dst) {
-        dst = seeta::aip::ImageData(SEETA_AIP_IMAGE_FORMAT(src.format),
-                                    src.number, src.height, src.width, src.channels);
-        for (int n = 0; n < src.number; ++n) {
-            for (int h = 0; h < src.height; ++h) {
-                auto dst_channels = src.channels;
-
-                auto dst_width = src.height;
-                auto dst_height = src.width;
-
-                auto dst_h = dst_height - 1;
-                auto dst_w = h;
-                auto dst_step = -(int64_t)dst_width * dst_channels;
-
-                auto src_step = src.channels;
-                auto src_data = reinterpret_cast<const uint8_t *>(src.data) + (n * src.height + h) * src.width * src.channels;
-                auto dst_data = reinterpret_cast<uint8_t *>(dst.data()) + ((n * dst_height + dst_h) * dst_width + dst_w) * dst_channels;
-
-                for (int w = 0; w < src.width; ++w) {
-                    copy_pixel(dst_data, src_data, src.channels);
-
-                    src_data += src_step;
-                    dst_data += dst_step;
-                }
-            }
-        }
-    }
-
-    template <>
-    void rotate<180>(const SeetaAIPImageData &src, seeta::aip::ImageData &dst) {
-        dst = seeta::aip::ImageData(SEETA_AIP_IMAGE_FORMAT(src.format),
-                                    src.number, src.width, src.height, src.channels);
-        for (int n = 0; n < src.number; ++n) {
-            for (int h = 0; h < src.height; ++h) {
-                auto dst_channels = src.channels;
-
-                auto dst_width = src.width;
-                auto dst_height = src.height;
-
-                auto dst_h = dst_height - 1 - h;
-                auto dst_w = dst_width - 1;
-                auto dst_step = -(int64_t)dst_channels;
-
-                auto src_step = src.channels;
-                auto src_data = reinterpret_cast<const uint8_t *>(src.data) + (n * src.height + h) * src.width * src.channels;
-                auto dst_data = reinterpret_cast<uint8_t *>(dst.data()) + ((n * dst_height + dst_h) * dst_width + dst_w) * dst_channels;
-
-                for (int w = 0; w < src.width; ++w) {
-                    copy_pixel(dst_data, src_data, src.channels);
-
-                    src_data += src_step;
-                    dst_data += dst_step;
-                }
-            }
-        }
-    }
-
-    template <>
-    void rotate<270>(const SeetaAIPImageData &src, seeta::aip::ImageData &dst) {
-        dst = seeta::aip::ImageData(SEETA_AIP_IMAGE_FORMAT(src.format),
-                                    src.number, src.height, src.width, src.channels);
-        for (int n = 0; n < src.number; ++n) {
-            for (int h = 0; h < src.height; ++h) {
-                auto dst_channels = src.channels;
-
-                auto dst_width = src.height;
-                auto dst_height = src.width;
-
-                auto dst_h = 0;
-                auto dst_w = dst_width - 1 - h;
-                auto dst_step = dst_width * dst_channels;
-
-                auto src_step = src.channels;
-                auto src_data = reinterpret_cast<const uint8_t *>(src.data) + (n * src.height + h) * src.width * src.channels;
-                auto dst_data = reinterpret_cast<uint8_t *>(dst.data()) + ((n * dst_height + dst_h) * dst_width + dst_w) * dst_channels;
-
-                for (int w = 0; w < src.width; ++w) {
-                    copy_pixel(dst_data, src_data, src.channels);
-
-                    src_data += src_step;
-                    dst_data += dst_step;
-                }
-            }
-        }
-    }
-
     void forward_0(const std::vector<SeetaAIPImageData> &images,
-                   const std::vector<SeetaAIPObject> &objects) {
-        if (images.size() != 1) throw seeta::aip::Exception(SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_IMAGE);
-        auto &image = images[0];
-        result.images.resize(1);
-        auto fix_angle = angle >= 0 ? angle % 360 : 360 - (-angle) % 360;
-        switch (fix_angle) {
-            default:
-                throw seeta::aip::Exception("Can not rotate to " + std::to_string(angle));
-            case 90:
-                rotate<90>(image, result.images[0]);
-                break;
-            case 180:
-                rotate<180>(image, result.images[0]);
-                break;
-            case 270:
-                rotate<270>(image, result.images[0]);
-                break;
-            case 0:
-                rotate<0>(image, result.images[0]);
-                break;
-        }
-    }
+                   const std::vector<SeetaAIPObject> &objects);
 
     void forward(
             uint32_t method_id,
@@ -201,6 +87,126 @@ public:
         }
     }
 };
+
+
+template <>
+void MyPackage::rotate<0>(const SeetaAIPImageData &src, seeta::aip::ImageData &dst) {
+    dst = seeta::aip::ImageData(SEETA_AIP_IMAGE_FORMAT(src.format),
+                                src.number, src.width, src.height, src.channels, src.data);
+}
+
+template <>
+void MyPackage::rotate<90>(const SeetaAIPImageData &src, seeta::aip::ImageData &dst) {
+    dst = seeta::aip::ImageData(SEETA_AIP_IMAGE_FORMAT(src.format),
+                                src.number, src.height, src.width, src.channels);
+    for (int n = 0; n < src.number; ++n) {
+        for (int h = 0; h < src.height; ++h) {
+            auto dst_channels = src.channels;
+
+            auto dst_width = src.height;
+            auto dst_height = src.width;
+
+            auto dst_h = dst_height - 1;
+            auto dst_w = h;
+            auto dst_step = -(int64_t)dst_width * dst_channels;
+
+            auto src_step = src.channels;
+            auto src_data = reinterpret_cast<const uint8_t *>(src.data) + (n * src.height + h) * src.width * src.channels;
+            auto dst_data = reinterpret_cast<uint8_t *>(dst.data()) + ((n * dst_height + dst_h) * dst_width + dst_w) * dst_channels;
+
+            for (int w = 0; w < src.width; ++w) {
+                copy_pixel(dst_data, src_data, src.channels);
+
+                src_data += src_step;
+                dst_data += dst_step;
+            }
+        }
+    }
+}
+
+template <>
+void MyPackage::rotate<180>(const SeetaAIPImageData &src, seeta::aip::ImageData &dst) {
+    dst = seeta::aip::ImageData(SEETA_AIP_IMAGE_FORMAT(src.format),
+                                src.number, src.width, src.height, src.channels);
+    for (int n = 0; n < src.number; ++n) {
+        for (int h = 0; h < src.height; ++h) {
+            auto dst_channels = src.channels;
+
+            auto dst_width = src.width;
+            auto dst_height = src.height;
+
+            auto dst_h = dst_height - 1 - h;
+            auto dst_w = dst_width - 1;
+            auto dst_step = -(int64_t)dst_channels;
+
+            auto src_step = src.channels;
+            auto src_data = reinterpret_cast<const uint8_t *>(src.data) + (n * src.height + h) * src.width * src.channels;
+            auto dst_data = reinterpret_cast<uint8_t *>(dst.data()) + ((n * dst_height + dst_h) * dst_width + dst_w) * dst_channels;
+
+            for (int w = 0; w < src.width; ++w) {
+                copy_pixel(dst_data, src_data, src.channels);
+
+                src_data += src_step;
+                dst_data += dst_step;
+            }
+        }
+    }
+}
+
+template <>
+void MyPackage::rotate<270>(const SeetaAIPImageData &src, seeta::aip::ImageData &dst) {
+    dst = seeta::aip::ImageData(SEETA_AIP_IMAGE_FORMAT(src.format),
+                                src.number, src.height, src.width, src.channels);
+    for (int n = 0; n < src.number; ++n) {
+        for (int h = 0; h < src.height; ++h) {
+            auto dst_channels = src.channels;
+
+            auto dst_width = src.height;
+            auto dst_height = src.width;
+
+            auto dst_h = 0;
+            auto dst_w = dst_width - 1 - h;
+            auto dst_step = dst_width * dst_channels;
+
+            auto src_step = src.channels;
+            auto src_data = reinterpret_cast<const uint8_t *>(src.data) + (n * src.height + h) * src.width * src.channels;
+            auto dst_data = reinterpret_cast<uint8_t *>(dst.data()) + ((n * dst_height + dst_h) * dst_width + dst_w) * dst_channels;
+
+            for (int w = 0; w < src.width; ++w) {
+                copy_pixel(dst_data, src_data, src.channels);
+
+                src_data += src_step;
+                dst_data += dst_step;
+            }
+        }
+    }
+}
+
+void MyPackage::forward_0(const std::vector<SeetaAIPImageData> &images, const std::vector<SeetaAIPObject> &objects) {
+    if (images.size() != 1) throw seeta::aip::Exception(SEETA_AIP_ERROR_MISMATCH_REQUIRED_INPUT_IMAGE);
+    auto &image = images[0];
+    if (seeta::aip::ImageData::GetType(SEETA_AIP_IMAGE_FORMAT(image.format)) != SEETA_AIP_VALUE_BYTE) {
+        throw seeta::aip::Exception("Image format not supported. byte type wanted.");
+    }
+    result.images.resize(1);
+    auto fix_angle = angle >= 0 ? angle % 360 : 360 - (-angle) % 360;
+    switch (fix_angle) {
+        default:
+            throw seeta::aip::Exception("Can not rotate to " + std::to_string(angle));
+        case 90:
+            rotate<90>(image, result.images[0]);
+            break;
+        case 180:
+            rotate<180>(image, result.images[0]);
+            break;
+        case 270:
+            rotate<270>(image, result.images[0]);
+            break;
+        case 0:
+            rotate<0>(image, result.images[0]);
+            break;
+    }
+}
 
 int32_t seeta_aip_load(struct SeetaAIP *aip, uint32_t size) {
     CHECK_AIP_SIZE(aip, size)
