@@ -25,6 +25,13 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "NVIDIA")
 endif()
 
+find_package(OpenMP)
+if (OpenMP_FOUND)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    include_directories(${OpenMP_CXX_INCLUDE_DIRS})
+    link_libraries(${OpenMP_CXX_LIBRARIES})
+endif()
+
 if (WIN32)
 elseif (IOS)
 elseif (APPLE)
