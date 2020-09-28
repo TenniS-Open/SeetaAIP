@@ -12,32 +12,32 @@ namespace seeta {
         namespace _ {
             template<typename SRC, typename DST,
                     typename=typename std::enable_if<std::is_convertible<SRC, DST>::value>::type>
-            inline void cast(int threads, const SRC *src, DST *dst, size_t N) {
+            inline void cast(int threads, const SRC *src, DST *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { dst[i] = DST(src[i]); }
+                    for (int i = 0; i < N; ++i) { dst[i] = DST(src[i]); }
                 } else {
-                    for (size_t i = 0; i < N; ++i) { *dst++ = DST(*src++); }
+                    for (int i = 0; i < N; ++i) { *dst++ = DST(*src++); }
                 }
             }
 
             template<typename SRC, typename DST,
                     typename=typename std::enable_if<std::is_convertible<SRC, DST>::value>::type>
-            inline void cast(int threads, const SRC *src, DST *dst, size_t N, SRC scale) {
+            inline void cast(int threads, const SRC *src, DST *dst, int N, SRC scale) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, scale, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { dst[i] = DST(scale * src[i]); }
+                    for (int i = 0; i < N; ++i) { dst[i] = DST(scale * src[i]); }
                 } else {
-                    for (size_t i = 0; i < N; ++i) { *dst++ = DST(scale * *src++); }
+                    for (int i = 0; i < N; ++i) { *dst++ = DST(scale * *src++); }
                 }
             }
 
             template<typename DST>
-            inline void cast_to(int threads, const void *src, SEETA_AIP_VALUE_TYPE src_type, DST *dst, size_t N,
+            inline void cast_to(int threads, const void *src, SEETA_AIP_VALUE_TYPE src_type, DST *dst, int N,
                                 float data_scale = 1) {
                 switch (src_type) {
                     default:
@@ -61,13 +61,11 @@ namespace seeta {
             inline size_t value_type_width(SEETA_AIP_VALUE_TYPE type) {
                 switch (type) {
                     default:
-                        return 0;
                     case SEETA_AIP_VALUE_VOID:
                         return 0;
                     case SEETA_AIP_VALUE_BYTE:
                         return 1;
                     case SEETA_AIP_VALUE_FLOAT32:
-                        return 4;
                     case SEETA_AIP_VALUE_INT32:
                         return 4;
                     case SEETA_AIP_VALUE_FLOAT64:
@@ -79,7 +77,7 @@ namespace seeta {
         inline void cast(int threads,
                          const void *src, SEETA_AIP_VALUE_TYPE src_type,
                          void *dst, SEETA_AIP_VALUE_TYPE dst_type,
-                         size_t N, float data_scale = 1) {
+                         int N, float data_scale = 1) {
             if (src_type == dst_type) {
                 if (src != dst) {
                     std::memcpy(dst, src, _::value_type_width(src_type) * N);
@@ -162,15 +160,15 @@ namespace seeta {
                 dst[2] = tmp;
             }
 
-            inline void convert_uimage_bgr2rgb(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_bgr2rgb(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
                     const auto N3 = N * 3;
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N3, src, dst)
 #endif
-                    for (size_t n = 0; n < N3; n += 3) { _bgr2rgb(src + n, dst + n); }
+                    for (int n = 0; n < N3; n += 3) { _bgr2rgb(src + n, dst + n); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 3, dst += 3) { _bgr2rgb(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 3, dst += 3) { _bgr2rgb(src, dst); }
                 }
             }
 
@@ -181,14 +179,14 @@ namespace seeta {
                 dst[3] = 0;
             }
 
-            inline void convert_uimage_bgr2bgra(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_bgr2bgra(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { _bgr2bgra(src + i * 3, dst + i * 4); }
+                    for (int i = 0; i < N; ++i) { _bgr2bgra(src + i * 3, dst + i * 4); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 3, dst += 4) { _bgr2bgra(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 3, dst += 4) { _bgr2bgra(src, dst); }
                 }
             }
 
@@ -199,14 +197,14 @@ namespace seeta {
                 dst[3] = 0;
             }
 
-            inline void convert_uimage_bgr2rgba(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_bgr2rgba(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { _bgr2rgba(src + i * 3, dst + i * 4); }
+                    for (int i = 0; i < N; ++i) { _bgr2rgba(src + i * 3, dst + i * 4); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 3, dst += 4) { _bgr2rgba(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 3, dst += 4) { _bgr2rgba(src, dst); }
                 }
             }
 
@@ -216,14 +214,14 @@ namespace seeta {
                 dst[2] = src[2];
             }
 
-            inline void convert_uimage_bgra2bgr(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_bgra2bgr(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { _bgra2bgr(src + i * 4, dst + i * 3); }
+                    for (int i = 0; i < N; ++i) { _bgra2bgr(src + i * 4, dst + i * 3); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 4, dst += 3) { _bgra2bgr(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 4, dst += 3) { _bgra2bgr(src, dst); }
                 }
             }
 
@@ -233,14 +231,14 @@ namespace seeta {
                 dst[2] = src[0];
             }
 
-            inline void convert_uimage_bgra2rgb(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_bgra2rgb(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { _bgra2rgb(src + i * 4, dst + i * 3); }
+                    for (int i = 0; i < N; ++i) { _bgra2rgb(src + i * 4, dst + i * 3); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 4, dst += 3) { _bgra2rgb(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 4, dst += 3) { _bgra2rgb(src, dst); }
                 }
             }
 
@@ -252,15 +250,15 @@ namespace seeta {
                 dst[3] = src[3];
             }
 
-            inline void convert_uimage_bgra2rgba(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_bgra2rgba(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
                     const auto N4 = N * 4;
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N4, src, dst)
 #endif
-                    for (size_t n = 0; n < N4; n += 4) { _bgra2rgba(src + n, dst + n); }
+                    for (int n = 0; n < N4; n += 4) { _bgra2rgba(src + n, dst + n); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 4, dst += 4) { _bgra2rgba(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 4, dst += 4) { _bgra2rgba(src, dst); }
                 }
             }
 
@@ -270,14 +268,14 @@ namespace seeta {
                 dst[2] = src[0];
             }
 
-            inline void convert_uimage_y2bgr(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_y2bgr(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { _y2bgr(src + i, dst + i * 3); }
+                    for (int i = 0; i < N; ++i) { _y2bgr(src + i, dst + i * 3); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 1, dst += 3) { _y2bgr(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 1, dst += 3) { _y2bgr(src, dst); }
                 }
             }
 
@@ -288,14 +286,14 @@ namespace seeta {
                 dst[3] = 0;
             }
 
-            inline void convert_uimage_y2bgra(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_y2bgra(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { _y2bgra(src + i, dst + i * 4); }
+                    for (int i = 0; i < N; ++i) { _y2bgra(src + i, dst + i * 4); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 1, dst += 4) { _y2bgra(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 1, dst += 4) { _y2bgra(src, dst); }
                 }
             }
 
@@ -307,25 +305,25 @@ namespace seeta {
                 dst[0] = Y > 255 ? 255 : Y;
             }
 
-            inline void convert_uimage_bgr2y(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_bgr2y(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { _bgr2y(src + i * 3, dst + i); }
+                    for (int i = 0; i < N; ++i) { _bgr2y(src + i * 3, dst + i); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 3, dst += 1) { _bgr2y(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 3, dst += 1) { _bgr2y(src, dst); }
                 }
             }
 
-            inline void convert_uimage_bgra2y(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_bgra2y(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { _bgr2y(src + i * 4, dst + i); }
+                    for (int i = 0; i < N; ++i) { _bgr2y(src + i * 4, dst + i); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 4, dst += 1) { _bgr2y(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 4, dst += 1) { _bgr2y(src, dst); }
                 }
             }
 
@@ -337,31 +335,31 @@ namespace seeta {
                 dst[0] = Y > 255 ? 255 : Y;
             }
 
-            inline void convert_uimage_rgb2y(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_rgb2y(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { _rgb2y(src + i * 3, dst + i); }
+                    for (int i = 0; i < N; ++i) { _rgb2y(src + i * 3, dst + i); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 3, dst += 1) { _rgb2y(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 3, dst += 1) { _rgb2y(src, dst); }
                 }
             }
 
-            inline void convert_uimage_rgba2y(int threads, const uint8_t *src, uint8_t *dst, size_t N) {
+            inline void convert_uimage_rgba2y(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(shared)
+#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
 #endif
-                    for (size_t i = 0; i < N; ++i) { _rgb2y(src + i * 4, dst + i); }
+                    for (int i = 0; i < N; ++i) { _rgb2y(src + i * 4, dst + i); }
                 } else {
-                    for (size_t i = 0; i < N; ++i, src += 4, dst += 1) { _rgb2y(src, dst); }
+                    for (int i = 0; i < N; ++i, src += 4, dst += 1) { _rgb2y(src, dst); }
                 }
             }
 
             inline void convert_uimage(int threads,
                                        cvt_format cvt_code, const void *src, void *dst,
-                                       size_t pixel_number) {
+                                       int pixel_number) {
                 static decltype(convert_uimage_bgr2rgb) *converter[] = {
                         nullptr,
                         convert_uimage_bgr2rgb,
@@ -390,7 +388,7 @@ namespace seeta {
                                         int src_channels, int dst_channels,
                                         SEETA_AIP_IMAGE_FORMAT src_format,
                                         SEETA_AIP_IMAGE_FORMAT dst_format,
-                                        size_t pixel_number) {
+                                        int pixel_number) {
                 if ((src_format < 1000 || dst_format < 1000) && src_channels != dst_channels) {
                     throw seeta::aip::Exception("Can not convert mismatch channel images with format U8Raw");
                 }
@@ -417,7 +415,7 @@ namespace seeta {
                                          int src_channels, int dst_channels,
                                          SEETA_AIP_IMAGE_FORMAT src_format,
                                          SEETA_AIP_IMAGE_FORMAT dst_format,
-                                         size_t pixel_number) {
+                                         int pixel_number) {
                 if (src_format != SEETA_AIP_FORMAT_F32RAW || dst_format != SEETA_AIP_FORMAT_F32RAW) {
                     throw seeta::aip::Exception("Float image format only support F32Raw for now.");
                 }
@@ -434,7 +432,7 @@ namespace seeta {
                                          int src_channels, int dst_channels,
                                          SEETA_AIP_IMAGE_FORMAT src_format,
                                          SEETA_AIP_IMAGE_FORMAT dst_format,
-                                         size_t pixel_number) {
+                                         int pixel_number) {
                 if (src_format != SEETA_AIP_FORMAT_I32RAW || dst_format != SEETA_AIP_FORMAT_I32RAW) {
                     throw seeta::aip::Exception("Integer image format only support I32Raw for now.");
                 }
@@ -488,15 +486,15 @@ namespace seeta {
                     break;
                 case SEETA_AIP_VALUE_BYTE:
                     _::convert_u8image(threads, src_data, dst_data, src_channels, dst_channels,
-                                       src_format, dst_format, SRC_N);
+                                       src_format, dst_format, int(SRC_N));
                     break;
                 case SEETA_AIP_VALUE_INT32:
                     _::convert_i32image(threads, src_data, dst_data, src_channels, dst_channels,
-                                        src_format, dst_format, SRC_N);
+                                        src_format, dst_format, int(SRC_N));
                     break;
                 case SEETA_AIP_VALUE_FLOAT32:
                     _::convert_f32image(threads, src_data, dst_data, src_channels, dst_channels,
-                                        src_format, dst_format, SRC_N);
+                                        src_format, dst_format, int(SRC_N));
                     break;
             }
         }
@@ -532,7 +530,7 @@ namespace seeta {
          */
         inline seeta::aip::ImageData convert(int threads,
                                              SEETA_AIP_IMAGE_FORMAT format,
-                                             seeta::aip::ImageData image,
+                                             const seeta::aip::ImageData &image,
                                              float data_scale = 255.0) {
             return convert(threads, format, SeetaAIPImageData(image), data_scale);
         }
