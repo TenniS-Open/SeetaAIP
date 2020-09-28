@@ -22,7 +22,7 @@
 #   define SEETA_AIP_OS_MAC     0
 #   define SEETA_AIP_OS_LINUX   1
 #   define SEETA_AIP_OS_IOS     0
-#   define SEETA_AIP_OS_UNIX    0
+#   define SEETA_AIP_OS_UNIX    1
 #elif defined(__WINDOWS__) || defined(_WIN32) || defined(WIN32) || defined(_WIN64) || \
     defined(WIN64) || defined(__WIN32__) || defined(__TOS_WIN__)
 #   define SEETA_AIP_OS_ANDROID 0
