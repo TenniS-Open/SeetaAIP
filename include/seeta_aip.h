@@ -11,8 +11,10 @@
 #else
 #define SEETA_AIP_API __declspec(dllimport)
 #endif
+#define SEETA_AIP_CALL __stdcall
 #else
 #define SEETA_AIP_API __attribute__ ((visibility("default")))
+#define SEETA_AIP_CALL __attribute__((stdcall))
 #endif
 
 #define SEETA_AIP_VERSION 2
@@ -206,7 +208,7 @@ enum SEETA_AIP_COMMON_ERRORCODE {
  * @note aip can often be nullptr, if errcode is -1, aip must be set
  * @note can not use common errcode, see SEETA_AIP_COMMON_ERRORCODE
  */
-typedef const char* seeta_aip_error(SeetaAIPHandle aip, int32_t errcode);
+typedef const char *SEETA_AIP_CALL seeta_aip_error(SeetaAIPHandle aip, int32_t errcode);
 
 /**
  * Create the aip
@@ -217,7 +219,8 @@ typedef const char* seeta_aip_error(SeetaAIPHandle aip, int32_t errcode);
  * @param [in] argc common be 1 or zero
  * @return error code, zero for succeed.
  */
-typedef int32_t seeta_aip_create(SeetaAIPHandle *paip,
+typedef int32_t SEETA_AIP_CALL seeta_aip_create(
+        SeetaAIPHandle *paip,
         const SeetaAIPDevice *device,
         const char **models,
         const struct SeetaAIPObject *args, uint32_t argc);
@@ -227,14 +230,14 @@ typedef int32_t seeta_aip_create(SeetaAIPHandle *paip,
  * @param [in] aip The AIP Handle
  * @return error code, zero for succeed.
  */
-typedef int32_t seeta_aip_free(SeetaAIPHandle aip);
+typedef int32_t SEETA_AIP_CALL seeta_aip_free(SeetaAIPHandle aip);
 
 
 /**
  * @param [in] aip The AIP Handle
  * @return error code, zero for succeed.
  */
-typedef int32_t seeta_aip_reset(SeetaAIPHandle aip);
+typedef int32_t SEETA_AIP_CALL seeta_aip_reset(SeetaAIPHandle aip);
 
 /**
  *
@@ -251,19 +254,21 @@ typedef int32_t seeta_aip_reset(SeetaAIPHandle aip);
  * @return error code, zero for succeed.
  * @note all the return value should be borrowed value, no need to free outside
  */
-typedef int32_t seeta_aip_forward(SeetaAIPHandle aip,
-                                  uint32_t method_id,
-                                  const struct SeetaAIPImageData *images, uint32_t images_size,
-                                  const struct SeetaAIPObject *objects, uint32_t objects_size,
-                                  struct SeetaAIPObject **result_objects, uint32_t *result_objects_size,
-                                  struct SeetaAIPImageData **result_images, uint32_t*result_images_size);
+typedef int32_t SEETA_AIP_CALL seeta_aip_forward(
+        SeetaAIPHandle aip,
+        uint32_t method_id,
+        const struct SeetaAIPImageData *images, uint32_t images_size,
+        const struct SeetaAIPObject *objects, uint32_t objects_size,
+        struct SeetaAIPObject **result_objects, uint32_t *result_objects_size,
+        struct SeetaAIPImageData **result_images,
+        uint32_t *result_images_size);
 
 /**
  * @param [in] aip The AIP Handle
  * @return C-style array of C-style string, end with NULL, example {"number_threads", "min_face_size", NULL}
  * @note return NULL means no property
  */
-typedef const char **seeta_aip_property(SeetaAIPHandle aip);
+typedef const char **SEETA_AIP_CALL seeta_aip_property(SeetaAIPHandle aip);
 
 /**
  * @param [in] aip The AIP Handle
@@ -271,7 +276,7 @@ typedef const char **seeta_aip_property(SeetaAIPHandle aip);
  * @param [in] value set value
  * @return error code, zero for succeed.
  */
-typedef int32_t seeta_aip_setd(SeetaAIPHandle aip, const char *name, double value);
+typedef int32_t SEETA_AIP_CALL seeta_aip_setd(SeetaAIPHandle aip, const char *name, double value);
 
 /**
  * @param [in] aip The AIP Handle
@@ -279,7 +284,7 @@ typedef int32_t seeta_aip_setd(SeetaAIPHandle aip, const char *name, double valu
  * @param [out] value get value
  * @note the return property must can be saved
  */
-typedef int32_t seeta_aip_getd(SeetaAIPHandle aip, const char *name, double *value);
+typedef int32_t SEETA_AIP_CALL seeta_aip_getd(SeetaAIPHandle aip, const char *name, double *value);
 
 /**
  * Get readable label string, for debug. and result auto plot.
@@ -290,7 +295,8 @@ typedef int32_t seeta_aip_getd(SeetaAIPHandle aip, const char *name, double *val
  * @return readable string, could be nullptr for no description
  * @note
  */
-typedef const char *seeta_aip_tag(SeetaAIPHandle aip, uint32_t method_id, uint32_t label_index, int32_t label_value);
+typedef const char *SEETA_AIP_CALL seeta_aip_tag(
+        SeetaAIPHandle aip, uint32_t method_id, uint32_t label_index, int32_t label_value);
 
 /**
  * @param [in] aip The AIP Handle
@@ -298,7 +304,7 @@ typedef const char *seeta_aip_tag(SeetaAIPHandle aip, uint32_t method_id, uint32
  * @param [in] value set value
  * @return error code, zero for succeed.
  */
-typedef int32_t seeta_aip_set(SeetaAIPHandle aip, const char *name, const SeetaAIPObject *pvalue);
+typedef int32_t SEETA_AIP_CALL seeta_aip_set(SeetaAIPHandle aip, const char *name, const SeetaAIPObject *pvalue);
 
 /**
  * @param [in] aip The AIP Handle
@@ -308,7 +314,7 @@ typedef int32_t seeta_aip_set(SeetaAIPHandle aip, const char *name, const SeetaA
  * @note the return value is borrowed value, no need to free
  * @note the get value only readable, DO NOT write any value. If write needed, use set_v2 instead.
  */
-typedef int32_t seeta_aip_get(SeetaAIPHandle aip, const char *name, SeetaAIPObject *pvalue);
+typedef int32_t SEETA_AIP_CALL seeta_aip_get(SeetaAIPHandle aip, const char *name, SeetaAIPObject *pvalue);
 
 
 struct SeetaAIP {
@@ -361,7 +367,7 @@ enum SEETA_AIP_LOAD_ERROR {
     SEETA_AIP_LOAD_AIP_VERSION_MISMATCH = 0xf003,   ///< for AIP version mismatched.
 };
 
-typedef int32_t seeta_aip_load_entry(struct SeetaAIP *aip, uint32_t size);
+typedef int32_t SEETA_AIP_CALL seeta_aip_load_entry(struct SeetaAIP *aip, uint32_t size);
 
 /**
  *
@@ -371,7 +377,7 @@ typedef int32_t seeta_aip_load_entry(struct SeetaAIP *aip, uint32_t size);
  * For each libraries can be static linked in system, the should be another exported API,
  * named like <module>_aip_load, the <module> is returned aip's module
  */
-SEETA_AIP_API int32_t seeta_aip_load(struct SeetaAIP *aip, uint32_t size);
+SEETA_AIP_API int32_t SEETA_AIP_CALL seeta_aip_load(struct SeetaAIP *aip, uint32_t size);
 
 #ifdef __cplusplus
 }

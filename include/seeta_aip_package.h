@@ -33,8 +33,8 @@ namespace seeta {
             virtual const char *error(int32_t errcode) = 0;
 
             virtual void create(const SeetaAIPDevice &device,
-                    const std::vector<std::string> &models,
-                    const std::vector<SeetaAIPObject> &args) = 0;
+                                const std::vector<std::string> &models,
+                                const std::vector<SeetaAIPObject> &args) = 0;
 
             virtual void free() = 0;
 
@@ -69,7 +69,8 @@ namespace seeta {
             using self = PackageWrapper;
             using Raw = T;
 
-            static const char *Error(SeetaAIPHandle aip, int32_t errcode) {
+            static const char *SEETA_AIP_CALL Error(
+                    SeetaAIPHandle aip, int32_t errcode) {
                 switch (errcode) {
                     default:
                         break;
@@ -125,10 +126,11 @@ namespace seeta {
                 }
             }
 
-            static int32_t Create(SeetaAIPHandle *paip,
-                                  const SeetaAIPDevice *device,
-                                  const char **models,
-                                  const struct SeetaAIPObject *args, uint32_t argc) {
+            static int32_t SEETA_AIP_CALL Create(
+                    SeetaAIPHandle *paip,
+                    const SeetaAIPDevice *device,
+                    const char **models,
+                    const struct SeetaAIPObject *args, uint32_t argc) {
                 try {
                     *paip = nullptr;
 
@@ -152,7 +154,7 @@ namespace seeta {
                         return e.errcode();
                     }
 
-                    *paip = static_cast<SeetaAIPHandle>((void*)wrapper.release());
+                    *paip = static_cast<SeetaAIPHandle>((void *) wrapper.release());
                     return 0;
                 } catch (const std::bad_alloc &) {
                     return SEETA_AIP_ERROR_BAD_ALLOC;
@@ -161,7 +163,8 @@ namespace seeta {
                 }
             }
 
-            static int32_t Free(SeetaAIPHandle aip) {
+            static int32_t SEETA_AIP_CALL Free(
+                    SeetaAIPHandle aip) {
                 try {
                     if (aip == nullptr) return 0;
                     auto wrapper = static_cast<self *>((void *) aip);
@@ -178,7 +181,8 @@ namespace seeta {
                 }
             }
 
-            static int32_t Reset(SeetaAIPHandle aip) {
+            static int32_t SEETA_AIP_CALL Reset(
+                    SeetaAIPHandle aip) {
                 try {
                     if (aip == nullptr) return SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE;
                     auto wrapper = static_cast<self *>((void *) aip);
@@ -195,7 +199,8 @@ namespace seeta {
                 }
             }
 
-            static int32_t SetD(SeetaAIPHandle aip, const char *name, double value) {
+            static int32_t SEETA_AIP_CALL SetD(
+                    SeetaAIPHandle aip, const char *name, double value) {
                 try {
                     if (aip == nullptr) return SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE;
                     if (name == nullptr) return SEETA_AIP_ERROR_NULLPTR;
@@ -213,7 +218,8 @@ namespace seeta {
                 }
             }
 
-            static int32_t GetD(SeetaAIPHandle aip, const char *name, double *pvalue) {
+            static int32_t SEETA_AIP_CALL GetD(
+                    SeetaAIPHandle aip, const char *name, double *pvalue) {
                 try {
                     if (aip == nullptr) return SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE;
                     if (name == nullptr) return SEETA_AIP_ERROR_NULLPTR;
@@ -231,7 +237,8 @@ namespace seeta {
                 }
             }
 
-            static const char **Property(SeetaAIPHandle aip) {
+            static const char **SEETA_AIP_CALL Property(
+                    SeetaAIPHandle aip) {
                 try {
                     if (aip == nullptr) return nullptr;
                     auto wrapper = static_cast<self *>((void *) aip);
@@ -248,7 +255,8 @@ namespace seeta {
                 }
             }
 
-            static int32_t Set(SeetaAIPHandle aip, const char *name, const SeetaAIPObject *pvalue) {
+            static int32_t SEETA_AIP_CALL Set(
+                    SeetaAIPHandle aip, const char *name, const SeetaAIPObject *pvalue) {
                 try {
                     if (aip == nullptr) return SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE;
                     if (name == nullptr) return SEETA_AIP_ERROR_NULLPTR;
@@ -267,7 +275,8 @@ namespace seeta {
                 }
             }
 
-            static int32_t Get(SeetaAIPHandle aip, const char *name, SeetaAIPObject *pvalue) {
+            static int32_t SEETA_AIP_CALL Get(
+                    SeetaAIPHandle aip, const char *name, SeetaAIPObject *pvalue) {
                 try {
                     if (aip == nullptr) return SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE;
                     if (name == nullptr) return SEETA_AIP_ERROR_NULLPTR;
@@ -285,12 +294,14 @@ namespace seeta {
                 }
             }
 
-            static int32_t Forward(SeetaAIPHandle aip,
-                                   uint32_t method_id,
-                                   const struct SeetaAIPImageData *images, uint32_t images_size,
-                                   const struct SeetaAIPObject *objects, uint32_t objects_size,
-                                   struct SeetaAIPObject **result_objects, uint32_t *result_objects_size,
-                                   struct SeetaAIPImageData **result_images, uint32_t *result_images_size) {
+            static int32_t SEETA_AIP_CALL Forward(
+                    SeetaAIPHandle aip,
+                    uint32_t method_id,
+                    const struct SeetaAIPImageData *images, uint32_t images_size,
+                    const struct SeetaAIPObject *objects, uint32_t objects_size,
+                    struct SeetaAIPObject **result_objects, uint32_t *result_objects_size,
+                    struct SeetaAIPImageData **result_images,
+                    uint32_t *result_images_size) {
                 try {
                     if (aip == nullptr) return SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE;
                     auto wrapper = static_cast<self *>((void *) aip);
@@ -315,7 +326,8 @@ namespace seeta {
                 }
             }
 
-            static const char *Tag(SeetaAIPHandle aip, uint32_t method_id, uint32_t label_index, int32_t label_value) {
+            static const char *SEETA_AIP_CALL Tag(
+                    SeetaAIPHandle aip, uint32_t method_id, uint32_t label_index, int32_t label_value) {
                 try {
                     if (aip == nullptr) return nullptr;
                     auto wrapper = static_cast<self *>((void *) aip);
@@ -381,16 +393,16 @@ namespace seeta {
             const char *mID = "";
             const char *sID = "";
             const char *version = "0.0.0";
-            const char **support = { nullptr };
+            const char **support = {nullptr};
         };
 
         inline void setup_aip_header(SeetaAIP &aip,
-                const char *module,
-                const char *description,
-                const char *mID,
-                const char *sID,
-                const char *version,
-                const char ** support) {
+                                     const char *module,
+                                     const char *description,
+                                     const char *mID,
+                                     const char *sID,
+                                     const char *version,
+                                     const char **support) {
             aip.aip_version = SEETA_AIP_VERSION;
 
             aip.module = module;
