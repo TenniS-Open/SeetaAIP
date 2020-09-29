@@ -11,10 +11,10 @@
 #else
 #define SEETA_AIP_API __declspec(dllimport)
 #endif
-#define SEETA_AIP_CALL __stdcall
+#define SEETA_AIP_CALL __cdecl
 #else
 #define SEETA_AIP_API __attribute__ ((visibility("default")))
-#define SEETA_AIP_CALL __attribute__((stdcall))
+#define SEETA_AIP_CALL __attribute__((cdecl))
 #endif
 
 #define SEETA_AIP_VERSION 2
