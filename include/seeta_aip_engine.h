@@ -47,14 +47,6 @@ namespace seeta {
                 return func;
             }
 
-            template<typename RET, typename... ARGS>
-            using FUNCTION = RET(ARGS...);
-
-            template<typename RET, typename... ARGS>
-            FUNCTION<RET, ARGS...> *function(const std::string &name) {
-                return symbol<FUNCTION<RET, ARGS...>>(name);
-            }
-
         private:
             std::shared_ptr<void> m_lib;
         };
