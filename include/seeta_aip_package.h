@@ -151,14 +151,17 @@ namespace seeta {
                     try {
                         raw->create(*device, cpp_models, input_objects);
                     } catch (const Exception &e) {
+                        std::cerr << "Create got unhandled exception: " << e.what() << std::endl;
                         return e.errcode();
                     }
 
                     *paip = static_cast<SeetaAIPHandle>((void *) wrapper.release());
                     return 0;
-                } catch (const std::bad_alloc &) {
+                } catch (const std::bad_alloc &e) {
+                    std::cerr << "Create got bac alloc exception: " << e.what() << std::endl;
                     return SEETA_AIP_ERROR_BAD_ALLOC;
-                } catch (const std::exception &) {
+                } catch (const std::exception &e) {
+                    std::cerr << "Create got unhandled internal error: " << e.what() << std::endl;
                     return SEETA_AIP_ERROR_UNHANDLED_INTERNAL_ERROR;
                 }
             }
