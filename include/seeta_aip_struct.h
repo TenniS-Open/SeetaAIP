@@ -359,17 +359,17 @@ namespace seeta {
 
             Object() = default;
 
-            Object(Shape shape)
-                : m_shape(std::move(shape)) {}
+            Object(const Shape &shape)
+                : m_shape(shape) {}
 
-            Object(Shape shape, Tags tags)
-                : m_shape(std::move(shape)), m_tags(std::move(tags)) {}
+            Object(const Shape &shape, Tags tags)
+                : m_shape(shape), m_tags(std::move(tags)) {}
 
-            Object(Shape shape, Tags tags, Tensor extra)
-                : m_shape(std::move(shape)), m_tags(std::move(tags)), m_extra(std::move(extra)) {}
+            Object(const Shape &shape, Tags tags, Tensor extra)
+                : m_shape(shape), m_tags(std::move(tags)), m_extra(std::move(extra)) {}
 
-            Object(Shape shape, Tensor extra)
-                : m_shape(std::move(shape)), m_extra(std::move(extra)) {}
+            Object(const Shape &shape, Tensor extra)
+                : m_shape(shape), m_extra(std::move(extra)) {}
 
             Object(Tensor extra)
                 : m_extra(std::move(extra)) {}
