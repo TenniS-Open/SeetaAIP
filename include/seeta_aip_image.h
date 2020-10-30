@@ -15,7 +15,7 @@ namespace seeta {
             inline void cast(int threads, const SRC *src, DST *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { dst[i] = DST(src[i]); }
                 } else {
@@ -28,7 +28,7 @@ namespace seeta {
             inline void cast(int threads, const SRC *src, DST *dst, int N, SRC scale) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, scale, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { dst[i] = DST(scale * src[i]); }
                 } else {
@@ -164,7 +164,7 @@ namespace seeta {
                 if (threads > 1) {
                     const auto N3 = N * 3;
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N3, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int n = 0; n < N3; n += 3) { _bgr2rgb(src + n, dst + n); }
                 } else {
@@ -182,7 +182,7 @@ namespace seeta {
             inline void convert_uimage_bgr2bgra(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { _bgr2bgra(src + i * 3, dst + i * 4); }
                 } else {
@@ -200,7 +200,7 @@ namespace seeta {
             inline void convert_uimage_bgr2rgba(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { _bgr2rgba(src + i * 3, dst + i * 4); }
                 } else {
@@ -217,7 +217,7 @@ namespace seeta {
             inline void convert_uimage_bgra2bgr(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { _bgra2bgr(src + i * 4, dst + i * 3); }
                 } else {
@@ -234,7 +234,7 @@ namespace seeta {
             inline void convert_uimage_bgra2rgb(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { _bgra2rgb(src + i * 4, dst + i * 3); }
                 } else {
@@ -254,7 +254,7 @@ namespace seeta {
                 if (threads > 1) {
                     const auto N4 = N * 4;
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N4, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int n = 0; n < N4; n += 4) { _bgra2rgba(src + n, dst + n); }
                 } else {
@@ -271,7 +271,7 @@ namespace seeta {
             inline void convert_uimage_y2bgr(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { _y2bgr(src + i, dst + i * 3); }
                 } else {
@@ -289,7 +289,7 @@ namespace seeta {
             inline void convert_uimage_y2bgra(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { _y2bgra(src + i, dst + i * 4); }
                 } else {
@@ -308,7 +308,7 @@ namespace seeta {
             inline void convert_uimage_bgr2y(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { _bgr2y(src + i * 3, dst + i); }
                 } else {
@@ -319,7 +319,7 @@ namespace seeta {
             inline void convert_uimage_bgra2y(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { _bgr2y(src + i * 4, dst + i); }
                 } else {
@@ -338,7 +338,7 @@ namespace seeta {
             inline void convert_uimage_rgb2y(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { _rgb2y(src + i * 3, dst + i); }
                 } else {
@@ -349,7 +349,7 @@ namespace seeta {
             inline void convert_uimage_rgba2y(int threads, const uint8_t *src, uint8_t *dst, int N) {
                 if (threads > 1) {
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(threads) default(none) shared(N, src, dst)
+#pragma omp parallel for num_threads(threads)
 #endif
                     for (int i = 0; i < N; ++i) { _rgb2y(src + i * 4, dst + i); }
                 } else {

@@ -9,6 +9,7 @@
 #include "seeta_aip.h"
 #include "seeta_aip_struct.h"
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <type_traits>
