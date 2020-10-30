@@ -211,6 +211,9 @@ namespace seeta {
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
                         return e.errcode();
+                    } catch (const std::exception &e) {
+                        wrapper->m_error_message = e.what();
+                        return -1;
                     }
                     return 0;
                 } catch (const std::exception &) {
@@ -230,6 +233,9 @@ namespace seeta {
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
                         return e.errcode();
+                    } catch (const std::exception &e) {
+                        wrapper->m_error_message = e.what();
+                        return -1;
                     }
                     return 0;
                 } catch (const std::exception &) {
@@ -249,6 +255,9 @@ namespace seeta {
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
                         return e.errcode();
+                    } catch (const std::exception &e) {
+                        wrapper->m_error_message = e.what();
+                        return -1;
                     }
                     return 0;
                 } catch (const std::exception &) {
@@ -266,6 +275,9 @@ namespace seeta {
                         return raw->property();
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
+                        return nullptr;
+                    } catch (const std::exception &e) {
+                        wrapper->m_error_message = e.what();
                         return nullptr;
                     }
                     return nullptr;
@@ -287,6 +299,9 @@ namespace seeta {
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
                         return e.errcode();
+                    } catch (const std::exception &e) {
+                        wrapper->m_error_message = e.what();
+                        return -1;
                     }
                     return 0;
                 } catch (const std::exception &) {
@@ -306,6 +321,9 @@ namespace seeta {
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
                         return e.errcode();
+                    } catch (const std::exception &e) {
+                        wrapper->m_error_message = e.what();
+                        return -1;
                     }
                     return 0;
                 } catch (const std::exception &) {
@@ -338,6 +356,9 @@ namespace seeta {
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
                         return e.errcode();
+                    } catch (const std::exception &e) {
+                        wrapper->m_error_message = e.what();
+                        return -1;
                     }
                     return 0;
                 } catch (const std::exception &) {
@@ -355,6 +376,9 @@ namespace seeta {
                         return raw->tag(method_id, label_index, label_value);
                     } catch (const Exception &e) {
                         wrapper->m_error_message = e.message();
+                        return nullptr;
+                    } catch (const std::exception &e) {
+                        wrapper->m_error_message = e.what();
                         return nullptr;
                     }
                 } catch (const std::exception &) {
