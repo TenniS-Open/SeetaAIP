@@ -14,7 +14,8 @@
 #define SEETA_AIP_CALL __cdecl
 #else
 #define SEETA_AIP_API __attribute__ ((visibility("default")))
-#define SEETA_AIP_CALL __attribute__((cdecl))
+// #define SEETA_AIP_CALL __attribute__((cdecl))    // cdecl is default, remove in case of warning
+#define SEETA_AIP_CALL
 #endif
 
 #define SEETA_AIP_VERSION 2

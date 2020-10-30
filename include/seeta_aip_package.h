@@ -13,6 +13,8 @@
 #include <string>
 #include <type_traits>
 
+#define AIP_THREAD_LOCAL thread_local
+
 namespace seeta {
     namespace aip {
         template<typename T, typename Enable = void>
@@ -63,6 +65,10 @@ namespace seeta {
             Result result;
         };
 
+        namespace {
+            AIP_THREAD_LOCAL char g_creation_error_message[256] = {0};
+        }
+
         template<typename T>
         class PackageWrapper<T, typename std::enable_if<std::is_base_of<Package, T>::value>::type> {
         public:
@@ -79,7 +85,7 @@ namespace seeta {
                     case SEETA_AIP_ERROR_UNHANDLED_INTERNAL_ERROR:
                         return "Unhandled internal error.";
                     case SEETA_AIP_ERROR_BAD_ALLOC:
-                        return "Catch std::back_alloc.";
+                        return "Catch std::bad_alloc.";
                     case SEETA_AIP_ERROR_OUT_OF_MEMORY:
                         return "Out of memory.";
                     case SEETA_AIP_ERROR_EMPTY_PACKAGE_HANDLE:
@@ -109,6 +115,9 @@ namespace seeta {
                 try {
                     auto wrapper = static_cast<self *>((void *) aip);
                     if (wrapper == nullptr && errcode == -1) {
+                        if (g_creation_error_message[0] != '\0') {
+                            return g_creation_error_message;
+                        }
                         return "Unhandled internal error.";
                     }
                     if (errcode == -1) {
@@ -133,6 +142,7 @@ namespace seeta {
                     const struct SeetaAIPObject *args, uint32_t argc) {
                 try {
                     *paip = nullptr;
+                    std::memset(g_creation_error_message, 0, sizeof(g_creation_error_message));
 
                     std::unique_ptr<self> wrapper(new self);
                     wrapper->m_raw.reset(new T);
@@ -151,7 +161,9 @@ namespace seeta {
                     try {
                         raw->create(*device, cpp_models, input_objects);
                     } catch (const Exception &e) {
-                        std::cerr << "Create got unhandled exception: " << e.what() << std::endl;
+                        std::cerr << "Create got unhandled exception(" << e.errcode() << "): " << e.what() << std::endl;
+                        std::snprintf(g_creation_error_message, sizeof(g_creation_error_message),
+                                      "%s", e.what());
                         return e.errcode();
                     }
 
@@ -162,7 +174,10 @@ namespace seeta {
                     return SEETA_AIP_ERROR_BAD_ALLOC;
                 } catch (const std::exception &e) {
                     std::cerr << "Create got unhandled internal error: " << e.what() << std::endl;
-                    return SEETA_AIP_ERROR_UNHANDLED_INTERNAL_ERROR;
+                    std::snprintf(g_creation_error_message, sizeof(g_creation_error_message),
+                                  "%s", e.what());
+                    // return SEETA_AIP_ERROR_UNHANDLED_INTERNAL_ERROR;
+                    return -1;
                 }
             }
 
@@ -174,7 +189,8 @@ namespace seeta {
                     Package *raw = wrapper->m_raw.get();
                     try {
                         raw->free();
-                    } catch (const std::exception &) {
+                    } catch (const std::exception &e) {
+                        std::cerr << "Free AIP got exception: " << e.what() << std::endl;
                         // no exception should be throw
                     }
                     delete wrapper;
