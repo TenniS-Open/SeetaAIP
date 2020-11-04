@@ -222,7 +222,7 @@ typedef const char *SEETA_AIP_CALL seeta_aip_error(SeetaAIPHandle aip, int32_t e
  */
 typedef int32_t SEETA_AIP_CALL seeta_aip_create(
         SeetaAIPHandle *paip,
-        const SeetaAIPDevice *device,
+        const struct SeetaAIPDevice *device,
         const char **models,
         const struct SeetaAIPObject *args, uint32_t argc);
 
@@ -305,7 +305,7 @@ typedef const char *SEETA_AIP_CALL seeta_aip_tag(
  * @param [in] value set value
  * @return error code, zero for succeed.
  */
-typedef int32_t SEETA_AIP_CALL seeta_aip_set(SeetaAIPHandle aip, const char *name, const SeetaAIPObject *pvalue);
+typedef int32_t SEETA_AIP_CALL seeta_aip_set(SeetaAIPHandle aip, const char *name, const struct SeetaAIPObject *pvalue);
 
 /**
  * @param [in] aip The AIP Handle
@@ -315,7 +315,7 @@ typedef int32_t SEETA_AIP_CALL seeta_aip_set(SeetaAIPHandle aip, const char *nam
  * @note the return value is borrowed value, no need to free
  * @note the get value only readable, DO NOT write any value. If write needed, use set_v2 instead.
  */
-typedef int32_t SEETA_AIP_CALL seeta_aip_get(SeetaAIPHandle aip, const char *name, SeetaAIPObject *pvalue);
+typedef int32_t SEETA_AIP_CALL seeta_aip_get(SeetaAIPHandle aip, const char *name, struct SeetaAIPObject *pvalue);
 
 
 struct SeetaAIP {
