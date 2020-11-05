@@ -134,27 +134,53 @@ struct SeetaAIPShape {
 };
 
 /**
- * \brief detectable object
+ * Declare Tag out of Object
+ */
+struct SeetaAIPObjectTag {
+    int32_t label;                 ///< label index, reserved in SEETAX_PURE_DETECTION mode
+    float score;                    ///< score of each label
+};
+
+/**
+ * Declare Extra(Tensor) out of Object
+ */
+struct SeetaAIPTensor {
+    int32_t type;                   ///< SEETA_AIP_VALUE_TYPE, extra data type, most be SEETA_AIP_VALUE_FLOAT
+    void *data;                     ///< empty for no extra data
+    struct Dims {
+        uint32_t *data;                 ///< dims data
+        uint32_t size;                  ///< dims size
+    } dims;                         ///< dims of extra data
+};
+
+#ifdef __cplusplus
+/**
+ * \brief detectable object, C++ version
+ */
+struct SeetaAIPObject {
+    using Tag = SeetaAIPObjectTag;
+    using Extra = SeetaAIPTensor;
+
+    SeetaAIPShape shape;    ///< shape of object
+    struct TagArray {
+        Tag *data;              ///< data of tags
+        uint32_t size;          ///< number of tag
+    } tags;                 ///< tags of object
+    Extra extra;            ///< extra data of object, be related to algorithm
+};
+#else
+/**
+ * \brief detectable object, C version
  */
 struct SeetaAIPObject {
     struct SeetaAIPShape shape;     ///< shape of object
-    struct Tag {
-        int32_t label;                 ///< label index, reserved in SEETAX_PURE_DETECTION mode
-        float score;                    ///< score of each label
-    };
     struct TagArray {
-        struct Tag *data;              ///< data of tags
-        uint32_t size;                 ///< number of tag
-    } tags;                        ///< tags of object
-    struct Extra {
-        int32_t type;                   ///< SEETA_AIP_VALUE_TYPE, extra data type, most be SEETA_AIP_VALUE_FLOAT
-        void *data;                     ///< empty for no extra data
-        struct Dims {
-            uint32_t *data;                 ///< dims data
-            uint32_t size;                  ///< dims size
-        } dims;                         ///< dims of extra data
-    } extra;                        ///< extra data of object, be related to algorithm
+        struct SeetaAIPObjectTag *data; ///< data of tags
+        uint32_t size;                  ///< number of tag
+    } tags;                         ///< tags of object
+    struct SeetaAIPTensor extra;    ///< extra data of object, be related to algorithm
 };
+#endif
 
 /**
  * \brief computing or running device
