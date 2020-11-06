@@ -473,7 +473,8 @@ namespace seeta {
                       : self(format, 1, width, height, channels, data) {
             }
 
-            static int GetChannels(SEETA_AIP_IMAGE_FORMAT format, int channels) {
+            static uint32_t GetChannels(SEETA_AIP_IMAGE_FORMAT format, int channels) {
+                format = SEETA_AIP_IMAGE_FORMAT(format & 0x0000ffff);
                 switch (format) {
                     default:
                     case SEETA_AIP_FORMAT_U8RAW:
@@ -492,6 +493,7 @@ namespace seeta {
             }
 
             static SEETA_AIP_VALUE_TYPE GetType(SEETA_AIP_IMAGE_FORMAT format) {
+                format = SEETA_AIP_IMAGE_FORMAT(format & 0x0000ffff);
                 switch (format) {
                     default:
                     case SEETA_AIP_FORMAT_U8RAW:

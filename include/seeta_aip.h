@@ -43,6 +43,18 @@ enum SEETA_AIP_IMAGE_FORMAT {
     SEETA_AIP_FORMAT_U8RGBA = 1003, ///< byte format for RGBA8888
     SEETA_AIP_FORMAT_U8BGRA = 1004, ///< byte format for BGRA8888
     SEETA_AIP_FORMAT_U8Y = 1005,    ///< byte format for gray image
+
+    /**
+     * Notice: CHW format may not fully supported, use format above recommended.
+     */
+    SEETA_AIP_FORMAT_CHW_U8RAW = 0x80000 | 0,     ///< planar byte type
+    SEETA_AIP_FORMAT_CHW_F32RAW = 0x80000 | 1,    ///< planar float type with 4-bytes
+    SEETA_AIP_FORMAT_CHW_I32RAW = 0x80000 | 2,    ///< planar signed integer type with 4-bytes
+    SEETA_AIP_FORMAT_CHW_U8RGB = 0x80000 | 1001,  ///< planar byte format for RGB888
+    SEETA_AIP_FORMAT_CHW_U8BGR = 0x80000 | 1002,  ///< planar byte format for BGR888
+    SEETA_AIP_FORMAT_CHW_U8RGBA = 0x80000 | 1003, ///< planar byte format for RGBA8888
+    SEETA_AIP_FORMAT_CHW_U8BGRA = 0x80000 | 1004, ///< planar byte format for BGRA8888
+    SEETA_AIP_FORMAT_CHW_U8Y = 0x80000 | 1005,    ///< planar byte format for gray image
 };
 
 /**
