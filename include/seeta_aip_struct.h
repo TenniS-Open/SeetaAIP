@@ -431,9 +431,72 @@ namespace seeta {
             Tensor m_extra;
         };
 
+        struct ImageAlign {
+        public:
+            ImageAlign() = default;
+
+            ImageAlign(int stride, int page)
+                : stride(stride), page(page) {}
+
+            int stride = 0;
+            int page = 0;
+
+            bool operator==(const ImageAlign &other) const {
+                return this->stride == other.stride
+                       && this->page == other.page;
+            }
+        };
+
+        struct AlignMemory {
+        public:
+            using self = AlignMemory;
+
+            AlignMemory(const AlignMemory &) = delete;
+
+            AlignMemory &operator=(const AlignMemory &) = delete;
+
+            AlignMemory(const ImageAlign &align, size_t size)
+                : m_align(align) {
+                auto stride = align.stride;
+                auto page = align.page;
+                auto wanted = size + size_t(stride) + size_t(page);
+                auto data = (uint8_t *) malloc(wanted);
+                if (!data) {
+                    std::ostringstream oss;
+                    oss << "Bad alloc(" << wanted << "bytes)";
+                    throw Exception(oss.str());
+                }
+                m_memory = data;
+                m_data = stride
+                         ? ((size_t) data % stride == 0 ? data : data + (stride - (size_t) data % stride))
+                         : data;
+            }
+
+            ~AlignMemory() {
+                free(m_memory);
+            }
+
+            void *data() { return m_data; }
+
+            const void *data() const { return m_data; }
+
+            template<typename T>
+            T *data() { return reinterpret_cast<T *>(data()); }
+
+            template<typename T>
+            const T *data() const { return reinterpret_cast<const T *>(data()); }
+
+            const ImageAlign &align() const { return m_align; }
+        private:
+            ImageAlign m_align;
+            uint8_t *m_data = nullptr;
+            uint8_t *m_memory = nullptr;
+        };
+
         class ImageData : public Wrapper<SeetaAIPImageData> {
         public:
             using self = ImageData;
+            using supper = Wrapper<SeetaAIPImageData>;
 
             ImageData() {
                 this->m_type = SEETA_AIP_VALUE_BYTE;
@@ -442,7 +505,7 @@ namespace seeta {
                 this->m_raw.width = 0;
                 this->m_raw.height = 0;
                 this->m_raw.channels = 0;
-                m_data.reset(new char[1], std::default_delete<char[]>());
+                m_memory.reset(new AlignMemory({0, 0}, 1));
             }
 
             ImageData(SEETA_AIP_IMAGE_FORMAT format,
@@ -459,9 +522,9 @@ namespace seeta {
                 this->m_raw.height = height;
                 this->m_raw.channels = GetChannels(format, channels);
                 auto bytes = this->bytes();
-                m_data.reset(new char[bytes], std::default_delete<char[]>());
+                m_memory.reset(new AlignMemory({0, 0}, bytes));
                 if (data) {
-                    std::memcpy(m_data.get(), data, bytes);
+                    std::memcpy(m_memory->data(), data, bytes);
                 }
             }
 
@@ -471,6 +534,36 @@ namespace seeta {
                       uint32_t channels,
                       void *data = nullptr)
                       : self(format, 1, width, height, channels, data) {
+            }
+
+            ImageData(SEETA_AIP_IMAGE_FORMAT format,
+                      const ImageAlign &align,
+                      uint32_t number,
+                      uint32_t width,
+                      uint32_t height,
+                      uint32_t channels,
+                      void *data = nullptr) {
+                auto type = GetType(format);
+                this->m_type = type;
+                this->m_raw.format = int32_t(format);
+                this->m_raw.number = number;
+                this->m_raw.width = width;
+                this->m_raw.height = height;
+                this->m_raw.channels = GetChannels(format, channels);
+                auto bytes = this->bytes();
+                m_memory.reset(new AlignMemory(align, bytes));
+                if (data) {
+                    std::memcpy(m_memory->data(), data, bytes);
+                }
+            }
+
+            ImageData(SEETA_AIP_IMAGE_FORMAT format,
+                      const ImageAlign &align,
+                      uint32_t width,
+                      uint32_t height,
+                      uint32_t channels,
+                      void *data = nullptr)
+                    : self(format, align, 1, width, height, channels, data) {
             }
 
             static uint32_t GetChannels(SEETA_AIP_IMAGE_FORMAT format, int channels) {
@@ -543,15 +636,15 @@ namespace seeta {
                 return number() * height() * width() * channels() * element_width();
             }
 
-            void *data() { return m_data.get(); }
+            void *data() { return m_memory->data(); }
 
-            const void *data() const { return m_data.get(); }
-
-            template<typename T>
-            T *data() { return reinterpret_cast<T *>(m_data.get()); }
+            const void *data() const { return  m_memory->data(); }
 
             template<typename T>
-            const T *data() const { return reinterpret_cast<const T *>(m_data.get()); }
+            T *data() { return reinterpret_cast<T *>(data()); }
+
+            template<typename T>
+            const T *data() const { return reinterpret_cast<const T *>(data()); }
 
             template<typename T>
             T &data(size_t i) { return this->data<T>()[i]; }
@@ -568,18 +661,35 @@ namespace seeta {
             std::vector<uint32_t> dims() const { return {number(), height(), width(), channels()}; }
 
             void exporter() override {
-                m_raw.data = m_data.get();
+                m_raw.data = m_memory->data();
             }
 
             void importer() override {
                 m_type = GetType(SEETA_AIP_IMAGE_FORMAT(m_raw.format));
                 auto bytes = this->bytes();
-                m_data.reset(new char[bytes], std::default_delete<char[]>());
-                std::memcpy(m_data.get(), m_raw.data, bytes);
+                m_memory.reset(new AlignMemory({0, 0}, bytes));
+                std::memcpy(m_memory->data(), m_raw.data, bytes);
             }
 
+            using supper::raw;
+
+            void raw(const SeetaAIPImageData &image, const ImageAlign &align) {
+                m_raw = image;
+                m_type = GetType(SEETA_AIP_IMAGE_FORMAT(m_raw.format));
+                auto bytes = this->bytes();
+                m_memory.reset(new AlignMemory(align, bytes));
+                std::memcpy(m_memory->data(), m_raw.data, bytes);
+            }
+
+            const ImageAlign &align() const { return m_memory->align(); }
+
+            self realign(const ImageAlign &align) const {
+                self dolly;
+                dolly.raw(*this, align);
+                return dolly;
+            }
         private:
-            std::shared_ptr<char> m_data;
+            std::shared_ptr<AlignMemory> m_memory;
             SEETA_AIP_VALUE_TYPE m_type;
         };
 

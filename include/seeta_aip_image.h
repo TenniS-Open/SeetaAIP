@@ -444,14 +444,14 @@ namespace seeta {
                 }
             }
 
-            uint32_t offset4d(const uint32_t *shape,
+            inline uint32_t offset4d(const uint32_t *shape,
                               uint32_t dim1, uint32_t dim2, uint32_t dim3, uint32_t dim4)
             {
                 return ((dim1 * shape[1] + dim2) * shape[2] + dim3) * shape[3] + dim4;
             }
 
             template <typename T>
-            void permute4d(
+            inline void permute4d(
                     T *dst, const T *src,
                     const uint32_t *shape,
                     uint32_t dim1, uint32_t dim2, uint32_t dim3, uint32_t dim4)
@@ -479,7 +479,7 @@ namespace seeta {
                     }
                 }
             }
-            void permute4d(
+            inline void permute4d(
                     SEETA_AIP_VALUE_TYPE type,
                     void *dst, const void *src,
                     const uint32_t *shape,
@@ -626,6 +626,48 @@ namespace seeta {
                                              const seeta::aip::ImageData &image,
                                              float data_scale = 255.0) {
             return convert(threads, format, SeetaAIPImageData(image), data_scale);
+        }
+
+        /**
+         * Use `threads` to convert image to `format`.:q:q
+         *
+         * @param threads using threads(OpenMP)
+         * @param format wanted format
+         * @param align memory align
+         * @param image original image
+         * @param data_scale used when convert float value to wanted format. the image value while multiply `data_scale`.
+         * @return
+         */
+        inline seeta::aip::ImageData convert(int threads,
+                                             SEETA_AIP_IMAGE_FORMAT format,
+                                             const ImageAlign &align,
+                                             SeetaAIPImageData image,
+                                             float data_scale = 255.0) {
+            seeta::aip::ImageData converted(format,
+                                            align,
+                                            image.number,
+                                            image.width,
+                                            image.height,
+                                            seeta::aip::ImageData::GetChannels(format, image.channels));
+            convert(threads, image, SeetaAIPImageData(converted), data_scale);
+            return converted;
+        }
+
+        /**
+         * Use `threads` to convert image to `format`.
+         * @param threads using threads(OpenMP)
+         * @param format wanted format
+         * @param align memory align
+         * @param image original image
+         * @param data_scale used when convert float value to wanted format. the image value while multiply `data_scale`.
+         * @return
+         */
+        inline seeta::aip::ImageData convert(int threads,
+                                             SEETA_AIP_IMAGE_FORMAT format,
+                                             const ImageAlign &align,
+                                             const seeta::aip::ImageData &image,
+                                             float data_scale = 255.0) {
+            return convert(threads, format, align, SeetaAIPImageData(image), data_scale);
         }
     }
 }
