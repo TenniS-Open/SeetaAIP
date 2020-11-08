@@ -513,7 +513,7 @@ namespace seeta {
                       uint32_t width,
                       uint32_t height,
                       uint32_t channels,
-                      void *data = nullptr) {
+                      const void *data = nullptr) {
                 auto type = GetType(format);
                 this->m_type = type;
                 this->m_raw.format = int32_t(format);
@@ -532,7 +532,7 @@ namespace seeta {
                       uint32_t width,
                       uint32_t height,
                       uint32_t channels,
-                      void *data = nullptr)
+                      const void *data = nullptr)
                       : self(format, 1, width, height, channels, data) {
             }
 
@@ -542,7 +542,7 @@ namespace seeta {
                       uint32_t width,
                       uint32_t height,
                       uint32_t channels,
-                      void *data = nullptr) {
+                      const void *data = nullptr) {
                 auto type = GetType(format);
                 this->m_type = type;
                 this->m_raw.format = int32_t(format);
@@ -562,7 +562,7 @@ namespace seeta {
                       uint32_t width,
                       uint32_t height,
                       uint32_t channels,
-                      void *data = nullptr)
+                      const void *data = nullptr)
                     : self(format, align, 1, width, height, channels, data) {
             }
 
