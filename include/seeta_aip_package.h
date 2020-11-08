@@ -345,10 +345,10 @@ namespace seeta {
                     auto wrapper = static_cast<self *>((void *) aip);
                     Package *raw = wrapper->m_raw.get();
                     try {
-                        *result_objects = nullptr;
-                        *result_objects_size = 0;
-                        *result_images = nullptr;
-                        *result_images_size = 0;
+                        if (result_objects) *result_objects = nullptr;
+                        if (result_objects_size) *result_objects_size = 0;
+                        if (result_images) *result_images = nullptr;
+                        if (result_images_size) *result_images_size = 0;
                         wrapper->update_input(images, images_size, objects, objects_size);
                         auto &input_images = wrapper->m_input_images;
                         auto &input_objects = wrapper->m_input_objects;
@@ -400,6 +400,8 @@ namespace seeta {
             void update_input(
                     const struct SeetaAIPImageData *images, uint32_t images_size,
                     const struct SeetaAIPObject *objects, uint32_t objects_size) {
+                if (!images) images_size = 0;
+                if (!objects) objects_size = 0;
                 m_input_images.clear();
                 m_input_images.reserve(images_size);
                 m_input_images.insert(m_input_images.end(), images, images + images_size);
@@ -423,10 +425,10 @@ namespace seeta {
                 for (auto &object : result.objects) {
                     m_output_objects.emplace_back(*object.raw());
                 }
-                *result_objects = m_output_objects.data();
-                *result_objects_size = uint32_t(m_output_objects.size());
-                *result_images = m_output_images.data();
-                *result_images_size = uint32_t(m_output_images.size());
+                if (result_objects) *result_objects = m_output_objects.data();
+                if (result_objects_size) *result_objects_size = uint32_t(m_output_objects.size());
+                if (result_images) *result_images = m_output_images.data();
+                if (result_images_size) *result_images_size = uint32_t(m_output_images.size());
             }
         };
 
