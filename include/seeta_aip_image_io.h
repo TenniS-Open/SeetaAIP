@@ -67,7 +67,7 @@ namespace seeta {
                                       (float *) image_t.data);;
             }
 
-            std::cerr << "Unknown image type, image not of any known type, or corrupt" << std::endl;
+            std::cerr << "Unknown image type \'" << ext << "\', image not of any known type, or corrupt" << std::endl;
             return false;
         }
     }
