@@ -94,17 +94,10 @@ namespace seeta {
 
                 return setting;
             }
-            inline std::vector<PutSetting> _prepare_rectangle_soft(
-                    uint32_t width, uint32_t height,
-                    const SeetaAIPPoint &p1, const SeetaAIPPoint &p2,
-                    int line_width) {
-                return _prepare_rectangle_solid(width, height, p1, p2, line_width);
-            }
 
             inline void rectangle(SeetaAIPImageData image,
                            const SeetaAIPPoint &p1, const SeetaAIPPoint &p2,
-                           const Color &color, int line_width = 3,
-                           bool solid = true) {
+                           const Color &color, int line_width = 3) {
                 auto format = SEETA_AIP_IMAGE_FORMAT(image.format);
                 auto type = ImageData::GetType(format);
                 auto channels = ImageData::GetChannels(format, image.channels);
@@ -118,13 +111,12 @@ namespace seeta {
                 }
                 image.channels = channels;  // fix channels if not mismatched.\
                 // compute all pixel to draw
-                auto setting = solid
-                        ? _prepare_rectangle_solid(image.width, image.height, p1, p2, line_width)
-                        : _prepare_rectangle_soft(image.width, image.height, p1, p2, line_width);
+                auto setting = _prepare_rectangle_solid(image.width, image.height, p1, p2, line_width);
+                // plot each point
                 auto c = color;
-                auto alpha = c.c4;
+                // auto alpha = c.c4;
                 for (auto &p : setting) {
-                    c.c4 = 255 - uint8_t(((255 - alpha) * (255 - p.alpha)) / 255);
+                    // c.c4 = 255 - uint8_t(((255 - alpha) * (255 - p.alpha)) / 255);
                     put_uint8_pixel(image, p.x, p.y, c);
                 }
             }
