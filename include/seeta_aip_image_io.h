@@ -17,6 +17,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <iostream>
 
 namespace seeta {
     namespace aip {

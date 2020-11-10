@@ -739,6 +739,39 @@ namespace seeta {
         private:
             std::shared_ptr<char> m_device;
         };
+
+        static const char *format_string(int format) {
+            switch (format) {
+                default: return "Unknown";
+                case SEETA_AIP_FORMAT_U8RAW: return "U8Raw";
+                case SEETA_AIP_FORMAT_F32RAW: return "F32RAW";
+                case SEETA_AIP_FORMAT_I32RAW: return "I32RAW";
+                case SEETA_AIP_FORMAT_U8RGB: return "U8RGB";
+                case SEETA_AIP_FORMAT_U8BGR: return "U8BGR";
+                case SEETA_AIP_FORMAT_U8RGBA: return "U8RGBA";
+                case SEETA_AIP_FORMAT_U8BGRA: return "U8BGRA";
+                case SEETA_AIP_FORMAT_U8Y: return "U8Y";
+                case SEETA_AIP_FORMAT_CHW_U8RAW: return "CHW_U8Raw";
+                case SEETA_AIP_FORMAT_CHW_F32RAW: return "CHW_F32RAW";
+                case SEETA_AIP_FORMAT_CHW_I32RAW: return "CHW_I32RAW";
+                case SEETA_AIP_FORMAT_CHW_U8RGB: return "CHW_U8RGB";
+                case SEETA_AIP_FORMAT_CHW_U8BGR: return "CHW_U8BGR";
+                case SEETA_AIP_FORMAT_CHW_U8RGBA: return "CHW_U8RGBA";
+                case SEETA_AIP_FORMAT_CHW_U8BGRA: return "CHW_U8BGRA";
+                case SEETA_AIP_FORMAT_CHW_U8Y: return "CHW_U8Y";
+            }
+        }
+
+        static const char *type_string(int type) {
+            switch (type) {
+                default: return "Unknown";
+                case SEETA_AIP_VALUE_VOID: return "VOID";
+                case SEETA_AIP_VALUE_BYTE: return "BYTE";
+                case SEETA_AIP_VALUE_INT32: return "INT32";
+                case SEETA_AIP_VALUE_FLOAT32: return "FLOAT32";
+                case SEETA_AIP_VALUE_FLOAT64: return "FLOAT64";
+            }
+        }
     }
 }
 
