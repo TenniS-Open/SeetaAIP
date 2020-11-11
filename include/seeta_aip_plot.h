@@ -85,17 +85,24 @@ namespace seeta {
                 if (right > int32_t(width)) right = width;
 
                 std::vector<PutSetting> setting;
-                for (decltype(top) y = top; y < bottom; ++y) {
+                for (decltype(top) y = top; y < c_top; ++y) {
                     for (decltype(left) x = left; x < right; ++x) {
-                        // not plot in center area
-                        if (y >= c_top && y < c_bottom
-                            && x >= c_left && x < c_right)
-                            continue;
-                        // plot pixel
                         setting.emplace_back(PutSetting({x, y, 0}));
                     }
                 }
-
+                for (decltype(top) y = c_top; y < c_bottom; ++y) {
+                    for (decltype(left) x = left; x < c_left; ++x) {
+                        setting.emplace_back(PutSetting({x, y, 0}));
+                    }
+                    for (decltype(left) x = c_right; x < right; ++x) {
+                        setting.emplace_back(PutSetting({x, y, 0}));
+                    }
+                }
+                for (decltype(top) y = c_bottom; y < bottom; ++y) {
+                    for (decltype(left) x = left; x < right; ++x) {
+                        setting.emplace_back(PutSetting({x, y, 0}));
+                    }
+                }
                 return setting;
             }
 
