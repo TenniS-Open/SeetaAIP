@@ -350,8 +350,9 @@ namespace seeta {
                     SeetaAIPPoint s1 = p1, s2 = p2;
                     if (s2.y < s1.y) std::swap(s1, s2);
                     for (decltype(top) y = top; y < bottom; ++y) {
-                        auto scan_left = int32_t(floorf(line.get_x(y) - scan_width / 2));
-                        auto scan_right = int32_t(ceilf(scan_left + scan_width));
+                        auto center_x = line.get_x(y);
+                        auto scan_left = int32_t(floorf(center_x - scan_width / 2));
+                        auto scan_right = int32_t(ceilf(center_x + scan_width / 2 + 1));
                         if (scan_left < 0) scan_left = 0;
                         if (scan_right > int32_t(width)) scan_right = width;
                         for (decltype(scan_left) x = scan_left; x < scan_right; ++x) {
@@ -380,8 +381,9 @@ namespace seeta {
                     SeetaAIPPoint s1 = p1, s2 = p2;
                     if (s2.x < s1.x) std::swap(s1, s2);
                     for (decltype(left) x = left; x < right; ++x) {
-                        auto scan_top = int32_t(floorf(line.get_y(x) - scan_width / 2));
-                        auto scan_bottom = int32_t(ceilf(scan_top + scan_width));
+                        auto center_y = line.get_y(x);
+                        auto scan_top = int32_t(floorf(center_y - scan_width / 2));
+                        auto scan_bottom = int32_t(ceilf(center_y + scan_width / 2 + 1));
                         if (scan_top < 0) scan_top = 0;
                         if (scan_bottom > int32_t(height)) scan_bottom = height;
                         for (decltype(scan_top) y = scan_top; y < scan_bottom; ++y) {
