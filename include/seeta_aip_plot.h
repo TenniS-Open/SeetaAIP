@@ -181,8 +181,8 @@ namespace seeta {
                         // plot pixel
                         auto d = _distance(center, {float(x), float(y)});
                         auto part = radius + 0.5f - d;
-                        if (part < 0) continue;
-                        if (part > 1) {
+                        if (part <= 0) continue;
+                        if (part >= 1) {
                             setting.emplace_back(PutSetting({x, y, 0xff}));
                         } else {
                             setting.emplace_back(PutSetting({x, y, int32_t(part * 255)}));
@@ -222,8 +222,8 @@ namespace seeta {
                         auto d = _distance(center, {float(x), float(y)});
                         auto part = std::min(radius + half + 0.5f - d,
                                              d - (radius - half - 0.5f));
-                        if (part < 0) continue;
-                        if (part > 1) {
+                        if (part <= 0) continue;
+                        if (part >= 1) {
                             setting.emplace_back(PutSetting({x, y, 0xff}));
                         } else {
                             setting.emplace_back(PutSetting({x, y, int32_t(part * 255)}));
@@ -367,8 +367,8 @@ namespace seeta {
                                 d = _distance(fp, proj);
                             }
                             auto part = half + 0.5f - d;
-                            if (part < 0) continue;
-                            if (part > 1) {
+                            if (part <= 0) continue;
+                            if (part >= 1) {
                                 setting.emplace_back(PutSetting({x, y, 0xff}));
                             } else {
                                 setting.emplace_back(PutSetting({x, y, int32_t(part * 255)}));
@@ -398,8 +398,8 @@ namespace seeta {
                                 d = _distance(fp, proj);
                             }
                             auto part = half + 0.5f - d;
-                            if (part < 0) continue;
-                            if (part > 1) {
+                            if (part <= 0) continue;
+                            if (part >= 1) {
                                 setting.emplace_back(PutSetting({x, y, 0xff}));
                             } else {
                                 setting.emplace_back(PutSetting({x, y, int32_t(part * 255)}));
