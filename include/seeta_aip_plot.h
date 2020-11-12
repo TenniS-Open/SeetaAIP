@@ -68,7 +68,7 @@ namespace seeta {
                 }
             }
 
-            inline std::vector<PutSetting> _prepare_rectangle_solid(
+            static inline std::vector<PutSetting> _prepare_rectangle_solid(
                     uint32_t width, uint32_t height,
                     const SeetaAIPPoint &p1, const SeetaAIPPoint &p2,
                     int line_width) {
@@ -120,7 +120,7 @@ namespace seeta {
                 return setting;
             }
 
-            inline std::vector<PutSetting> _prepare_fill_rectangle_solid(
+            static inline std::vector<PutSetting> _prepare_fill_rectangle_solid(
                     uint32_t width, uint32_t height,
                     const SeetaAIPPoint &p1, const SeetaAIPPoint &p2) {
                 // check plot area
@@ -150,13 +150,13 @@ namespace seeta {
                 return setting;
             }
 
-            inline float _pow2(float x) { return x * x; }
+            static inline float _pow2(float x) { return x * x; }
 
-            inline float _distance(const SeetaAIPPoint &a, const SeetaAIPPoint &b) {
+            static inline float _distance(const SeetaAIPPoint &a, const SeetaAIPPoint &b) {
                 return sqrtf(_pow2(a.x - b.x) + _pow2(a.y - b.y));
             }
 
-            inline std::vector<PutSetting> _prepare_fill_circle(
+            static inline std::vector<PutSetting> _prepare_fill_circle(
                     uint32_t width, uint32_t height,
                     const SeetaAIPPoint &center, int radius) {
                 // check plot area
@@ -193,7 +193,7 @@ namespace seeta {
                 return setting;
             }
 
-            inline std::vector<PutSetting> _prepare_circle(
+            static inline std::vector<PutSetting> _prepare_circle(
                     uint32_t width, uint32_t height,
                     const SeetaAIPPoint &center, int radius,
                     int line_width) {
@@ -311,7 +311,7 @@ namespace seeta {
             };
 
 
-            inline std::vector<PutSetting> _prepare_line(
+            static inline std::vector<PutSetting> _prepare_line(
                     uint32_t width, uint32_t height,
                     const SeetaAIPPoint &p1, const SeetaAIPPoint &p2,
                     int line_width) {
@@ -418,7 +418,7 @@ namespace seeta {
              * @param color color according to image format
              * @param line_width line with, -1 (or negative value) for fill.
              */
-            inline void rectangle(SeetaAIPImageData image,
+            static void rectangle(SeetaAIPImageData image,
                                   const SeetaAIPPoint &p1, const SeetaAIPPoint &p2,
                                   const Color &color, int line_width = 3) {
                 auto format = SEETA_AIP_IMAGE_FORMAT(image.format);
@@ -454,7 +454,7 @@ namespace seeta {
              * @param color color according to image format
              * @param line_width line with, -1 (or negative value) for fill.
              */
-            inline void circle(SeetaAIPImageData image,
+            static void circle(SeetaAIPImageData image,
                                const SeetaAIPPoint &center, int radius,
                                const Color &color, int line_width = 3) {
                 auto format = SEETA_AIP_IMAGE_FORMAT(image.format);
@@ -490,7 +490,7 @@ namespace seeta {
              * @param color color according to image format
              * @param line_width line with, -1 (or negative value) for fill.
              */
-            inline void line(SeetaAIPImageData image,
+            static void line(SeetaAIPImageData image,
                              const SeetaAIPPoint &p1, const SeetaAIPPoint &p2,
                              const Color &color, int line_width = 3) {
                 auto format = SEETA_AIP_IMAGE_FORMAT(image.format);
