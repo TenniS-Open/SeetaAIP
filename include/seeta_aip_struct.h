@@ -282,7 +282,7 @@ namespace seeta {
 
             uint32_t bytes() const {
                 return m_dims
-                    ? std::accumulate(m_dims->begin(), m_dims->end(), uint32_t(1)) * element_width()
+                    ? std::accumulate(m_dims->begin(), m_dims->end(), uint32_t(1), std::multiplies<uint32_t>()) * element_width()
                     : 0;
             }
 
