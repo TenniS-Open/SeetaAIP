@@ -17,7 +17,7 @@ template <typename T, typename K,
         typename=typename std::enable_if<std::is_constructible<T, K>::value>::type>
 static inline int array_size(T *array, K env_val) {
     int size = 0;
-    constexpr T end(env_val);
+    const T end(env_val);
     while (array[size] != end) {
         ++size;
     }
