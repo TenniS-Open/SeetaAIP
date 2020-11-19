@@ -232,8 +232,8 @@ namespace seeta {
             /**
              * \brief get transformation matrix, perform p(x', y') = M dot p(x, y)
              * \tparam T dtype
-             * \param degree degree
-             * \return the rotatation matrix
+             * \param degree clockwise degree
+             * \return the rotation matrix
              */
             template<typename T>
             Trans2D<T> rotate(T degree) {

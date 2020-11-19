@@ -108,7 +108,7 @@ namespace seeta {
             auto left = int32_t(floorf(x));
             auto top = int32_t(floorf(y));
 
-            auto p0 = &reinterpret_cast<uint8_t *>(image.data)[((top * W) + left) * C];
+            auto p0 = reinterpret_cast<uint8_t *>(image.data) + (top * int32_t(W) + left) * int32_t(C);
             auto next_image_shift = H * W * C;
             auto next_line_shift = W * C;
             for (decltype(N) n = 0; n < N; ++n) {
@@ -137,7 +137,7 @@ namespace seeta {
             auto W = image.width;
             auto C = image.channels;
 
-            if (x < 0 || x >= W || y < 0 || y >= H) {
+            if (x < 0 || x >= int(W) || y < 0 || y >= int(H)) {
                 for (decltype(N) n = 0; n < N; ++n) {
                     std::memset(out, 0, C);
                     out += out_shift;
@@ -149,9 +149,6 @@ namespace seeta {
             auto next_image_shift = H * W * C;
             auto next_line_shift = W * C;
             for (decltype(N) n = 0; n < N; ++n) {
-                auto p1 = p0 + C;
-                auto p2 = p0 + next_line_shift;
-                auto p3 = p2 + C;
                 for (decltype(C) c = 0; c < C; ++c) {
                     out[c] = p0[c];
                 }
@@ -273,6 +270,60 @@ namespace seeta {
             auto height = int(roundf(image.height * scale_y));
 
             return affine_sample2d(threads, M, image, 0, 0, width, height);
+        }
+
+        static seeta::aip::ImageData flip_x(int threads, SeetaAIPImageData image) {
+            float M[] = {
+                    -1, 0, float(image.width - 1),
+                    0, 1, 0,
+                    0, 0, 1,
+            };
+
+            return affine_sample2d(threads, M, image, 0, 0, image.width, image.height);
+        }
+
+        static seeta::aip::ImageData flip_y(int threads, SeetaAIPImageData image) {
+            float M[] = {
+                    1, 0, 0,
+                    0, -1, float(image.height - 1),
+                    0, 0, 1,
+            };
+
+            return affine_sample2d(threads, M, image, 0, 0, image.width, image.height);
+        }
+
+        static seeta::aip::ImageData flip_xy(int threads, SeetaAIPImageData image) {
+            float M[] = {
+                    -1, 0, float(image.width - 1),
+                    0, -1, float(image.height - 1),
+                    0, 0, 1,
+            };
+
+            return affine_sample2d(threads, M, image, 0, 0, image.width, image.height);
+        }
+
+        static seeta::aip::ImageData rotate_180(int threads, SeetaAIPImageData image) {
+            return flip_xy(threads, image);
+        }
+
+        static seeta::aip::ImageData rotate_left_90(int threads, SeetaAIPImageData image) {
+            float M[] = {
+                    0, -1, float(image.width - 1),
+                    1, 0, 0,
+                    0, 0, 1,
+            };
+
+            return affine_sample2d(threads, M, image, 0, 0, image.height, image.width);
+        }
+
+        static seeta::aip::ImageData rotate_right_90(int threads, SeetaAIPImageData image) {
+            float M[] = {
+                    0, 1, 0,
+                    -1, 0, float(image.height - 1),
+                    0, 0, 1,
+            };
+
+            return affine_sample2d(threads, M, image, 0, 0, image.height, image.width);
         }
     }
 }
