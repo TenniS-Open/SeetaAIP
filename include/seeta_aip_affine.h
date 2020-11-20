@@ -38,7 +38,7 @@ namespace seeta {
              */
             bool GetSampleRatio(
                     LineSampleRatio *ratio,
-                    float x, float y, uint32_t width, uint32_t height) {
+                    float x, float y, int32_t width, int32_t height) {
                 *ratio = LineSampleRatio();
                 if (x < -1 || x >= float(width)
                     || y < -1 || y >= float(height)) {
@@ -90,10 +90,10 @@ namespace seeta {
                 SeetaAIPImageData image,
                 float x, float y, uint8_t *out,
                 uint32_t out_shift) {
-            auto N = image.number;
-            auto H = image.height;
-            auto W = image.width;
-            auto C = image.channels;
+            auto N = int32_t(image.number);
+            auto H = int32_t(image.height);
+            auto W = int32_t(image.width);
+            auto C = int32_t(image.channels);
 
             _::LineSampleRatio ratio;
             bool need_sample = _::GetSampleRatio(&ratio, x, y, W, H);
@@ -108,7 +108,7 @@ namespace seeta {
             auto left = int32_t(floorf(x));
             auto top = int32_t(floorf(y));
 
-            auto p0 = reinterpret_cast<uint8_t *>(image.data) + (top * int32_t(W) + left) * int32_t(C);
+            auto p0 = reinterpret_cast<uint8_t *>(image.data) + (top * W + left) * C;
             auto next_image_shift = H * W * C;
             auto next_line_shift = W * C;
             for (decltype(N) n = 0; n < N; ++n) {
@@ -132,12 +132,12 @@ namespace seeta {
                 SeetaAIPImageData image,
                 int x, int y, uint8_t *out,
                 uint32_t out_shift) {
-            auto N = image.number;
-            auto H = image.height;
-            auto W = image.width;
-            auto C = image.channels;
+            auto N = int32_t(image.number);
+            auto H = int32_t(image.height);
+            auto W = int32_t(image.width);
+            auto C = int32_t(image.channels);
 
-            if (x < 0 || x >= int(W) || y < 0 || y >= int(H)) {
+            if (x < 0 || x >= W || y < 0 || y >= H) {
                 for (decltype(N) n = 0; n < N; ++n) {
                     std::memset(out, 0, C);
                     out += out_shift;
