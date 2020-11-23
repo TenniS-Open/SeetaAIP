@@ -12,7 +12,7 @@ namespace seeta {
         namespace _ {
             template<typename SRC, typename DST,
                     typename=typename std::enable_if<std::is_convertible<SRC, DST>::value>::type>
-            static inline void cast(int threads, const SRC *src, DST *dst, uint32_t N) {
+            static inline void cast(int threads, const SRC *src, DST *dst, int32_t N) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -25,7 +25,7 @@ namespace seeta {
 
             template<typename SRC, typename DST,
                     typename=typename std::enable_if<std::is_convertible<SRC, DST>::value>::type>
-            static inline void cast(int threads, const SRC *src, DST *dst, uint32_t N, SRC scale) {
+            static inline void cast(int threads, const SRC *src, DST *dst, int32_t N, SRC scale) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -44,16 +44,16 @@ namespace seeta {
                     case SEETA_AIP_VALUE_VOID:
                         break;
                     case SEETA_AIP_VALUE_BYTE:
-                        cast<uint8_t, DST>(threads, reinterpret_cast<const uint8_t *>(src), dst, N);
+                        cast<uint8_t, DST>(threads, reinterpret_cast<const uint8_t *>(src), dst, int32_t(N));
                         break;
                     case SEETA_AIP_VALUE_INT32:
-                        cast<int32_t, DST>(threads, reinterpret_cast<const int32_t *>(src), dst, N);
+                        cast<int32_t, DST>(threads, reinterpret_cast<const int32_t *>(src), dst, int32_t(N));
                         break;
                     case SEETA_AIP_VALUE_FLOAT32:
-                        cast<float, DST>(threads, reinterpret_cast<const float *>(src), dst, N, data_scale);
+                        cast<float, DST>(threads, reinterpret_cast<const float *>(src), dst, int32_t(N), data_scale);
                         break;
                     case SEETA_AIP_VALUE_FLOAT64:
-                        cast<double, DST>(threads, reinterpret_cast<const double *>(src), dst, N, data_scale);
+                        cast<double, DST>(threads, reinterpret_cast<const double *>(src), dst, int32_t(N), data_scale);
                         break;
                 }
             }
@@ -160,7 +160,7 @@ namespace seeta {
                 dst[2] = tmp;
             }
 
-            static inline void convert_uimage_bgr2rgb(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_bgr2rgb(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
                     const auto N3 = N * 3;
 #ifdef _OPENMP
@@ -179,7 +179,7 @@ namespace seeta {
                 dst[3] = 0;
             }
 
-            static inline void convert_uimage_bgr2bgra(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_bgr2bgra(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -197,7 +197,7 @@ namespace seeta {
                 dst[3] = 0;
             }
 
-            static inline void convert_uimage_bgr2rgba(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_bgr2rgba(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -214,7 +214,7 @@ namespace seeta {
                 dst[2] = src[2];
             }
 
-            static inline void convert_uimage_bgra2bgr(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_bgra2bgr(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -231,7 +231,7 @@ namespace seeta {
                 dst[2] = src[0];
             }
 
-            static inline void convert_uimage_bgra2rgb(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_bgra2rgb(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -250,7 +250,7 @@ namespace seeta {
                 dst[3] = src[3];
             }
 
-            static inline void convert_uimage_bgra2rgba(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_bgra2rgba(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
                     const auto N4 = N * 4;
 #ifdef _OPENMP
@@ -268,7 +268,7 @@ namespace seeta {
                 dst[2] = src[0];
             }
 
-            static inline void convert_uimage_y2bgr(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_y2bgr(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -286,7 +286,7 @@ namespace seeta {
                 dst[3] = 0;
             }
 
-            static inline void convert_uimage_y2bgra(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_y2bgra(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -305,7 +305,7 @@ namespace seeta {
                 dst[0] = Y > 255 ? 255 : Y;
             }
 
-            static inline void convert_uimage_bgr2y(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_bgr2y(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -316,7 +316,7 @@ namespace seeta {
                 }
             }
 
-            static inline void convert_uimage_bgra2y(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_bgra2y(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -335,7 +335,7 @@ namespace seeta {
                 dst[0] = Y > 255 ? 255 : Y;
             }
 
-            static inline void convert_uimage_rgb2y(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_rgb2y(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -346,7 +346,7 @@ namespace seeta {
                 }
             }
 
-            static inline void convert_uimage_rgba2y(int threads, const uint8_t *src, uint8_t *dst, uint32_t N) {
+            static inline void convert_uimage_rgba2y(int threads, const uint8_t *src, uint8_t *dst, int32_t N) {
                 if (threads > 1) {
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -380,7 +380,7 @@ namespace seeta {
                 func(threads,
                      reinterpret_cast<const uint8_t *>(src),
                      reinterpret_cast<uint8_t *>(dst),
-                     pixel_number);
+                     int32_t(pixel_number));
             }
 
             static inline void convert_u8image(int threads,
