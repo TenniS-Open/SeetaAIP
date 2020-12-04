@@ -521,9 +521,45 @@ namespace seeta {
             }
         }
 
+        inline uint32_t image_format_element_width(SEETA_AIP_IMAGE_FORMAT format) {
+            auto type = seeta::aip::ImageData::GetType(format);
+            switch (type) {
+                default:
+                    return 0;
+                case SEETA_AIP_VALUE_VOID:
+                    return 0;
+                case SEETA_AIP_VALUE_BYTE:
+                    return 1;
+                case SEETA_AIP_VALUE_FLOAT32:
+                    return 4;
+                case SEETA_AIP_VALUE_INT32:
+                    return 4;
+                case SEETA_AIP_VALUE_FLOAT64:
+                    return 8;
+            }
+        }
+
         static inline void convert(int threads,
                             SeetaAIPImageData src, SeetaAIPImageData dst,
                             float data_scale = 255.0) {
+            if (src.format == dst.format) {
+                auto SRC_N = src.number * src.height * src.width;
+                auto DST_N = dst.number * dst.height * dst.width;
+                if (SRC_N != DST_N) {
+                    throw seeta::aip::Exception("Convert image pixels' number must be equal.");
+                }
+                auto src_format = SEETA_AIP_IMAGE_FORMAT(src.format);
+                auto type_width = image_format_element_width(src_format);
+                auto src_data = src.data;
+                auto dst_data = dst.data;
+                auto src_channels = seeta::aip::ImageData::GetChannels(src_format, src.channels);
+                auto dst_channels = seeta::aip::ImageData::GetChannels(src_format, dst.channels);
+                if (src_channels != dst_channels) {
+                    throw seeta::aip::Exception("Convert images' channels must be equal with format are same.");
+                }
+                std::memcpy(dst_data, src_data, SRC_N * src_channels * type_width);
+                return;
+            }
             if ((src.format & 0xffff0000) == 0x80000) {   // CHW format
                 seeta::aip::ImageData tmp( SEETA_AIP_IMAGE_FORMAT(src.format & 0x0000ffff),
                                            src.number, src.width, src.height, src.channels);
