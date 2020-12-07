@@ -64,7 +64,7 @@
 #   define SEETA_AIP_OS_LINUX   1
 #   define SEETA_AIP_OS_IOS     0
 #   define SEETA_AIP_OS_UNIX    1
-#elif defined(_UNIX) || defined(_unix) || defined(_UNIX_) || defined(_unix_)s
+#elif defined(_UNIX) || defined(_unix) || defined(_UNIX_) || defined(_unix_)
 #   define SEETA_AIP_OS_ANDROID 0
 #   define SEETA_AIP_OS_WINDOWS 0
 #   define SEETA_AIP_OS_MAC     0
