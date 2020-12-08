@@ -18,6 +18,13 @@
 
 #include <Windows.h>
 
+/**
+ * Undefined used variable in AIP
+ */
+#undef VOID
+#undef min
+#undef max
+
 #else
 
 #pragma message("[WRANING] Using system not support dynamic library loading!")
