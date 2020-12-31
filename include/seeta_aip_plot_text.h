@@ -111,6 +111,11 @@ namespace seeta {
                 auto left = int32_t(floorf(p.x));
                 auto right = int32_t(ceilf(p.x + area_width + 1));
 
+                if (top < 0) top = 0;
+                if (bottom > int32_t(height)) bottom = height;
+                if (left < 0) left = 0;
+                if (right > int32_t(width)) right = width;
+
                 std::vector<PutSetting> setting;
                 for (decltype(top) y = top; y < bottom; ++y) {
                     for (decltype(left) x = left; x < right; ++x) {
