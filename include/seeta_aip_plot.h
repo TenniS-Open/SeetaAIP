@@ -515,6 +515,53 @@ namespace seeta {
                     put_uint8_pixel(image, p.x, p.y, c);
                 }
             }
+
+            inline SeetaAIPPoint rotate_point(const SeetaAIPPoint &c,
+                                              float angle,
+                                              const SeetaAIPPoint &p) {
+                constexpr float scale = M_PI / 180;
+                return {
+                        (p.x - c.x) * cos(scale * angle) - (p.y - c.y) * sin(scale * angle) + c.x,
+                        (p.x - c.x) * sin(scale * angle) + (p.y - c.y) * cos(scale * angle) + c.y
+                };
+            }
+
+            /**
+             *
+             * @param image BYTE type HWC format image.
+             * @param p1 top-left point
+             * @param p2 right-bottom point
+             * @param color color according to image format
+             * @param rotate rotate angle around center anti-clockwise
+             * @param line_width line with, -1 (or negative value) for fill.
+             */
+            static void rectangle_rotate(SeetaAIPImageData image,
+                                         const SeetaAIPPoint &p1, const SeetaAIPPoint &p2,
+                                         const Color &color, float angle, int line_width = 3) {
+                if (fabs(angle) < FLT_EPSILON) {
+                    rectangle(image, p1, p2, color, line_width);
+                    return;
+                }
+                if (line_width == 0) return;
+                if (line_width < 0) {
+                    throw Exception(
+                            std::string("AIP image plot rotate rectangle only support positive line width, got ")
+                                + type_string(line_width));
+                }
+                auto rp0 = p1;
+                auto rp2 = p2;
+                SeetaAIPPoint rp1 = {p2.x, p1.y};
+                SeetaAIPPoint rp3 = {p1.x, p2.y};
+                SeetaAIPPoint center = {p1.x + (p2.x - p1.x) / 2, p1.y + (p2.y - p1.y) / 2};
+                rp0 = rotate_point(center, angle, rp0);
+                rp1 = rotate_point(center, angle, rp1);
+                rp2 = rotate_point(center, angle, rp2);
+                rp3 = rotate_point(center, angle, rp3);
+                line(image, rp0, rp1, color, line_width);
+                line(image, rp1, rp2, color, line_width);
+                line(image, rp2, rp3, color, line_width);
+                line(image, rp3, rp0, color, line_width);
+            }
         }
     }
 }
