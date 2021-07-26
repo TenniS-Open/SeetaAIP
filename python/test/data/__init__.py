@@ -65,5 +65,13 @@ class MyAIP(AIP):
         return Object()
 
 
+"""
+The must be a function create to return new AIP instance. 
+"""
+
+
 def create():
+    """
+    :return: instance of seetaaip.toc.AIP.
+    """
     return MyAIP()
