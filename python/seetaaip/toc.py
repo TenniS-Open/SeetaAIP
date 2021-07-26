@@ -9,6 +9,7 @@ else:
 
 import os
 import numpy
+import copy
 from typing import Union, Iterable, Tuple, Dict, List, Any, Optional
 from . import dtype as aip_dtype
 
@@ -705,36 +706,61 @@ class Engine(object):
     """
 
     ENTRY = "create"
+    MAIN = "__init__.py"
 
-    def __init__(self, filepath):
+    def __init__(self, filepath, tmpdir=None, replace=True):
         """
         Load python extension like normal AIP.
         :param filepath: directly python script or zip file contains __init__.py
+        :param tmpdir: tmpdir to extract zip files.
+        :param replace: if cover exist files when extract files.
         """
         root, name_ext = os.path.split(filepath)
         name, ext = os.path.splitext(name_ext)
         ext = ext.lower()
         root = os.path.abspath(root)
 
-        if ext not in {".py"}:
-            raise Exception("Python AIP module must be *.py")
-        import copy
+        if ext not in {".py", ".zip"}:
+            raise Exception("Python AIP module must be *.py or *.zip")
+
+        pyfile = filepath
+        if ext == ".py":
+            pass
+        else:
+            # get temp path
+            if tmpdir is None:
+                tmpdir = os.path.join(root, name)
+            if not os.path.isdir(tmpdir):
+                os.makedirs(tmpdir)
+            try_main = os.path.join(tmpdir, self.MAIN)
+            if replace or not os.path.isfile(try_main):
+                sys.stdout.write("[INFO] Extracting {} into {}.\n".format(
+                    filepath, tmpdir))
+                # extract files
+                import zipfile
+                with zipfile.ZipFile(filepath) as zf:
+                    zf.extractall(tmpdir)
+            if not os.path.isfile(try_main):
+                raise Exception("Can not found {} in {}.".format(self.MAIN, filepath))
+            pyfile = try_main
+            root = tmpdir
+
         g = copy.copy(globals())
         g.update({
-            "__file__": filepath,
+            "__file__": pyfile,
             "__name__": "__main__",
         })
         # l = locals()
         if root not in sys.path:
             sys.path.append(root)
 
-        with open(filepath, 'rb') as file:
-            exec(compile(file.read(), filepath, 'exec'), g, None)
+        with open(pyfile, 'rb') as file:
+            exec(compile(file.read(), pyfile, 'exec'), g, None)
 
         if self.ENTRY not in g:
             raise Exception("Can not found method create in {}."
                             " which must return instance of 'seetaaip.toc.AIP',"
-                            " and define like 'def create(): ...'".format(filepath))
+                            " and define like 'def create(): ...'".format(pyfile))
 
         self.__create = g["create"]
 

@@ -3,8 +3,14 @@ import cv2
 
 if __name__ == '__main__':
     # create instance by python script or
-    filepath = "data/__init__.py"
-    instance = Instance(filepath, Device("cpu"), "A")
+    filepath = "data/data.zip"
+    instance = Instance(Engine(filepath), Device("cpu"), "A")
+    """
+    Use Engine to load zip files:
+    `Engine("data/aip.zip", replace=False)`, the file will extracted in "data/aip" on first time.
+    `Engine("data/aip.zip", replace=True)`, the file will extracted in "data/aip" on every time.
+    `Engine("data/aip.zip", tmpdir="/tmp/aip")`, the file will extracted in "/tmp/aip" on every time.
+    """
 
     # set property
     instance.setd("threshold", 0.3)
