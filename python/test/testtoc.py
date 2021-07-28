@@ -3,7 +3,7 @@ import cv2
 
 if __name__ == '__main__':
     # create instance by python script or
-    filepath = "data/data.zip"
+    filepath = "data/__init__.py"
     instance = Instance(Engine(filepath), Device("cpu"), "A")
     """
     Use Engine to load zip files:

@@ -447,6 +447,53 @@ class Shape(object):
         return self.__str__()
 
 
+class Rectangle(Shape):
+    def __init__(self, xywh=None, xyxy=None, x=None, y=None, w=None, h=None):
+        self.__x = 0
+        self.__y = 0
+        self.__w = 0
+        self.__h = 0
+        if xywh is not None:
+            xywh = list(xywh)
+            self.__x, self.__y, self.__w, self.__h = xywh
+        elif xyxy is not None:
+            xyxy = list(xyxy)
+            self.__x, self.__y, self.__w, self.__h = xyxy
+            self.__w, self.__h = self.__w - self.__x, self.__h - self.__y
+        if x is not None:
+            self.__x = x
+        if y is not None:
+            self.__y = y
+        if w is not None:
+            self.__w = w
+        if h is not None:
+            self.__h = h
+
+        super(Rectangle, self).__init__(
+            SHAPE_RECTANGLE,
+            [(self.__x, self.__y), (self.__x + self.__w, self.__y + self.__h)])
+
+    @property
+    def x(self):
+        return self.__x
+
+    @property
+    def y(self):
+        return self.__y
+
+    @property
+    def w(self):
+        return self.__w
+
+    @property
+    def h(self):
+        return self.__h
+
+    def __str__(self):
+        return "Rectangle{{x={}, y={}, w={}, h={}}}".format(
+            self.__x, self.__y, self.__w, self.__h)
+
+
 class Tag(object):
     """
     Object tag.
@@ -606,8 +653,8 @@ class AIP(object):
         return []
 
     def init(self, device: Device,
-             models: Union[str, Iterable[str]],
-             objects: Union[Object, Iterable[Object]] = None):
+             models: List[str],
+             objects: List[Object]):
         """
         Init created AIP instance.
         :param device: compute device
@@ -635,8 +682,12 @@ class AIP(object):
         pass
 
     def forward(self, method_id: int,
-                images: Iterable[Union[Any, ImageData]] = None, objects: Iterable[Object] = None) \
-            -> Tuple[List[Object], List[ImageData]]:
+                images: List[ImageData],
+                objects: List[Object]) \
+            -> Tuple[
+                List[Union[numpy.ndarray, Shape, Object]],
+                List[ImageData]
+            ]:
         """
         Do forward by method and image/object inputs.
         :param method_id: method id, there can be many method in single AIP.
@@ -665,7 +716,7 @@ class AIP(object):
         """
         raise NotImplementedError
 
-    def setd(self, name: str, value: Union[bool, int, float]):
+    def setd(self, name: str, value: float):
         """
         set double-value property.
         :param name: property name
@@ -674,7 +725,7 @@ class AIP(object):
         """
         raise Exception("Can not set property: {}".format(name))
 
-    def getd(self, name: str) -> float:
+    def getd(self, name: str) -> Union[bool, int, float]:
         """
         get object-value property.
         :param name: property name
@@ -682,7 +733,7 @@ class AIP(object):
         """
         raise Exception("Can not get property: {}".format(name))
 
-    def set(self, name: str, value: Union[bool, int, float, Object]):
+    def set(self, name: str, value: Object):
         """
         set object-value property.
         :param name: property name
@@ -691,7 +742,7 @@ class AIP(object):
         """
         raise Exception("Can not set property: {}".format(name))
 
-    def get(self, name: str) -> Object:
+    def get(self, name: str) -> Union[bool, int, float, numpy.ndarray, Shape, Object]:
         """
         get object-value property.
         :param name: property name
@@ -793,8 +844,17 @@ class Instance(object):
 
         if isinstance(models, str):
             models = [models]
+        models = [str(s) for s in models]
+
+        if objects is None:
+            objects = []
         if isinstance(objects, Object):
             objects = [objects]
+        elif isinstance(objects, numpy.ndarray):
+            objects = [Object(extra=objects)]
+        elif isinstance(objects, Shape):
+            objects = [Object(shape=objects)]
+        objects = [self._any_to_object(o) for o in objects]
 
         assert isinstance(filename, (str, Engine))
         if isinstance(filename, str):
@@ -814,7 +874,8 @@ class Instance(object):
             For example, SeetaFaceDetector610
         :return: module
         """
-        return self.__instance.module()
+        s = self.__instance.module()
+        return str(s)
 
     @property
     def description(self) -> str:
@@ -822,7 +883,8 @@ class Instance(object):
         json string for more information, the format will post later
         :return: description
         """
-        return self.__instance.description()
+        s = self.__instance.description()
+        return str(s)
 
     @property
     def mID(self) -> str:
@@ -830,7 +892,8 @@ class Instance(object):
         not readable ID of AIP, only satisfied in system
         :return: main ID
         """
-        return self.__instance.mID()
+        s = self.__instance.mID()
+        return str(s)
 
     @property
     def sID(self) -> str:
@@ -838,7 +901,8 @@ class Instance(object):
         self describable algorithm ID, like SSD, FRCNN etc.
         :return: sub ID
         """
-        return self.__instance.sID()
+        s = self.__instance.sID()
+        return str(s)
 
     @property
     def version(self) -> str:
@@ -846,7 +910,8 @@ class Instance(object):
         this AIP's version of mID, comparable `Dotted String`, like 1.3, 6.4.0, or 1.2.3.rc1
         :return: version
         """
-        return self.__instance.property()
+        s = self.__instance.version()
+        return str(s)
 
     @property
     def support(self) -> List[str]:
@@ -854,7 +919,8 @@ class Instance(object):
         array of string, like {'cpu', 'gpu'}, only for tips
         :return: array of supported compute device
         """
-        return self.__instance.support()
+        supports = self.__instance.support()
+        return [str(s) for s in supports]
 
     def dispose(self):
         """
@@ -872,7 +938,8 @@ class Instance(object):
         self.__instance.reset()
 
     def forward(self, method_id: int,
-                images: Iterable[Union[Any, ImageData]] = None, objects: Iterable[Object] = None) \
+                images: Iterable[Union[Any, ImageData]] = None,
+                objects: Iterable[Object] = None) \
             -> Tuple[List[Object], List[ImageData]]:
         """
         Do forward by method and image/object inputs.
@@ -881,14 +948,39 @@ class Instance(object):
         :param objects: input objects.
         :return: List of Object and List of ImageData
         """
-        return self.__instance.forward(method_id, images, objects)
+        if images is None:
+            images = []
+        if objects is None:
+            objects = []
+
+        if isinstance(images, ImageData):
+            images = [images]
+        elif isinstance(images, numpy.ndarray):
+            images = [ImageData(images)]
+        images = [self._any_to_image(i) for i in images]
+
+        if isinstance(objects, Object):
+            objects = [objects]
+        elif isinstance(objects, numpy.ndarray):
+            objects = [Object(extra=objects)]
+        elif isinstance(objects, Shape):
+            objects = [Object(shape=objects)]
+        objects = [self._any_to_object(o) for o in objects]
+
+        result_objects, result_images = self.__instance.forward(method_id, images, objects)
+
+        result_objects = [self._any_to_object(o) for o in result_objects]
+        result_images = [self._any_to_image(i) for i in result_images]
+
+        return result_objects, result_images
 
     def property(self) -> List[str]:
         """
         Get all readable and settable properties. example ["number_threads", "min_face_size"]
         :return: list of properties.
         """
-        return self.__instance.property()
+        properties = self.__instance.property()
+        return [str(s) for s in properties]
 
     def tag(self, method_id: int, label_index: int, label_value: int) -> str:
         """
@@ -900,6 +992,9 @@ class Instance(object):
         label index tell the label index. if an object get label [(3, 0.2), (4, 0.4)] from method 5.
             Followings will be called to get all labels: tag(5, 0, 3) and tag(5, 1, 4).
         """
+        method_id = int(method_id)
+        label_index = int(label_index)
+        label_value = int(label_value)
         return self.__instance.tag(method_id, label_index, label_value)
 
     def setd(self, name: str, value: Union[bool, int, float]):
@@ -909,6 +1004,7 @@ class Instance(object):
         :param value: property value
         :return:
         """
+        value = float(value)
         self.__instance.setd(name, value)
 
     def getd(self, name: str) -> float:
@@ -917,15 +1013,17 @@ class Instance(object):
         :param name: property name
         :return: property value
         """
-        return self.__instance.getd(name)
+        value = self.__instance.getd(name)
+        return float(value)
 
-    def set(self, name: str, value: Union[bool, int, float, Object]):
+    def set(self, name: str, value: Union[bool, int, float, numpy.ndarray, Shape, Object]):
         """
         set object-value property.
         :param name: property name
         :param value: property value
         :return:
         """
+        value = self._any_to_object(value)
         self.__instance.set(name, value)
 
     def get(self, name: str) -> Object:
@@ -934,7 +1032,34 @@ class Instance(object):
         :param name: property name
         :return: property value
         """
-        return self.__instance.get(name)
+        value = self.__instance.get(name)
+        return self._any_to_object(value)
+
+    def _any_to_object(self, value: Union[bool, int, float, numpy.ndarray, Shape, Object]) -> Object:
+        if isinstance(value, bool):
+            value = Object(extra=numpy.asarray(value, dtype=numpy.int32))
+        elif isinstance(value, int):
+            value = Object(extra=numpy.asarray(value, dtype=numpy.int32))
+        elif isinstance(value, float):
+            value = Object(extra=numpy.asarray(value, dtype=numpy.int32))
+        elif isinstance(value, numpy.ndarray):
+            value = Object(extra=value)
+        elif isinstance(value, Shape):
+            value = Object(shape=value)
+        elif isinstance(value, Object):
+            pass
+        else:
+            raise Exception("Value must be bool, int, float, numpy.ndarray, Shape or Object")
+        return value
+
+    def _any_to_image(self, image:Union[numpy.ndarray, ImageData]) -> ImageData:
+        if isinstance(image, ImageData):
+            pass
+        elif isinstance(image, numpy.ndarray):
+            image = ImageData(image)
+        else:
+            raise Exception("Image must be numpy.ndarray or ImageData")
+        return image
 
 
 if __name__ == '__main__':
