@@ -541,7 +541,7 @@ class Shape(object):
             if isinstance(point, Point):
                 self.__landmarks.append(point)
                 continue
-            if not isinstance(point, (Tuple, List)):
+            if not isinstance(point, (tuple, list)):
                 raise RuntimeError("param tags must be list of Point or tuple[2]")
             if len(point) != 2:
                 raise RuntimeError("param tags must be list of Point or tuple[2]")
@@ -660,7 +660,7 @@ class Object(object):
             if isinstance(tag, Tag):
                 self.__tags.append(tag)
                 continue
-            if not isinstance(tag, (Tuple, List)):
+            if not isinstance(tag, (tuple, list)):
                 raise RuntimeError("param tags must be list of Tag or tuple[2]")
             if len(tag) != 2:
                 raise RuntimeError("param tags must be list of Tag or tuple[2]")
