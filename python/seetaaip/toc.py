@@ -561,7 +561,7 @@ class Object(object):
             if isinstance(tag, Tag):
                 self.__tags.append(tag)
                 continue
-            if not isinstance(tag, (tuple, tuple)):
+            if not isinstance(tag, (tuple, list)):
                 raise RuntimeError("param tags must be list of Tag or tuple[2]")
             if len(tag) != 2:
                 raise RuntimeError("param tags must be list of Tag or tuple[2]")
