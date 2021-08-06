@@ -261,6 +261,11 @@ namespace seeta {
                 m_data.reset(new char[bytes], std::default_delete<char[]>());
             }
 
+            Tensor(const std::string &str)
+                : self(SEETA_AIP_VALUE_CHAR, {uint32_t(str.length())}) {
+                std::memcpy(m_data.get(), str.data(), str.length());
+            }
+
             _SEETA_AIP_WRAPPER_DECLARE_GETTER(type, SEETA_AIP_VALUE_TYPE)
 
             uint32_t element_width() const {
@@ -277,6 +282,8 @@ namespace seeta {
                         return 4;
                     case SEETA_AIP_VALUE_FLOAT64:
                         return 8;
+                    case SEETA_AIP_VALUE_CHAR:
+                        return 1;
                 }
             }
 
@@ -629,6 +636,8 @@ namespace seeta {
                         return 4;
                     case SEETA_AIP_VALUE_FLOAT64:
                         return 8;
+                    case SEETA_AIP_VALUE_CHAR:
+                        return 1;
                 }
             }
 
@@ -770,6 +779,7 @@ namespace seeta {
                 case SEETA_AIP_VALUE_INT32: return "INT32";
                 case SEETA_AIP_VALUE_FLOAT32: return "FLOAT32";
                 case SEETA_AIP_VALUE_FLOAT64: return "FLOAT64";
+                case SEETA_AIP_VALUE_CHAR: return "CHAR";
             }
         }
     }
