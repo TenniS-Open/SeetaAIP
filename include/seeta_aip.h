@@ -27,11 +27,12 @@ extern "C" {
 #include <stdint.h>
 
 enum SEETA_AIP_VALUE_TYPE {
-    SEETA_AIP_VALUE_VOID = 0,    ///< for non value type
-    SEETA_AIP_VALUE_BYTE = 2,   ///< byte type
-    SEETA_AIP_VALUE_INT32 = 5,    ///< signed integer type with 4-bytes
-    SEETA_AIP_VALUE_FLOAT32 = 10,  ///< float type with 4-bytes
-    SEETA_AIP_VALUE_FLOAT64 = 11,    ///< signed float type with 8-bytes
+    SEETA_AIP_VALUE_VOID = 0,       ///< for non value type
+    SEETA_AIP_VALUE_BYTE = 2,       ///< byte type
+    SEETA_AIP_VALUE_INT32 = 5,      ///< signed integer type with 4-bytes
+    SEETA_AIP_VALUE_FLOAT32 = 10,   ///< float type with 4-bytes
+    SEETA_AIP_VALUE_FLOAT64 = 11,   ///< signed float type with 8-bytes
+    SEETA_AIP_VALUE_CHAR = 13,      ///< string's char
 };
 
 enum SEETA_AIP_IMAGE_FORMAT {

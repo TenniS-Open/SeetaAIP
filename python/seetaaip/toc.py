@@ -18,6 +18,7 @@ BYTE = 2        # byte type
 INT32 = 5       # signed integer type with 4-bytes
 FLOAT32 = 10     # float type with 4-bytes
 FLOAT64 = 11     # signed float type with 8-bytes
+CHAR = 13     # string's char
 
 
 FORMAT_U8RAW = 0      # byte type
@@ -532,22 +533,27 @@ class Object(object):
     Detectable object.
     Attr shape: Shape
     Attr tags: list of Tag
-    Attr extra: numpy.ndarray
+    Attr extra: numpy.ndarray or str
     """
 
     Tag = Tag
 
     def __init__(self, shape: Shape = None, tags: Iterable[Union[Tag, Tuple]] = None,
-                 extra: Union[Any, numpy.ndarray] = None):
+                 extra: Union[Any, str, numpy.ndarray] = None):
         """
         :param shape: instance of Shape
         :param tags: list of Tag
-        :param extra: instance of numpy.ndarray, means the extra data of object.
+        :param extra: instance of numpy.ndarray or str, means the extra data of object.
             must be uint8, int32, float32 or float64.
         """
         assert isinstance(shape, (type(None), Shape))
-        if extra is not None and not isinstance(extra, numpy.ndarray):
-            extra = numpy.asarray(extra)
+        if extra is not None:
+            if isinstance(extra, str):
+                pass
+            elif isinstance(extra, numpy.ndarray):
+                pass
+            else:
+                extra = numpy.asarray(extra)
         if tags is None:
             tags = []
 
@@ -592,7 +598,10 @@ class Object(object):
         if value is None:
             self.__extra = None
             return
-        self.__extra = numpy.asarray(value)
+        if isinstance(value, str):
+            self.__extra = str
+        else:
+            self.__extra = numpy.asarray(value)
 
     def __str__(self):
         return "Object{{shape={}, tags=[{}], extra={}}}".format(
@@ -685,7 +694,7 @@ class AIP(object):
                 images: List[ImageData],
                 objects: List[Object]) \
             -> Tuple[
-                List[Union[numpy.ndarray, Shape, Object]],
+                List[Union[str, numpy.ndarray, Shape, Object]],
                 List[ImageData]
             ]:
         """
@@ -742,7 +751,7 @@ class AIP(object):
         """
         raise Exception("Can not set property: {}".format(name))
 
-    def get(self, name: str) -> Union[bool, int, float, numpy.ndarray, Shape, Object]:
+    def get(self, name: str) -> Union[bool, int, float, str, numpy.ndarray, Shape, Object]:
         """
         get object-value property.
         :param name: property name
@@ -850,6 +859,8 @@ class Instance(object):
             objects = []
         if isinstance(objects, Object):
             objects = [objects]
+        elif isinstance(objects, str):
+            objects = [Object(extra=objects)]
         elif isinstance(objects, numpy.ndarray):
             objects = [Object(extra=objects)]
         elif isinstance(objects, Shape):
@@ -961,6 +972,8 @@ class Instance(object):
 
         if isinstance(objects, Object):
             objects = [objects]
+        elif isinstance(objects, str):
+            objects = [Object(extra=objects)]
         elif isinstance(objects, numpy.ndarray):
             objects = [Object(extra=objects)]
         elif isinstance(objects, Shape):
@@ -1016,7 +1029,7 @@ class Instance(object):
         value = self.__instance.getd(name)
         return float(value)
 
-    def set(self, name: str, value: Union[bool, int, float, numpy.ndarray, Shape, Object]):
+    def set(self, name: str, value: Union[bool, int, float, str, numpy.ndarray, Shape, Object]):
         """
         set object-value property.
         :param name: property name
@@ -1035,13 +1048,15 @@ class Instance(object):
         value = self.__instance.get(name)
         return self._any_to_object(value)
 
-    def _any_to_object(self, value: Union[bool, int, float, numpy.ndarray, Shape, Object]) -> Object:
+    def _any_to_object(self, value: Union[bool, int, float, str, numpy.ndarray, Shape, Object]) -> Object:
         if isinstance(value, bool):
             value = Object(extra=numpy.asarray(value, dtype=numpy.int32))
         elif isinstance(value, int):
             value = Object(extra=numpy.asarray(value, dtype=numpy.int32))
         elif isinstance(value, float):
-            value = Object(extra=numpy.asarray(value, dtype=numpy.int32))
+            value = Object(extra=numpy.asarray(value, dtype=numpy.float32))
+        elif isinstance(value, str):
+            value = Object(extra=value)
         elif isinstance(value, numpy.ndarray):
             value = Object(extra=value)
         elif isinstance(value, Shape):

@@ -56,6 +56,7 @@ BYTE = 2        # byte type
 INT32 = 5       # signed integer type with 4-bytes
 FLOAT32 = 10     # float type with 4-bytes
 FLOAT64 = 11     # signed float type with 8-bytes
+CHAR = 13     # string's char
 
 
 FORMAT_U8RAW = 0      # byte type
