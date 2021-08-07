@@ -5,7 +5,7 @@
 #ifndef _INC_SEETA_AIP_H
 #define _INC_SEETA_AIP_H
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
 #ifdef SEETA_AIP_EXPORTS
 #define SEETA_AIP_API __declspec(dllexport)
 #else
