@@ -10,20 +10,42 @@
 #include <sstream>
 #include <iomanip>
 
-#if SEETA_AIP_OS_UNIX
+#if SEETA_AIP_OS_UNIX || SEETA_AIP_OS_IOS
 
 #include <dlfcn.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <sys/stat.h>
+#include <fstream>
+
+#define SEETA_AIP_GETCWD(buffer, length) ::getcwd((buffer), (length))
+#define SEETA_AIP_CHDIR(path) ::chdir(path)
 
 #elif SEETA_AIP_OS_WINDOWS
 
+#include <direct.h>
+#include <io.h>
 #include <Windows.h>
 
+#define SEETA_AIP_GETCWD(buffer, length) ::_getcwd((buffer), (length))
+#define SEETA_AIP_CHDIR(path) ::_chdir(path)
+
 /**
- * Undefined used variable in AIP
+ * Undefined use variable in AIP
  */
 #undef VOID
 #undef min
 #undef max
+#undef TRUE
+#undef FALSE
+#undef BOOL
+
+using VOID = void;
+using BOOL = int32_t;
+namespace {
+    BOOL TRUE = 1;
+    BOOL FALSE = 0;
+}
 
 #else
 
@@ -148,6 +170,55 @@ namespace seeta {
 #endif
         }
 
+        inline std::string _getcwd() {
+            auto pwd = SEETA_AIP_GETCWD(nullptr, 0);
+            if (pwd == nullptr) return std::string();
+            std::string pwd_str = pwd;
+            free(pwd);
+            return pwd_str;
+        }
+
+        inline bool _chdir(const std::string &path) {
+            (void)(TRUE);
+            (void)(FALSE);
+            return SEETA_AIP_CHDIR(path.c_str()) == 0;
+        }
+
+
+        class _stack_cd {
+        public:
+            using self = _stack_cd;
+
+            _stack_cd(const _stack_cd &) = delete;
+
+            _stack_cd &operator=(const _stack_cd &) = delete;
+
+            explicit _stack_cd(const std::string &path)
+            : m_cwd(_getcwd()) {
+                _chdir(path);
+            }
+
+            ~_stack_cd() {
+                _chdir(m_cwd);
+            }
+
+        private:
+            std::string m_cwd;
+        };
+
+        inline void *_dlopen_v2(const std::string &root, const std::string &libname,
+                                const std::string &prefix, const std::string &suffix) {
+            std::ostringstream libpath;
+            if (root.empty()) {
+                libpath << prefix << libname << suffix;
+            } else {
+                libpath << root << _file_separator() << prefix << libname << suffix;
+            }
+            auto tmp = libpath.str();
+            std::cout << "tried: " << tmp << std::endl;
+            return dlopen(tmp.c_str());
+        }
+
         /**
          * Load dynamic library
          * @param [in] libname path to libname, can ignore the the prefix or suffix of libname
@@ -167,35 +238,25 @@ namespace seeta {
             static const char *prefix = "lib";
             static const char *suffix = ".dll";
 #endif
+            std::string tail;
+            std::string head = _cut_path_tail(libname, tail);
+
+            _stack_cd _cd_local(head);
+
             // first open library
             auto handle = dlopen(libname.c_str());
             if (handle) return handle;
 
-            // second open library
-            std::string tail;
-            std::string head = _cut_path_tail(libname, tail);
-            std::ostringstream fixed_libname_buf;
-            if (head.empty()) {
-                fixed_libname_buf << prefix << tail << suffix;
-            } else {
-                fixed_libname_buf << head << _file_separator() << prefix << tail << suffix;
-            }
-            auto fixed_libname = fixed_libname_buf.str();
-            handle = dlopen(fixed_libname.c_str());
+            // try other names
+            handle = _dlopen_v2(head, tail, prefix, suffix);
             if (handle) return handle;
 
-            // third open library
-            fixed_libname_buf.str("");
-            if (head.empty()) {
-                fixed_libname_buf << tail << suffix;
-            } else {
-                fixed_libname_buf << _file_separator() << tail << suffix;
-            }
-            fixed_libname = fixed_libname_buf.str();
-            handle = dlopen(fixed_libname.c_str());
+            handle = _dlopen_v2(head, tail, "", suffix);
             if (handle) return handle;
 
-            // 4-th open library
+            handle = _dlopen_v2(head, tail, prefix, "");
+            if (handle) return handle;
+
             handle = dlopen(libname.c_str());
             if (handle) return handle;
 
@@ -204,5 +265,8 @@ namespace seeta {
         }
     }
 }
+
+#undef SEETA_AIP_CHDIR
+#undef SEETA_AIP_GETCWD
 
 #endif //_INC_SEETA_AIP_DLL_H
