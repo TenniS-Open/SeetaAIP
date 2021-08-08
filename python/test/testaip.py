@@ -23,8 +23,7 @@ if __name__ == '__main__':
 
     print(data2.shape)
 
-
-    obj = Object(shape=Shape(_C.SHAPE_POINTS, [(1, 2), (3, 4)]))
+    obj = Object(shape=Shape(_C.SHAPE_POINTS, [(1, 2), (3, 4)]), extra=Tensor("String========"))
     obj2 = Object.FromRaw(obj.ref)
 
     instance = Instance(engine, device, ["test1"], [obj2])

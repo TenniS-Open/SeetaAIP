@@ -24,7 +24,7 @@ def _to_ctypes_array(array, dtype):
 
 class Device(object):
     def __init__(self, type: str = "cpu", id: int = 0):
-        type = type.encode()
+        type = type.encode("utf-8")
         self.__raw = _C.Device(type, id)
 
     @property
@@ -52,7 +52,7 @@ class Device(object):
 
 
 class Tensor(object):
-    def __init__(self, obj: Union[_C.POINTER(_C.Tensor), _C.Tensor, numpy.ndarray, Iterable, int, float] = None,
+    def __init__(self, obj: Union[_C.POINTER(_C.Tensor), _C.Tensor, numpy.ndarray, Iterable, int, float, str] = None,
                  dtype: Union[int, Any, type(int), type(float)]=None, shape: Iterable[int] = None):
         self.__type = _C.VOID
         self.__dims = []
@@ -86,6 +86,15 @@ class Tensor(object):
         elif isinstance(obj, _C.Tensor):
             self.__raw = obj
             self._import_raw()
+        elif isinstance(obj, str):
+            obj_bytes = obj.encode("utf-8")
+            if dtype is not None and dtype != _C.CHAR8:
+                raise ValueError("dtype should be None or CHAR8 with type(obj)==str")
+            if shape is not None and shape != (len(obj),):
+                raise ValueError("shape should be None or [{}] with type(obj)==str".format(len(obj)))
+            self.__numpy = numpy.asarray(obj)
+            self.__type = _C.CHAR
+            self.__dims = [len(obj_bytes)]
         else:
             if dtype is None:
                 self.__numpy = numpy.ascontiguousarray(obj)
@@ -108,10 +117,22 @@ class Tensor(object):
         c_dims = self.__raw.dims
         dims = [int(c_dims.data[i]) for i in range(int(c_dims.size))]
 
-        c_dtype_data = _C.cast(c_data, _C.POINTER(self._to_ctype(int(c_type))))
-        self.__numpy = numpy.ctypeslib.as_array(c_dtype_data, shape=tuple(dims))
         self.__type = int(c_type)
         self.__dims = tuple(dims)
+
+        if c_type == _C.CHAR:
+            count = numpy.prod(dims)
+            c_char_buffer = _C.cast(c_data, _C.POINTER(_C.c_char))
+
+            tmp = (_C.c_char * max(count + 1, 8))()
+            _C.memmove(tmp, c_char_buffer, count)
+            tmp[count] = '\0'.encode()
+            c_str = _C.cast(tmp, _C.c_char_p)
+
+            self.__numpy = numpy.asarray(c_str.value.decode("utf-8"))
+        else:
+            c_dtype_data = _C.cast(c_data, _C.POINTER(self._to_ctype(int(c_type))))
+            self.__numpy = numpy.ctypeslib.as_array(c_dtype_data, shape=tuple(dims))
 
     def _to_ctype(self, dtype: int) -> Any:
         dtype_map = {
@@ -119,6 +140,7 @@ class Tensor(object):
             _C.INT32: _C.c_int32,
             _C.FLOAT32: _C.c_float,
             _C.FLOAT64: _C.c_double,
+            _C.CHAR: _C.c_char,
         }
         return dtype_map[dtype]
 
@@ -134,6 +156,9 @@ class Tensor(object):
             numpy.uint16: numpy.int32,
             numpy.int64: numpy.int32,
             numpy.uint64: numpy.int32,
+            numpy.string_: numpy.bytes_,
+            numpy.str_: numpy.bytes_,
+            numpy.bytes_: numpy.bytes_,
         }
         if dtype not in dtype_map:
             raise Exception("Not supported numpy.dtype={}".format(str(dtype.__name__)))
@@ -146,11 +171,12 @@ class Tensor(object):
         if dtype is float or dtype == float:
             return _C.FLOAT32
         if isinstance(dtype, int):
-            assert dtype in {_C.BYTE, _C.INT32, _C.FLOAT32, _C.FLOAT64}, \
+            assert dtype in {_C.BYTE, _C.INT32, _C.FLOAT32, _C.FLOAT64, _C.CHAR}, \
                 "Not supported converting aip dtype = {}".format(dtype)
             return dtype
         # assert isinstance(dtype, numpy.generic)
-        assert dtype in {numpy.uint8, numpy.int32, numpy.float32, numpy.float64}, \
+        assert dtype in {numpy.uint8, numpy.int32, numpy.float32, numpy.float64,
+                         numpy.string_, numpy.str_, numpy.bytes_}, \
             "Not supported numpy.dtype={}".format(str(dtype.__name__))
         return aip_dtype.from_numpy(dtype)
 
@@ -162,7 +188,8 @@ class Tensor(object):
         if isinstance(dtype, int):
             return aip_dtype.to_numpy(dtype)
         # assert isinstance(dtype, numpy.generic)
-        assert dtype in {numpy.uint8, numpy.int32, numpy.float32, numpy.float64}, \
+        assert dtype in {numpy.uint8, numpy.int32, numpy.float32, numpy.float64,
+                         numpy.string_, numpy.str, numpy.bytes_}, \
             "Not supported numpy.dtype={}".format(str(dtype.__name__))
         return dtype
 
@@ -185,7 +212,7 @@ class Tensor(object):
         return self.__dims
 
     @property
-    def data(self) -> Optional[numpy.ndarray]:
+    def data(self) -> Optional[Union[numpy.ndarray, str]]:
         return self.__numpy
 
     @property
@@ -200,11 +227,16 @@ class Tensor(object):
     def ref(self) -> _C.Tensor:
         self.__raw = _C.Tensor(type=_C.VOID, data=None, dims=_C.Tensor.Dims(data=None, size=0))
         if self.__numpy is not None:
+            if self.__type == _C.CHAR:
+                numpy_data = numpy.ascontiguousarray(str(self.__numpy).encode("utf-8"))
+            else:
+                numpy_data = numpy.ascontiguousarray(self.__numpy,
+                                                     dtype=self._narraw_numpy_dtype(self.__numpy.dtype.type))
             self.__raw_dims = numpy.ascontiguousarray(self.dims, dtype=numpy.uint32)
             c_dims_data = self.__raw_dims.ctypes.data_as(_C.POINTER(_C.c_uint32))
             c_dims_size = _C.c_uint32(len(self.dims))
             c_dims = _C.Tensor.Dims(data=c_dims_data, size=c_dims_size)
-            c_data = self.data.ctypes.data_as(_C.c_void_p)
+            c_data = numpy_data.ctypes.data_as(_C.c_void_p)
             self.__raw.type = _C.c_int32(self.type)
             self.__raw.data = c_data
             self.__raw.dims = c_dims
@@ -231,6 +263,13 @@ class Tensor(object):
 
     def __setitem__(self, key, value):
         self.__numpy[key] = value
+
+    def is_string(self) -> bool:
+        """
+        Return if this tensor is a string
+        :return:
+        """
+        return self.type == _C.CHAR
 
 
 class ImageData(object):
@@ -741,6 +780,15 @@ class Object(object):
     def __repr__(self):
         return self.__str__()
 
+    def has_string(self) -> bool:
+        """
+        Return if extra is a string
+        :return:
+        """
+        if self.extra is None:
+            return False
+        return self.extra.type == _C.CHAR
+
 
 class Package(object):
     def __init__(self, obj: _C.Package):
@@ -834,7 +882,7 @@ class Package(object):
         c_handle = _C.c_void_p(0)
         c_phandle = _C.byref(c_handle)
         c_device = device.raw
-        c_models_tmp = [_C.c_char_p(m.encode()) for m in models]
+        c_models_tmp = [_C.c_char_p(m.encode("utf-8")) for m in models]
         c_models_tmp.append(None)
         c_models = (_C.c_char_p * len(c_models_tmp))(*c_models_tmp)
         if objects is None:
@@ -913,7 +961,7 @@ class Package(object):
         assert isinstance(handle, (type(None), Package.Handle))
         c_handle = handle.handle if handle else _C.c_void_p(0)
 
-        c_name = name.encode()
+        c_name = name.encode("utf-8")
         c_value = _C.c_double(value)
 
         c_errcode = self.__raw.setd(c_handle, c_name, c_value)
@@ -924,7 +972,7 @@ class Package(object):
         assert isinstance(handle, (type(None), Package.Handle))
         c_handle = handle.handle if handle else _C.c_void_p(0)
 
-        c_name = name.encode()
+        c_name = name.encode("utf-8")
         c_value = _C.c_double()
 
         c_errcode = self.__raw.getd(c_handle, c_name, _C.byref(c_value))
@@ -937,7 +985,7 @@ class Package(object):
         assert isinstance(handle, (type(None), Package.Handle))
         c_handle = handle.handle if handle else _C.c_void_p(0)
 
-        c_name = name.encode()
+        c_name = name.encode("utf-8")
         c_value = value.ref
 
         c_errcode = self.__raw.set(c_handle, c_name, _C.byref(c_value))
@@ -950,7 +998,7 @@ class Package(object):
 
         value = Object()
 
-        c_name = name.encode()
+        c_name = name.encode("utf-8")
         c_value = value.ref
 
         c_errcode = self.__raw.get(c_handle, c_name, _C.byref(c_value))

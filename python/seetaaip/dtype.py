@@ -7,6 +7,7 @@ UINT8 = 2
 INT32 = 5
 FLOAT32 = 10
 FLOAT64 = 11
+CHAR = 13
 
 __dtype_bytes_map = {
     VOID: 0,
@@ -14,6 +15,7 @@ __dtype_bytes_map = {
     INT32: 4,
     FLOAT32: 4,
     FLOAT64: 8,
+    CHAR: 1,
 }
 
 __dtype_str_map = {
@@ -22,6 +24,7 @@ __dtype_str_map = {
     INT32: 'int32',
     FLOAT32: 'float32',
     FLOAT64: 'float64',
+    CHAR: 'char',
 }
 
 convert_pairs = [
@@ -29,6 +32,9 @@ convert_pairs = [
     (numpy.uint8, UINT8),
     (numpy.float32, FLOAT32),
     (numpy.float64, FLOAT64),
+    (numpy.string_, CHAR),
+    (numpy.str_, CHAR),
+    (numpy.bytes_, CHAR),
 ]
 
 __numpy_dtype_to_dtype = { pair[0]: pair[1] for pair in convert_pairs }

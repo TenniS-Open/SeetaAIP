@@ -27,7 +27,14 @@ inline std::ostream &operator<<(std::ostream &out, const seeta::aip::Tensor &obj
         }
         out << dim;
     }
-    out << "], data[0]=...}";
+    out << "], ";
+    if (obj.type() == SEETA_AIP_VALUE_CHAR) {
+        std::string tmp(obj.data<char>(), obj.bytes());
+        out << "data=\"" << tmp << "\"";
+    } else {
+        out << "data[0]=...";
+    }
+    out << "}";
     return out;
 }
 

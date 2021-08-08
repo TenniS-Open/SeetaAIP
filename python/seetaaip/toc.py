@@ -549,7 +549,7 @@ class Object(object):
         assert isinstance(shape, (type(None), Shape))
         if extra is not None:
             if isinstance(extra, str):
-                pass
+                extra = numpy.asarray(extra)
             elif isinstance(extra, numpy.ndarray):
                 pass
             else:
@@ -599,7 +599,7 @@ class Object(object):
             self.__extra = None
             return
         if isinstance(value, str):
-            self.__extra = str
+            self.__extra = numpy.asarray(value)
         else:
             self.__extra = numpy.asarray(value)
 
@@ -612,6 +612,15 @@ class Object(object):
 
     def __repr__(self):
         return self.__str__()
+
+    def has_string(self) -> bool:
+        """
+        Return if extra is a string
+        :return:
+        """
+        if self.extra is None:
+            return False
+        return self.extra.dtype.type in {numpy.string_, numpy.str_}
 
 
 class AIP(object):
