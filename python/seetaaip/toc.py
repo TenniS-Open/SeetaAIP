@@ -130,7 +130,7 @@ class ImageData(object):
     Attr channels: channels of image
     Attr dims: get [number, height, width, channels] of image
     Attr shape: get memory layout shape. It's different to dims when format is NCHW_*
-    Attr data/number: get numpy.ndarray, which contains data of image.
+    Attr data/numpy: get numpy.ndarray, which contains data of image.
     """
     def __init__(self, obj: Union[numpy.ndarray, Iterable, int, float] = None,
                  fmt: int = None, shape: Iterable[int] = None,
@@ -362,8 +362,27 @@ class ImageData(object):
 
 
 class Tensor(object):
+    """
+    Image data
+    Attr type: type of tensor value
+        [BYTE, INT32, FLOAT32, FLOAT64, CHAR, ]
+    Attr dims/shape: get memory layout shape.
+    Attr data/number: get numpy.ndarray, which contains data of image.
+    """
     def __init__(self, obj: Union[numpy.ndarray, Iterable, int, float, str] = None,
-                 dtype: Union[int, Any, type(int), type(float)]=None, shape: Iterable[int] = None):
+                 dtype: Union[int, Any, type(int), type(float)] = None,
+                 shape: Iterable[int] = None):
+        """
+
+        :param obj: data which can be parse to numpy.asarray()
+        :param dtype: image data type, can be [BYTE, INT32, FLOAT32, FLOAT64, CHAR, ]
+        :param shape: shape of tensor
+        Usage:
+            tensor = Tensor(data, dtype=FLOAT32)
+            tensor = Tensor(dtype=FLOAT32, shape=[1, 300, 400, 3])
+            tensor = Tensor("String")
+        You can treat Tensor as numpy.ndarray. like tensor[:, :, 0] = 4.
+        """
         self.__type = VOID
         self.__dims = []
         self.__numpy = None  # numpy
