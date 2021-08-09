@@ -749,7 +749,7 @@ namespace seeta {
             std::shared_ptr<char> m_device;
         };
 
-        static const char *format_string(int format) {
+        static inline const char *format_string(int format) {
             switch (format) {
                 default: return "Unknown";
                 case SEETA_AIP_FORMAT_U8RAW: return "U8Raw";
@@ -771,7 +771,7 @@ namespace seeta {
             }
         }
 
-        static const char *type_string(int type) {
+        static inline const char *type_string(int type) {
             switch (type) {
                 default: return "Unknown";
                 case SEETA_AIP_VALUE_VOID: return "VOID";
