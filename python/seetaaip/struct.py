@@ -88,8 +88,8 @@ class Tensor(object):
             self._import_raw()
         elif isinstance(obj, str):
             obj_bytes = obj.encode("utf-8")
-            if dtype is not None and dtype != _C.CHAR8:
-                raise ValueError("dtype should be None or CHAR8 with type(obj)==str")
+            if dtype is not None and dtype != _C.CHAR:
+                raise ValueError("dtype should be None or CHAR with type(obj)==str")
             if shape is not None and shape != (len(obj),):
                 raise ValueError("shape should be None or [{}] with type(obj)==str".format(len(obj)))
             self.__numpy = numpy.asarray(obj)

@@ -361,6 +361,150 @@ class ImageData(object):
         self.__numpy[key] = value
 
 
+class Tensor(object):
+    def __init__(self, obj: Union[numpy.ndarray, Iterable, int, float, str] = None,
+                 dtype: Union[int, Any, type(int), type(float)]=None, shape: Iterable[int] = None):
+        self.__type = VOID
+        self.__dims = []
+        self.__numpy = None  # numpy
+
+        if obj is None:
+            if dtype is None and shape is None:
+                return
+            if shape is None:
+                shape = []
+            if dtype is None:
+                dtype = FLOAT32
+            dtype = self._check_dtype_aip(dtype)
+            self.__type = dtype
+            self.__dims = tuple(shape)
+            self.__numpy = numpy.zeros(self.__dims, self._check_dtype_numpy(dtype))
+        elif isinstance(obj, Tensor):
+            self.__type = obj.__type
+            self.__dims = obj.__dims
+            self.__numpy = obj.__numpy
+        elif isinstance(obj, str):
+            obj_bytes = obj.encode("utf-8")
+            if dtype is not None and dtype != CHAR:
+                raise ValueError("dtype should be None or CHAR8 with type(obj)==str")
+            if shape is not None and shape != (len(obj),):
+                raise ValueError("shape should be None or [{}] with type(obj)==str".format(len(obj)))
+            self.__numpy = numpy.asarray(obj)
+            self.__type = CHAR
+            self.__dims = [len(obj_bytes)]
+        else:
+            if dtype is None:
+                self.__numpy = numpy.ascontiguousarray(obj)
+                self.__numpy = numpy.ascontiguousarray(self.__numpy,
+                                                       dtype=self._narraw_numpy_dtype(self.__numpy.dtype.type))
+            else:
+                self.__numpy = numpy.ascontiguousarray(obj, dtype=self._check_dtype_numpy(dtype))
+            self.__type = self._check_dtype_aip(self.__numpy.dtype.type)
+            if shape is not None:
+                self.__numpy = numpy.reshape(self.__numpy, shape)
+            self.__dims = self.__numpy.shape
+
+    def _narraw_numpy_dtype(self, dtype: Any):
+        dtype_map = {
+            numpy.uint8: numpy.uint8,
+            numpy.int32: numpy.int32,
+            numpy.float32: numpy.float32,
+            numpy.float64: numpy.float64,
+            numpy.int8: numpy.int32,
+            numpy.uint32: numpy.int32,
+            numpy.int16: numpy.int32,
+            numpy.uint16: numpy.int32,
+            numpy.int64: numpy.int32,
+            numpy.uint64: numpy.int32,
+            numpy.string_: numpy.bytes_,
+            numpy.str_: numpy.bytes_,
+            numpy.bytes_: numpy.bytes_,
+        }
+        if dtype not in dtype_map:
+            raise Exception("Not supported numpy.dtype={}".format(str(dtype.__name__)))
+
+        return dtype_map[dtype]
+
+    def _check_dtype_aip(self, dtype: Union[int, Any]) -> int:
+        if dtype is int or dtype == int:
+            return INT32
+        if dtype is float or dtype == float:
+            return FLOAT32
+        if isinstance(dtype, int):
+            assert dtype in {BYTE, INT32, FLOAT32, FLOAT64, CHAR}, \
+                "Not supported converting aip dtype = {}".format(dtype)
+            return dtype
+        # assert isinstance(dtype, numpy.generic)
+        assert dtype in {numpy.uint8, numpy.int32, numpy.float32, numpy.float64,
+                         numpy.string_, numpy.str_, numpy.bytes_}, \
+            "Not supported numpy.dtype={}".format(str(dtype.__name__))
+        return aip_dtype.from_numpy(dtype)
+
+    def _check_dtype_numpy(self, dtype: Union[int, Any]) -> Any:
+        if dtype is int or dtype == int:
+            return numpy.int32
+        if dtype is float or dtype == float:
+            return numpy.float32
+        if isinstance(dtype, int):
+            return aip_dtype.to_numpy(dtype)
+        # assert isinstance(dtype, numpy.generic)
+        assert dtype in {numpy.uint8, numpy.int32, numpy.float32, numpy.float64,
+                         numpy.string_, numpy.str, numpy.bytes_}, \
+            "Not supported numpy.dtype={}".format(str(dtype.__name__))
+        return dtype
+
+    def empty(self) -> bool:
+        return self.__numpy is not None
+
+    def __bool__(self):
+        return not self.empty()
+
+    @property
+    def type(self) -> int:
+        return self.__type
+
+    @property
+    def dims(self) -> Tuple[int]:
+        return self.__dims
+
+    @property
+    def shape(self) -> Tuple[int]:
+        return self.__dims
+
+    @property
+    def data(self) -> Optional[Union[numpy.ndarray, str]]:
+        return self.__numpy
+
+    def __repr__(self):
+        return self.__numpy.__repr__()
+
+    def __str__(self):
+        return self.__numpy.__str__()
+
+    def __nonzero__(self) -> bool:
+        return not self.empty()
+
+    def __array__(self) -> numpy.ndarray:
+        return self.__numpy
+
+    @property
+    def numpy(self) -> numpy.ndarray:
+        return self.__numpy
+
+    def __getitem__(self, item):
+        return self.__numpy[item]
+
+    def __setitem__(self, key, value):
+        self.__numpy[key] = value
+
+    def is_string(self) -> bool:
+        """
+        Return if this tensor is a string
+        :return:
+        """
+        return self.type == CHAR
+
+
 class Point(object):
     """
     Point in image.
@@ -533,13 +677,13 @@ class Object(object):
     Detectable object.
     Attr shape: Shape
     Attr tags: list of Tag
-    Attr extra: numpy.ndarray or str
+    Attr extra: Tensor
     """
 
     Tag = Tag
 
     def __init__(self, shape: Shape = None, tags: Iterable[Union[Tag, Tuple]] = None,
-                 extra: Union[Any, str, numpy.ndarray] = None):
+                 extra: Union[Any, Iterable, int, float, str, numpy.ndarray, Tensor] = None):
         """
         :param shape: instance of Shape
         :param tags: list of Tag
@@ -548,12 +692,8 @@ class Object(object):
         """
         assert isinstance(shape, (type(None), Shape))
         if extra is not None:
-            if isinstance(extra, str):
-                extra = numpy.asarray(extra)
-            elif isinstance(extra, numpy.ndarray):
-                pass
-            else:
-                extra = numpy.asarray(extra)
+            if not isinstance(extra, Tensor):
+                extra = Tensor(extra)
         if tags is None:
             tags = []
 
@@ -573,15 +713,12 @@ class Object(object):
                 raise RuntimeError("param tags must be list of Tag or tuple[2]")
             self.__tags.append(Tag(tag[0], tag[1]))
 
-        self.__tmp_shape = None
-        self.__tmp_extra = None
-
     @property
-    def tags(self):
+    def tags(self) -> List[Tag]:
         return self.__tags
 
     @property
-    def shape(self):
+    def shape(self) -> Shape:
         return self.__shape
 
     @shape.setter
@@ -590,18 +727,17 @@ class Object(object):
         self.__shape = value
 
     @property
-    def extra(self):
+    def extra(self) -> Tensor:
         return self.__extra
 
     @extra.setter
-    def extra(self, value):
+    def extra(self, value: Union[int, float, str, numpy.ndarray, Iterable, Tensor]):
         if value is None:
             self.__extra = None
             return
-        if isinstance(value, str):
-            self.__extra = numpy.asarray(value)
-        else:
-            self.__extra = numpy.asarray(value)
+        if not isinstance(value, Tensor):
+            value = Tensor(value)
+        self.__extra = value
 
     def __str__(self):
         return "Object{{shape={}, tags=[{}], extra={}}}".format(
@@ -620,7 +756,7 @@ class Object(object):
         """
         if self.extra is None:
             return False
-        return self.extra.dtype.type in {numpy.string_, numpy.str_}
+        return self.extra.type == CHAR
 
 
 class AIP(object):
