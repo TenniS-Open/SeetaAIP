@@ -215,7 +215,6 @@ namespace seeta {
                 libpath << root << _file_separator() << prefix << libname << suffix;
             }
             auto tmp = libpath.str();
-            std::cout << "tried: " << tmp << std::endl;
             return dlopen(tmp.c_str());
         }
 
