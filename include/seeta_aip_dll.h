@@ -31,7 +31,7 @@
 #define SEETA_AIP_CHDIR(path) ::_chdir(path)
 
 /**
- * Undefined use variable in AIP
+ * Undefined used variables in AIP
  */
 #undef VOID
 #undef min
@@ -39,13 +39,6 @@
 #undef TRUE
 #undef FALSE
 #undef BOOL
-
-using VOID = void;
-using BOOL = int32_t;
-namespace {
-    BOOL TRUE = 1;
-    BOOL FALSE = 0;
-}
 
 #else
 
@@ -179,8 +172,6 @@ namespace seeta {
         }
 
         inline bool _chdir(const std::string &path) {
-            (void)(TRUE);
-            (void)(FALSE);
             return SEETA_AIP_CHDIR(path.c_str()) == 0;
         }
 
