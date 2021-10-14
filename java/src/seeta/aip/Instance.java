@@ -1,6 +1,6 @@
 package seeta.aip;
 
-class Instance {
+public class Instance {
     private long handle = 0;
     private Package aip;
     private Engine engine;
