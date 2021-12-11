@@ -103,8 +103,8 @@ class Device(object):
         :param dev: device name
         :param i: device id
         """
-        self.__type = dev
-        self.__id = i
+        self.__type = str(dev)
+        self.__id = int(i)
 
     @property
     def device(self) -> str:
@@ -174,9 +174,9 @@ class ImageData(object):
             shape = list(shape)
             assert 2 <= len(shape) <= 4
             if len(shape) == 2:
-                shape = [1, shape[0], shape[1], 1]
+                shape = [1, int(shape[0]), int(shape[1]), 1]
             if len(shape) == 3:
-                shape = [1, shape[0], shape[1], shape[2]]
+                shape = [1, int(shape[0]), int(shape[1]), int(shape[2])]
         if number is not None or width is not None or height is not None or channels is not None:
             if width is None or height is None:
                 raise Exception("number, width, height, channels must be set in same time")
@@ -184,7 +184,7 @@ class ImageData(object):
                 number = 1
             if channels is None:
                 channels = 3
-            shape = [number, height, width, channels]
+            shape = [int(number), int(height), int(width), int(channels)]
 
         if obj is None:
             if fmt is None and shape is None:
@@ -387,6 +387,9 @@ class Tensor(object):
         self.__dims = []
         self.__numpy = None  # numpy
 
+        if shape is not None:
+            shape = tuple([int(i) for i in shape])
+
         if obj is None:
             if dtype is None and shape is None:
                 return
@@ -396,7 +399,7 @@ class Tensor(object):
                 dtype = FLOAT32
             dtype = self._check_dtype_aip(dtype)
             self.__type = dtype
-            self.__dims = tuple(shape)
+            self.__dims = shape
             self.__numpy = numpy.zeros(self.__dims, self._check_dtype_numpy(dtype))
         elif isinstance(obj, Tensor):
             self.__type = obj.__type
@@ -532,8 +535,24 @@ class Point(object):
     Attr y: means coordinates from top to bottom.
     """
     def __init__(self, x=0, y=0):
-        self.x = x
-        self.y = y
+        self.__x = float(x)
+        self.__y = float(y)
+
+    @property
+    def x(self):
+        return self.__x
+
+    @x.setter
+    def x(self, val):
+        self.__x = float(val)
+
+    @property
+    def y(self):
+        return self.__y
+
+    @y.setter
+    def y(self, val):
+        self.__y = float(val)
 
     def __str__(self):
         return "({}, {})".format(self.x, self.y)
@@ -560,10 +579,10 @@ class Shape(object):
         :param rotate: using degree measure, positive value means anticlockwise
         :param scale: normally means scale of point's coordinate, specially means radius of a circle
         """
-        self.__shape_type = shape_type
+        self.__shape_type = int(shape_type)
         self.__landmarks = []
-        self.__rotate = rotate
-        self.__scale = scale
+        self.__rotate = float(rotate)
+        self.__scale = float(scale)
 
         self.__raw = None   # _C.Shape
 
@@ -667,8 +686,24 @@ class Tag(object):
         :param label: label index
         :param value: score of each label
         """
-        self.label = label
-        self.value = value
+        self.__label = int(label)
+        self.__value = float(value)
+
+    @property
+    def label(self):
+        return self.__label
+
+    @label.setter
+    def label(self, val):
+        self.__label = int(val)
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, val):
+        self.__value = float(val)
 
     def __str__(self):
         return "({}, {})".format(self.label, self.value)
