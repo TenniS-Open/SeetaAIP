@@ -649,34 +649,42 @@ class Shape(object):
 
 
 class Tag(_C.Tag):
-    def __init__(self, label=0, value=0):
-        super(Tag, self).__init__(label=label, value=value)
+    def __init__(self, label=0, score=0):
+        super(Tag, self).__init__(label=label, score=score)
 
     def __str__(self):
-        return "({}, {})".format(self.label, self.value)
+        return "({}, {})".format(self.label, self.score)
 
     def __repr__(self):
-        return "({}, {})".format(self.label, self.value)
+        return "({}, {})".format(self.label, self.score)
 
     def __getitem__(self, item):
         assert item in {0, 1}
         if item == 0:
             return self.label
         else:
-            return self.value
+            return self.score
 
     def __setitem__(self, key, value):
         assert key in {0, 1}
         if key == 0:
             self.label = value
         else:
-            self.value = value
+            self.score = value
+
+    @property
+    def value(self):
+        return self.score
+
+    @value.setter
+    def value(self, val):
+        self.score = float(val)
 
     @staticmethod
     def FromRaw(raw: Union[_C.POINTER(_C.Tag), _C.Tag]):
         if isinstance(raw, _C.POINTER(_C.Tag)):
             raw = raw.contents
-        return Tag(raw.label, raw.value)
+        return Tag(raw.label, raw.score)
 
 
 class Object(object):

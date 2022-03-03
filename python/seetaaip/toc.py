@@ -681,13 +681,13 @@ class Tag(object):
     """
     Object tag.
     """
-    def __init__(self, label=0, value=0):
+    def __init__(self, label=0, score=0):
         """
         :param label: label index
-        :param value: score of each label
+        :param score: score of each label
         """
         self.__label = int(label)
-        self.__value = float(value)
+        self.__score = float(score)
 
     @property
     def label(self):
@@ -698,32 +698,40 @@ class Tag(object):
         self.__label = int(val)
 
     @property
+    def score(self):
+        return self.__score
+
+    @property
     def value(self):
-        return self.__value
+        return self.__score
+
+    @score.setter
+    def score(self, val):
+        self.__score = float(val)
 
     @value.setter
     def value(self, val):
-        self.__value = float(val)
+        self.__score = float(val)
 
     def __str__(self):
-        return "({}, {})".format(self.label, self.value)
+        return "({}, {})".format(self.label, self.score)
 
     def __repr__(self):
-        return "({}, {})".format(self.label, self.value)
+        return "({}, {})".format(self.label, self.score)
 
     def __getitem__(self, item):
         assert item in {0, 1}
         if item == 0:
             return self.label
         else:
-            return self.value
+            return self.score
 
     def __setitem__(self, key, value):
         assert key in {0, 1}
         if key == 0:
             self.label = value
         else:
-            self.value = value
+            self.score = value
 
 
 class Object(object):
