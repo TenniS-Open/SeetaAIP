@@ -259,7 +259,10 @@ class DynamicLibrary(object):
         assert isinstance(libname, str)
         self.lib = LoadLibrary(libname.encode())
         if not self.lib:
-            raise ImportError("Can find library: {}".format(libname))
+            from . import libfinder
+            self.lib = libfinder.load_native_library(libname, LoadLibrary)
+            if not self.lib:
+                raise ImportError("Can find library: {}".format(libname))
 
     def __del__(self):
         if self.lib is not None:

@@ -247,6 +247,18 @@ namespace seeta {
             handle = _dlopen_v2(head, tail, prefix, "");
             if (handle) return handle;
 
+            handle = _dlopen_v2("", tail, prefix, suffix);
+            if (handle) return handle;
+
+            handle = _dlopen_v2("", tail, "", suffix);
+            if (handle) return handle;
+
+            handle = _dlopen_v2("", tail, prefix, "");
+            if (handle) return handle;
+
+            handle = _dlopen_v2("", tail, "", "");
+            if (handle) return handle;
+
             handle = dlopen(libname.c_str());
             if (handle) return handle;
 
