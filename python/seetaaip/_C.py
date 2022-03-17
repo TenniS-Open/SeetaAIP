@@ -5,6 +5,8 @@ from ctypes import *
 from ctypes.util import find_library
 from . import libfinder
 from typing import List
+import platform
+import os
 
 kernel32Name = "kernel32"
 libTennis = find_library(kernel32Name)
@@ -257,6 +259,8 @@ seeta_aip_load_entry = CFUNCTYPE(c_int32, POINTER(Package), c_uint32)
 class DynamicLibrary(object):
     def __init__(self, libname):
         assert isinstance(libname, str)
+        if platform.system() == "Windows":
+            os.environ["OMP_WAIT_POLICY"] = "passive"
         self.lib = LoadLibrary(libname.encode())
         if not self.lib:
             from . import libfinder
