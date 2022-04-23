@@ -1,5 +1,7 @@
 # Seeta AIP
 
+[![License](https://img.shields.io/badge/license-BSD-blue.svg)](LICENSE)
+
 AIP(AI Package) is the base of SeetaAIoT framework.
 
 It provide single AI ability, which can be compute on satisfied device.
