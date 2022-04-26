@@ -59,6 +59,7 @@ namespace seeta {
                 STATIC = 0,
                 DYNAMIC = 1,
             };
+
             Engine(const Engine &) = delete;
 
             Engine &operator=(const Engine &) = delete;
@@ -134,20 +135,25 @@ namespace seeta {
 
         private:
             void construct(const SeetaAIP &aip, const Device &device, const std::vector<std::string> &models) {
-                this->construct(aip, device, models, {});
+                this->construct(aip, device, models, std::vector<SeetaAIPObject>());
             }
 
             void construct(const SeetaAIP &aip, const Device &device,
-                    const std::vector<std::string> &models,
-                    const std::vector<Object> &args) {
+                           const std::vector<std::string> &models,
+                           const std::vector<Object> &args) {
+                construct(aip, device, models, Convert(args));
+            }
+
+            void construct(const SeetaAIP &aip, const Device &device,
+                           const std::vector<std::string> &models,
+                           const std::vector<SeetaAIPObject> &args) {
                 m_handle = nullptr;
                 m_aip = aip;
 
-                auto c_args = Convert(args);
-
+                auto c_args = args;
                 std::vector<const char *> c_models;
                 c_models.reserve(models.size());
-                for (auto &model : models) { c_models.emplace_back(model.c_str()); }
+                for (auto &model: models) { c_models.emplace_back(model.c_str()); }
                 c_models.emplace_back(nullptr);
                 auto errcode = m_aip.create(&m_handle, device, c_models.data(), c_args.data(), uint32_t(c_args.size()));
                 if (errcode) throw Exception(errcode, m_aip.error(nullptr, errcode));
@@ -155,11 +161,13 @@ namespace seeta {
 
         public:
 
-            Instance(const SeetaAIP &aip, const Device &device, const std::vector<std::string> &models, const std::vector<Object> &args) {
+            Instance(const SeetaAIP &aip, const Device &device, const std::vector<std::string> &models,
+                     const std::vector<SeetaAIPObject> &args) {
                 this->construct(aip, device, models, args);
             }
 
-            Instance(const std::shared_ptr<Engine> &engine, const Device &device, const std::vector<std::string> &models, const std::vector<Object> &args) {
+            Instance(const std::shared_ptr<Engine> &engine, const Device &device,
+                     const std::vector<std::string> &models, const std::vector<SeetaAIPObject> &args) {
                 auto &aip = engine->aip();
                 if (engine->type() == Engine::DYNAMIC) {
                     m_engine = engine;
@@ -168,7 +176,8 @@ namespace seeta {
                 this->construct(aip, device, models, args);
             }
 
-            Instance(const std::string &libname, const Device &device, const std::vector<std::string> &models, const std::vector<Object> &args) {
+            Instance(const std::string &libname, const Device &device, const std::vector<std::string> &models,
+                     const std::vector<SeetaAIPObject> &args) {
                 auto engine = std::make_shared<Engine>(libname);
 
                 auto &aip = engine->aip();
@@ -179,7 +188,8 @@ namespace seeta {
                 this->construct(aip, device, models, args);
             }
 
-            Instance(seeta_aip_load_entry *entry, const Device &device, const std::vector<std::string> &models, const std::vector<Object> &args) {
+            Instance(seeta_aip_load_entry *entry, const Device &device, const std::vector<std::string> &models,
+                     const std::vector<SeetaAIPObject> &args) {
                 auto engine = std::make_shared<Engine>(entry);
 
                 auto &aip = engine->aip();
@@ -190,20 +200,41 @@ namespace seeta {
                 this->construct(aip, device, models, args);
             }
 
+            Instance(const SeetaAIP &aip, const Device &device, const std::vector<std::string> &models,
+                     const std::vector<Object> &args)
+                    : self(aip, device, models, Convert(args)) {
+            }
+
+            Instance(const std::shared_ptr<Engine> &engine, const Device &device,
+                     const std::vector<std::string> &models, const std::vector<Object> &args)
+                    : self(engine, device, models, Convert(args)) {
+            }
+
+            Instance(const std::string &libname, const Device &device, const std::vector<std::string> &models,
+                     const std::vector<Object> &args)
+                    : self(libname, device, models, Convert(args)) {
+            }
+
+            Instance(seeta_aip_load_entry *entry, const Device &device, const std::vector<std::string> &models,
+                     const std::vector<Object> &args)
+                    : self(entry, device, models, Convert(args)) {
+            }
+
             Instance(const SeetaAIP &aip, const Device &device, const std::vector<std::string> &models)
-                : self(aip, device, models, {}) {}
+                    : self(aip, device, models, std::vector<SeetaAIPObject>()) {}
 
 
-            Instance(const std::shared_ptr<Engine> &engine, const Device &device, const std::vector<std::string> &models)
-                    : self(engine, device, models, {}) {}
+            Instance(const std::shared_ptr<Engine> &engine, const Device &device,
+                     const std::vector<std::string> &models)
+                    : self(engine, device, models, std::vector<SeetaAIPObject>()) {}
 
 
             Instance(const std::string &libname, const Device &device, const std::vector<std::string> &models)
-                    : self(libname, device, models, {}) {}
+                    : self(libname, device, models, std::vector<SeetaAIPObject>()) {}
 
 
             Instance(seeta_aip_load_entry *entry, const Device &device, const std::vector<std::string> &models)
-                    : self(entry, device, models, {}) {}
+                    : self(entry, device, models, std::vector<SeetaAIPObject>()) {}
 
             ~Instance() {
                 if (m_handle) {
@@ -298,7 +329,7 @@ namespace seeta {
             static std::vector<SeetaAIPImageData> Convert(const std::vector<ImageData> &array) {
                 std::vector<SeetaAIPImageData> cvt;
                 cvt.reserve(array.size());
-                for (auto &obj : array) {
+                for (auto &obj: array) {
                     cvt.emplace_back(*obj.raw());
                 }
                 return cvt;
@@ -307,7 +338,7 @@ namespace seeta {
             static std::vector<SeetaAIPObject> Convert(const std::vector<Object> &array) {
                 std::vector<SeetaAIPObject> cvt;
                 cvt.reserve(array.size());
-                for (auto &obj : array) {
+                for (auto &obj: array) {
                     cvt.emplace_back(*obj.raw());
                 }
                 return cvt;
@@ -341,7 +372,8 @@ namespace seeta {
                 return forward(method_id, Convert(images), std::vector<SeetaAIPObject>());
             }
 
-            Result forward(uint32_t method_id, const SeetaAIPImageData &image, const std::vector<SeetaAIPObject> &objects) {
+            Result forward(uint32_t method_id,
+                           const SeetaAIPImageData &image, const std::vector<SeetaAIPObject> &objects) {
                 return forward(method_id, std::vector<SeetaAIPImageData>({image}), objects);
             }
 
@@ -351,6 +383,20 @@ namespace seeta {
 
             Result forward(uint32_t method_id, const SeetaAIPImageData &image, const std::vector<Object> &objects) {
                 return forward(method_id, image, Convert(objects));
+            }
+
+            Result forward(uint32_t method_id, const SeetaAIPObject &object) {
+                return forward(method_id,
+                               std::vector<SeetaAIPImageData>(),
+                               std::vector<SeetaAIPObject>({object}));
+            }
+
+            Result forward(uint32_t method_id, const std::vector<SeetaAIPObject> &objects) {
+                return forward(method_id, std::vector<SeetaAIPImageData>(), objects);
+            }
+
+            Result forward(uint32_t method_id, const std::vector<Object> &objects) {
+                return forward(method_id, std::vector<SeetaAIPImageData>(), objects);
             }
 
             const char *c_tag(uint32_t method_id, uint32_t label_index, int32_t label_value) {
