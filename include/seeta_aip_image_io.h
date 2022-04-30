@@ -40,7 +40,7 @@ namespace seeta {
             }
             auto dot_pos = filename.rfind('.');
             std::string ext = dot_pos == std::string::npos ? "" : filename.substr(dot_pos + 1);
-            for (auto &ch : ext) ch = std::tolower(ch);
+            for (auto &ch: ext) ch = std::tolower(ch);
 
             if (ext.empty()) {
                 std::cerr << "Unknown image type, image not of any known type, or corrupt" << std::endl;
@@ -70,6 +70,77 @@ namespace seeta {
 
             std::cerr << "Unknown image type \'" << ext << "\', image not of any known type, or corrupt" << std::endl;
             return false;
+        }
+
+        static seeta::aip::ImageData decode(const void *data, int len) {
+            int iw, ih, n;
+            iw = ih = n = 0;
+            unsigned char *image_data = stbi_load_from_memory((const stbi_uc *) data, len, &iw, &ih, &n, 3);
+            if (!image_data) return seeta::aip::ImageData();
+            seeta::aip::ImageData result(SEETA_AIP_FORMAT_U8RGB, iw, ih, n, image_data);
+            stbi_image_free(image_data);
+            return result;
+        }
+
+        namespace _ {
+            static void encode_buffer(void *context, void *data, int size) {
+                auto buffer = (std::vector<unsigned char> *) context;
+                auto now_size = buffer->size();
+                auto new_size = buffer->size() + size;
+                buffer->resize(new_size);
+                std::memcpy(buffer->data() + now_size, data, size);
+            }
+        }
+
+        static std::vector<unsigned char> encode(const std::string &code, const SeetaAIPImageData &image) {
+            auto image_t = image;
+            seeta::aip::ImageData tmp;
+            if (image_t.format != SEETA_AIP_FORMAT_U8RGB && image_t.format != SEETA_AIP_FORMAT_U8RGBA) {
+                tmp = convert(1, SEETA_AIP_FORMAT_U8RGB, image_t);
+                image_t = tmp;
+            }
+            auto dot_pos = code.rfind('.');
+            std::string ext = dot_pos == std::string::npos ? code : code.substr(dot_pos + 1);
+            for (auto &ch: ext) ch = std::tolower(ch);
+
+            if (ext.empty()) {
+                std::cerr << "Unknown image type, image not of any known type, or corrupt" << std::endl;
+                return {};
+            }
+
+            std::vector<unsigned char> buffer;
+            buffer.reserve(image_t.number * image_t.height * image_t.width * image_t.channels / 2);
+
+            if (ext == "jpeg" || ext == "jpg") {
+                if (stbi_write_jpg_to_func(_::encode_buffer, &buffer,
+                                           image_t.width, image_t.height, image_t.channels, image_t.data,
+                                           90))
+                    return buffer;
+            } else if (ext == "png") {
+                if (stbi_write_png_to_func(_::encode_buffer, &buffer,
+                                           image_t.width, image_t.height, image_t.channels, image_t.data,
+                                           0))
+                    return buffer;
+            } else if (ext == "bmp") {
+                if (stbi_write_bmp_to_func(_::encode_buffer, &buffer,
+                                           image_t.width, image_t.height, image_t.channels, image_t.data))
+                    return buffer;
+            } else if (ext == "tga") {
+                if (stbi_write_tga_to_func(_::encode_buffer, &buffer,
+                                           image_t.width, image_t.height, image_t.channels, image_t.data))
+                    return buffer;
+            } else if (ext == "hdr") {
+                if (stbi_write_hdr_to_func(_::encode_buffer, &buffer,
+                                           image_t.width, image_t.height, image_t.channels, (float *) image_t.data))
+                    return buffer;
+            } else {
+                std::cerr << "Unknown image type \'" << ext << "\', image not of any known type, or corrupt"
+                          << std::endl;
+            }
+
+            std::cerr << "Failed to encode image to \'" << ext << "\'" << std::endl;
+
+            return {};
         }
     }
 }
