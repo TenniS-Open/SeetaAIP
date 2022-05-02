@@ -98,6 +98,11 @@ namespace seeta {
                 if (left < 0) left = 0;
                 if (right > int32_t(width)) right = width;
 
+                if (c_top < 0) c_top = 0;
+                if (c_bottom > int32_t(height)) c_bottom = height;
+                if (c_left < 0) c_left = 0;
+                if (c_right > int32_t(width)) c_right = width;
+
                 std::vector<PutSetting> setting;
                 for (decltype(top) y = top; y < c_top; ++y) {
                     for (decltype(left) x = left; x < right; ++x) {
