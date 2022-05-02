@@ -5,9 +5,18 @@ set(JAVA_PACKAGE_NAME seeta_aip)
 
 # find jni for compile
 find_package(JNI OPTIONAL_COMPONENTS)
+
 if (JNI_FOUND)
     include_directories(${JAVA_INCLUDE_PATH})
     include_directories(${JAVA_INCLUDE_PATH2})
+else ()
+    if (ANDROID)
+    else ()
+        message(STATUS "[WARNING] Can not find JNI header, leave empty.")
+    endif ()
+endif ()
+
+if (TRUE)
     message(STATUS "[STATUS] Compiling JNI module.")
 
     find_package(Java REQUIRED COMPONENTS Development)
@@ -247,6 +256,4 @@ if (JNI_FOUND)
 
         endif()
     endforeach()
-else ()
-    message(STATUS "[WARNING] Can not find JNI header, not going to compile JNI module.")
 endif ()

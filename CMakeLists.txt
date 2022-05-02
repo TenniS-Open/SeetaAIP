@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.1)
 project(seeta_aip)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -44,7 +44,7 @@ endif()
 
 add_subdirectory(java)
 
-find_package(OpenCV OPTIONAL_COMPONENTS)
+find_package(OpenCV OPTIONAL_COMPONENTS QUIET)
 
 if (OpenCV_FOUND )
     include_directories(${OpenCV_INCLUDES})
@@ -72,3 +72,4 @@ foreach (path ${TEST_FILES})
     add_executable(test_${file} ${path})
     target_link_libraries(test_${file} ${third})
 endforeach ()
+
