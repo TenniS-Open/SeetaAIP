@@ -83,9 +83,9 @@ namespace seeta {
             }
 
             explicit Engine(const std::string &libname) {
-                m_lib = Library(libname);
+                m_lib = std::make_shared<Library>(libname);
                 m_type = DYNAMIC;
-                auto entry = m_lib.symbol<seeta_aip_load_entry>(entry_name);
+                auto entry = m_lib->symbol<seeta_aip_load_entry>(entry_name);
                 auto errcode = entry(&m_aip, sizeof(SeetaAIP));
                 if (errcode != 0) {
                     switch (errcode) {
@@ -108,7 +108,7 @@ namespace seeta {
 
         private:
             const char *entry_name = "seeta_aip_load";
-            Library m_lib;
+            std::shared_ptr<Library> m_lib;
             Type m_type;
             SeetaAIP m_aip = {};
         };
