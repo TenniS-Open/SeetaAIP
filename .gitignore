@@ -12,3 +12,7 @@
 *.exp
 *.manifest
 
+# javah generate file.
+/java/include
+*.class
+

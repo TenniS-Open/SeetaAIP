@@ -29,8 +29,8 @@ echo "[INFO] Using $THREADS thread(s)"
 
 echo "========[ Building jar"
 
-mkdir -p "$PWD/jar"
-pushd "$PWD/jar" > /dev/null
+mkdir -p "$PWD/android-jar"
+pushd "$PWD/android-jar" > /dev/null
 
 $SHELL "${SCRIPT_ROOT}/android-${BUILD[0]}.sh"
 if [ $? -ne 0 ]; then
