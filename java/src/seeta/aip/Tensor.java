@@ -7,6 +7,7 @@ public class Tensor {
     private int[] data_int;
     private double[] data_double;
     private int[] dims = new int[0];
+    private String data_string;
 
     public Tensor() {}
 
@@ -102,6 +103,12 @@ public class Tensor {
         this.dims = dims;
     }
 
+    public Tensor(String data) {
+        this.type = ValueType.Char;
+        this.data_string = data;
+        this.dims = new int[data.length()];
+    }
+
     public ValueType getType() {
         return this.type;
     }
@@ -124,5 +131,9 @@ public class Tensor {
 
     public double[] getDoubleData() {
         return this.data_double;
+    }
+
+    public String getString() {
+        return this.data_string;
     }
 }

@@ -6,4 +6,5 @@ public enum ValueType {
     Int,
     Float,
     Double,
+    Char,
 }

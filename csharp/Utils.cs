@@ -11,7 +11,7 @@ namespace Seeta.AIP
     {
         public static ImageData ToImageData(Bitmap bitmap)
         {
-            ImageData image = new ImageData(ImageFormat.U8Bgr, 1, (uint) bitmap.Height, (uint) bitmap.Width, 3);
+            ImageData image = new ImageData(ImageFormat.U8Bgr, 1, (uint) bitmap.Width, (uint) bitmap.Height, 3);
             // TODO: make sure lock bits is BGR format, default is BGR by now
             BitmapData data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                 ImageLockMode.ReadOnly,

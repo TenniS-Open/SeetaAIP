@@ -16,8 +16,8 @@ public class ImageData {
 
    public ImageData(ImageFormat format,
                     int number,
-                    int height,
                     int width,
+                    int height,
                     int channels) {
       this.format = format;
       this.number = number;
@@ -42,8 +42,8 @@ public class ImageData {
 
    public ImageData(float[] data,
                     int number,
-                    int height,
                     int width,
+                    int height,
                     int channels) {
       int N = number * height * width * channels;
       if (N != data.length) {
@@ -63,8 +63,8 @@ public class ImageData {
 
    public ImageData(int[] data,
                     int number,
-                    int height,
                     int width,
+                    int height,
                     int channels) {
       int N = number * height * width * channels;
       if (N != data.length) {
@@ -84,8 +84,8 @@ public class ImageData {
 
    public ImageData(byte[] data,
                     int number,
-                    int height,
                     int width,
+                    int height,
                     int channels,
                     ImageFormat format) {
       int N = number * height * width * channels;
@@ -108,10 +108,10 @@ public class ImageData {
 
    public ImageData(byte[] data,
                     int number,
-                    int height,
                     int width,
+                    int height,
                     int channels) {
-      this(data, number, height, width, channels, ImageFormat.U8Raw);
+      this(data, number, width, height, channels, ImageFormat.U8Raw);
    }
 
    public static ValueType GetType(ImageFormat format) {

@@ -309,7 +309,7 @@ namespace Seeta.AIP
             }
         }
 
-        public ImageData(ImageFormat format, uint number, uint height, uint width, uint channels)
+        public ImageData(ImageFormat format, uint number, uint width, uint height, uint channels)
         {
             this.type = GetType(format);
             this.format = format;
@@ -335,7 +335,7 @@ namespace Seeta.AIP
         }
 
         public ImageData(Unmanaged.ImageData image)
-            : this((ImageFormat) image.format, image.number, image.height, image.width, image.channels)
+            : this((ImageFormat) image.format, image.number, image.width, image.height, image.channels)
         {
             CopyFrom(image.data);
         }

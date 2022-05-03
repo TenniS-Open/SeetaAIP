@@ -126,6 +126,7 @@ public:
         this->bind("Int", SEETA_AIP_VALUE_INT32);
         this->bind("Float", SEETA_AIP_VALUE_FLOAT32);
         this->bind("Double", SEETA_AIP_VALUE_FLOAT64);
+        this->bind("Char", SEETA_AIP_VALUE_CHAR);
     }
 };
 
@@ -137,6 +138,7 @@ public:
     jfieldID data_int;
     jfieldID data_double;
     jfieldID dims;
+    jfieldID data_string;
 
     explicit JTensor(JNIEnv *env)
             : JConverter(env, JNI_PACKAGE "Tensor") {
@@ -146,6 +148,7 @@ public:
         data_int = env->GetFieldID(clazz, "data_int", "[I");
         data_double = env->GetFieldID(clazz, "data_double", "[D");
         dims = env->GetFieldID(clazz, "dims", "[I");
+        data_string = env->GetFieldID(clazz, "data_string", "Ljava/lang/String;");
     }
 
     AutoJObject convert(const SeetaAIPObject::Extra &object) const {
@@ -187,6 +190,21 @@ public:
                         java_tensor, data_double,
                         JDouble(env).convert_array(reinterpret_cast<const double*>(object.data), N));
                 break;
+            case SEETA_AIP_VALUE_CHAR:
+            {
+                std::cout << "Tensor Convert..." << std::endl;
+                auto str = JString(env).convert(std::string((char *)object.data, N));
+                std::cout << "Tensor Convert setup dims" << std::endl;
+
+                // set java's length, in case of mismatch
+                auto strLen = (uint32_t)env->GetStringLength(str.get<jstring>());
+                auto strDims = JInt(env).convert_array(&strLen, 1);
+                env->SetObjectField(java_tensor, dims, strDims);
+                std::cout << "Tensor Convert set number" << std::endl;
+
+                env->SetObjectField(java_tensor, data_string, str);
+                break;
+            }
         }
 
         return java_tensor;
@@ -254,6 +272,12 @@ public:
                 env->GetDoubleArrayRegion(java_data, 0, N, result.data<jdouble>());
                 break;
             }
+            case SEETA_AIP_VALUE_CHAR: {
+                auto java_data = reinterpret_cast<jstring>(env->GetObjectField(object, data_string));
+                defer_delete_local_ref(env, java_data);
+                result = seeta::aip::Tensor(JString(env).convert(java_data));
+                break;
+            }
         }
 
         return result;
@@ -266,7 +290,7 @@ public:
     jfieldID score;
 
     explicit JTag(JNIEnv *env)
-            : JConverter(env, JNI_PACKAGE "Object$Tag") {
+            : JConverter(env, JNI_PACKAGE "Tag") {
         label = GetFieldID("label", "I");
         score = GetFieldID("score", "F");
     }
@@ -290,7 +314,7 @@ public:
     explicit JAIPObject(JNIEnv *env)
             : JConverter(env, JNI_PACKAGE "Object") {
         shape = env->GetFieldID(clazz, "shape", "L" JNI_PACKAGE "Shape;");
-        tags = env->GetFieldID(clazz, "tags", "[L" JNI_PACKAGE "Object$Tag;");
+        tags = env->GetFieldID(clazz, "tags", "[L" JNI_PACKAGE "Tag;");
         extra = env->GetFieldID(clazz, "extra", "L" JNI_PACKAGE "Tensor;");
     }
 
@@ -502,8 +526,8 @@ public:
 
         auto result = NativeObject(SEETA_AIP_IMAGE_FORMAT(native_format),
                                    uint32_t(java_number),
-                                   uint32_t(java_height),
                                    uint32_t(java_width),
+                                   uint32_t(java_height),
                                    uint32_t(java_channels));
         auto native_type = result.type();
 
