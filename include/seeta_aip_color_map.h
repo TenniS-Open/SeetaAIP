@@ -158,8 +158,8 @@ namespace seeta {
             inline Color rcolor(int seed, uint8_t min, uint8_t max) {
                 // std::default_random_engine generator(seed);
                 std::mt19937 g(seed);
-                std::uniform_int_distribution<uint8_t> r(min, max);
-                return Color(r(g), r(g), r(g));
+                std::uniform_int_distribution<int> r(min, max);
+                return Color(uint8_t(r(g)), uint8_t(r(g)), uint8_t(r(g)));
             }
 
             /**

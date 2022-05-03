@@ -10,6 +10,10 @@
 #include <climits>
 #include <cfloat>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 namespace seeta {
     namespace aip {
         namespace plot {
@@ -355,7 +359,7 @@ namespace seeta {
                     SeetaAIPPoint s1 = p1, s2 = p2;
                     if (s2.y < s1.y) std::swap(s1, s2);
                     for (decltype(top) y = top; y < bottom; ++y) {
-                        auto center_x = line.get_x(y);
+                        auto center_x = line.get_x(float(y));
                         auto scan_left = int32_t(floorf(center_x - scan_width / 2));
                         auto scan_right = int32_t(ceilf(center_x + scan_width / 2 + 1));
                         if (scan_left < 0) scan_left = 0;
@@ -386,7 +390,7 @@ namespace seeta {
                     SeetaAIPPoint s1 = p1, s2 = p2;
                     if (s2.x < s1.x) std::swap(s1, s2);
                     for (decltype(left) x = left; x < right; ++x) {
-                        auto center_y = line.get_y(x);
+                        auto center_y = line.get_y(float(x));
                         auto scan_top = int32_t(floorf(center_y - scan_width / 2));
                         auto scan_bottom = int32_t(ceilf(center_y + scan_width / 2 + 1));
                         if (scan_top < 0) scan_top = 0;
@@ -524,7 +528,7 @@ namespace seeta {
             inline SeetaAIPPoint rotate_point(const SeetaAIPPoint &c,
                                               float angle,
                                               const SeetaAIPPoint &p) {
-                constexpr float scale = M_PI / 180;
+                constexpr auto scale = float(M_PI / 180);
                 return {
                         (p.x - c.x) * cos(scale * angle) - (p.y - c.y) * sin(scale * angle) + c.x,
                         (p.x - c.x) * sin(scale * angle) + (p.y - c.y) * cos(scale * angle) + c.y
