@@ -112,9 +112,9 @@ namespace seeta {
                 auto right = int32_t(ceilf(p.x + area_width + 1));
 
                 if (top < 0) top = 0;
-                if (bottom > int32_t(height)) bottom = height;
+                if (bottom > int32_t(height)) bottom = int32_t(height);
                 if (left < 0) left = 0;
-                if (right > int32_t(width)) right = width;
+                if (right > int32_t(width)) right = int32_t(width);
 
                 std::vector<PutSetting> setting;
                 for (decltype(top) y = top; y < bottom; ++y) {
@@ -167,8 +167,8 @@ namespace seeta {
                         float scale = 1.0f,
                         int endl = -1)
                         : m_scale(scale) {
-                    m_start_x = x;
-                    m_start_y = y;
+                    m_start_x = int(x);
+                    m_start_y = int(y);
                     m_cursor_x = x;
                     m_cursor_y = y;
                     m_endl = endl;
@@ -197,20 +197,20 @@ namespace seeta {
                     if (ch == '\t') {
                         auto shift = 8 - m_count % 8;
                         m_count += shift;
-                        m_cursor_x += shift * (LetterFont::Width() + 1) * m_scale;
+                        m_cursor_x += float(shift) * float(LetterFont::Width() + 1) * m_scale;
                         try_next_letter_endl();
                         return nullptr;
                     }
 
                     if (ch == '\r') {
-                        m_cursor_x = m_start_x;
+                        m_cursor_x = float(m_start_x);
                         m_count = 0;
                         return nullptr;
                     }
 
                     if (ch == '\n') {
-                        m_cursor_y += (LetterFont::Height() + 1) * m_scale;
-                        m_cursor_x = m_start_x;
+                        m_cursor_y += float(LetterFont::Height() + 1) * m_scale;
+                        m_cursor_x = float(m_start_x);
                         m_count = 0;
                         m_line += 1;
                         return nullptr;
@@ -228,9 +228,10 @@ namespace seeta {
 
             private:
                 void try_next_letter_endl() {
-                    if (m_endl > 0 && cursor().x + LetterFont::Width() * m_scale >= m_endl) {
-                        m_cursor_y += (LetterFont::Height() + 1) * m_scale;
-                        m_cursor_x = m_start_x;
+                    auto next_edge = cursor().x + float(LetterFont::Width()) * m_scale;
+                    if (m_endl > 0 && int(next_edge) >= m_endl) {
+                        m_cursor_y += float(LetterFont::Height() + 1) * m_scale;
+                        m_cursor_x = float(m_start_x);
                         m_count = 0;
                         m_line += 1;
                     }
