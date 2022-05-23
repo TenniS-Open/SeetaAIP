@@ -530,8 +530,8 @@ namespace seeta {
                                               const SeetaAIPPoint &p) {
                 constexpr auto scale = float(M_PI / 180);
                 return {
-                        (p.x - c.x) * cos(scale * angle) - (p.y - c.y) * sin(scale * angle) + c.x,
-                        (p.x - c.x) * sin(scale * angle) + (p.y - c.y) * cos(scale * angle) + c.y
+                        float((p.x - c.x) * cos(scale * angle) - (p.y - c.y) * sin(scale * angle) + c.x),
+                        float((p.x - c.x) * sin(scale * angle) + (p.y - c.y) * cos(scale * angle) + c.y)
                 };
             }
 
