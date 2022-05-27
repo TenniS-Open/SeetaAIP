@@ -151,6 +151,26 @@ namespace seeta {
                 const Color Black(0x000000);
             }
 
+            inline Color hue_color(float hue) {
+                if (hue < 0) hue = 0;
+                if (hue > 1) hue = 1;
+                auto field = int(hue * 6);
+                if (field > 5) field = 5;
+                auto deep = (hue - float(field) / 6.0f) * 6.0f;
+                if (deep < 0) deep = 0;
+                if (deep > 1) deep = 1;
+                auto v = uint8_t(deep * 255);
+                switch (field) {
+                    default: return {0, 0, 0};
+                    case 0: return {255, v, 0};
+                    case 1: return {uint8_t(255 - v), 255, 0};
+                    case 2: return {0, 255, v};
+                    case 3: return {0, uint8_t(255 - v), 255};
+                    case 4: return {v, 0, 255};
+                    case 5: return {255, 0, uint8_t(255 - v)};
+                }
+            }
+
             /**
              * got random color by seed at range[min, max]
              * @return
@@ -166,7 +186,11 @@ namespace seeta {
              * got random color by seed at range[128, 255]
              * @return
              */
-            inline Color rcolor(int seed) { return rcolor(seed, 128, 255); }
+            inline Color rcolor(int seed) {
+                std::mt19937 g(seed);
+                std::uniform_real_distribution<float> u(0, 1);
+                return hue_color(u(g));
+            }
         }
     }
 }
