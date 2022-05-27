@@ -419,6 +419,53 @@ namespace seeta {
                 return setting;
             }
 
+            template<size_t Channels>
+            inline void _fill(void *data, uint32_t count, const void *color) {
+                struct C {
+                    uint8_t data[Channels];
+                };
+                auto from = reinterpret_cast<const C *>(color);
+                auto to = reinterpret_cast<C *>(data);
+                for (decltype(count) i = 0; i < count; ++i) {
+                    *to++ = *from;
+                }
+            }
+
+            /**
+             *
+             * @param image BYTE type HWC format image.
+             * @param color color according to image format
+             */
+            static void fill(SeetaAIPImageData image, const Color &color) {
+                auto format = SEETA_AIP_IMAGE_FORMAT(image.format);
+                auto type = ImageData::GetType(format);
+                auto channels = ImageData::GetChannels(format, image.channels);
+                if ((format & 0xffff0000) == 0x80000) {
+                    throw Exception(
+                            std::string("AIP image plot only support HWC format, got ") + format_string(format));
+                }
+                if (type != SEETA_AIP_VALUE_BYTE) {
+                    throw Exception(
+                            std::string("AIP image plot only support BYTE type, got ") + type_string(format));
+                }
+                image.channels = channels;  // fix channels if not mismatched.
+                auto count = image.number * image.height * image.width;
+                switch (image.channels) {
+                    case 4:
+                        _fill<4>(image.data, count, &color);
+                        break;
+                    case 3:
+                        _fill<3>(image.data, count, &color);
+                        break;
+                    case 2:
+                        _fill<2>(image.data, count, &color);
+                        break;
+                    case 1:
+                        _fill<1>(image.data, count, &color);
+                        break;
+                }
+            }
+
             /**
              *
              * @param image BYTE type HWC format image.
