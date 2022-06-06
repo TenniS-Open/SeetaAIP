@@ -43,7 +43,7 @@ JNIEXPORT void JNICALL Java_seeta_aip_Package_construct
     jfieldID self_field_support = env->GetFieldID(self_class, "support", "[Ljava/lang/String;");
 
     // set base data
-    env->SetObjectField(self_class, self_field_cdata, cdata);
+    env->SetObjectField(self, self_field_cdata, cdata);
     // set other member
     jbyte* native_cdata = env->GetByteArrayElements(cdata, JNI_FALSE);
     defer(&JNIEnv::ReleaseByteArrayElements, env, cdata, native_cdata, 0);
@@ -94,7 +94,7 @@ JNIEXPORT jlong JNICALL Java_seeta_aip_Package_create
         (JNIEnv *env, jobject self, jobject device, jobjectArray models, jobjectArray objects) {
     jclass self_class = env->GetObjectClass(self);
     jfieldID self_field_cdata = env->GetFieldID(self_class, "cdata", "[B");
-    auto jni_cdata = reinterpret_cast<jbyteArray>(env->GetObjectField(self_class, self_field_cdata));
+    auto jni_cdata = reinterpret_cast<jbyteArray>(env->GetObjectField(self, self_field_cdata));
     jbyte* native_cdata = env->GetByteArrayElements(jni_cdata, JNI_FALSE);
     defer(&JNIEnv::ReleaseByteArrayElements, env, jni_cdata, native_cdata, 0);
     auto &aip = *reinterpret_cast<SeetaAIP*>(native_cdata);
