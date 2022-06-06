@@ -205,6 +205,8 @@ public class Instance {
      * @throws seeta.aip.Exception when parameter not valid or other runtime exception.
      */
     public Result forward(int methodID, ImageData[] images, Object[] objects) throws seeta.aip.Exception {
+        if (images == null) images = new ImageData[0];
+        if (objects == null) objects = new Object[0];
         return this.aip.forward(handle, methodID, images, objects);
     }
 

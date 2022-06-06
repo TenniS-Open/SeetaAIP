@@ -192,16 +192,11 @@ public:
                 break;
             case SEETA_AIP_VALUE_CHAR:
             {
-                std::cout << "Tensor Convert..." << std::endl;
                 auto str = JString(env).convert(std::string((char *)object.data, N));
-                std::cout << "Tensor Convert setup dims" << std::endl;
-
                 // set java's length, in case of mismatch
                 auto strLen = (uint32_t)env->GetStringLength(str.get<jstring>());
                 auto strDims = JInt(env).convert_array(&strLen, 1);
                 env->SetObjectField(java_tensor, dims, strDims);
-                std::cout << "Tensor Convert set number" << std::endl;
-
                 env->SetObjectField(java_tensor, data_string, str);
                 break;
             }
