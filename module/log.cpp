@@ -11,6 +11,44 @@
 #include <map>
 #include <set>
 
+#if defined(__ANDROID__)
+#include "android/log.h"
+#define ANDROID_LOG(_LEVEL, _TAG, ...) __android_log_print(_LEVEL, _TAG, __VA_ARGS__)
+#endif
+
+namespace log {
+    class EndLine {};
+
+    class Logger {
+    public:
+        std::ostringstream oss;
+    };
+
+    template <typename T>
+    inline Logger &operator<<(Logger &s, const T &t) {
+        s.oss << t;
+        return s;
+    }
+
+    inline Logger &operator<<(Logger &s, const EndLine &) {
+        const auto content = s.oss.str();
+        s.oss << std::endl;
+        const auto content_endl = s.oss.str();
+        std::cout << content_endl;
+        std::cout.flush();
+
+#if defined(__ANDROID__)
+        ANDROID_LOG(ANDROID_LOG_INFO, "AIPLOG", "%s", content.c_str());
+#endif
+
+        s.oss.clear();
+        return s;
+    }
+
+    static Logger cout;
+    static EndLine endl;
+}
+
 
 inline std::ostream &operator<<(std::ostream &out, const seeta::aip::Tensor &obj) {
     if (obj.empty()) {
@@ -88,55 +126,57 @@ public:
     std::map<std::string, seeta::aip::Object> m_property_objects;
     std::vector<const char *> m_properties;
 
+    log::Logger term_log;
+
     MyPackage() {
-        std::cout << "[aip] [" << this << "] constructed." << std::endl;
+        term_log << "[aip] [" << this << "] constructed." << log::endl;
     }
 
     ~MyPackage() override {
-        std::cout << "[aip] [" << this << "] destructed." << std::endl;
+        term_log << "[aip] [" << this << "] destructed." << log::endl;
     }
 
     void create(const SeetaAIPDevice &device,
             const std::vector<std::string> &models,
             const std::vector<SeetaAIPObject> &objects) override {
-        std::cout << "[aip] [" << this << "] create called." << std::endl;
-        std::cout << "[aip]     " << "param: device=" << "[" << device.device << ":" << device.id << "]" << std::endl;
-        std::cout << "[aip]     " << "param: models=" << "[";
+        term_log << "[aip] [" << this << "] create called." << log::endl;
+        term_log << "[aip]     " << "param: device=" << "[" << device.device << ":" << device.id << "]" << log::endl;
+        term_log << "[aip]     " << "param: models=" << "[";
         if (models.empty()) {
-            std::cout << "]" << std::endl;
+            term_log << "]" << log::endl;
         } else {
-            std::cout << std::endl;
+            term_log << log::endl;
             for (auto &model : models) {
-                std::cout << "[aip]         \"" << model << "\", " << std::endl;
+                term_log << "[aip]         \"" << model << "\", " << log::endl;
             }
-            std::cout << "[aip]     " << "]" << std::endl;
+            term_log << "[aip]     " << "]" << log::endl;
         }
-        std::cout << "[aip]     " << "param: objects=" << "[";
+        term_log << "[aip]     " << "param: objects=" << "[";
         if (objects.empty()) {
-            std::cout << "]" << std::endl;
+            term_log << "]" << log::endl;
         } else {
-            std::cout << std::endl;
+            term_log << log::endl;
             for (auto &object : objects) {
-                std::cout << "[aip]         " << object << ", " << std::endl;
+                term_log << "[aip]         " << object << ", " << log::endl;
             }
-            std::cout << "[aip]     " << "]" << std::endl;
+            term_log << "[aip]     " << "]" << log::endl;
         }
     }
 
     void free() override {
-        std::cout << "[aip] [" << this << "] free called." << std::endl;
+        term_log << "[aip] [" << this << "] free called." << log::endl;
     }
 
     const char *error(int32_t errcode) override  {
         static const char *msg = "Error example.";
-        std::cout << "[aip] [" << this << "] error called." << std::endl;
-        std::cout << "[aip]     " << "param: errcode=" << errcode << std::endl;
-        std::cout << "[aip]     " << "return: \"" << msg << "\"" << std::endl;
+        term_log << "[aip] [" << this << "] error called." << log::endl;
+        term_log << "[aip]     " << "param: errcode=" << errcode << log::endl;
+        term_log << "[aip]     " << "return: \"" << msg << "\"" << log::endl;
         return msg;
     }
 
     const char **property() override {
-        std::cout << "[aip] [" << this << "] property called." << std::endl;
+        term_log << "[aip] [" << this << "] property called." << log::endl;
 
         m_properties.clear();
         std::set<std::string> cache;
@@ -153,15 +193,15 @@ public:
             m_properties.push_back(name.c_str());
         }
 
-        std::cout << "[aip]     " << "return: " << "[";
+        term_log << "[aip]     " << "return: " << "[";
         if (m_properties.empty()) {
-            std::cout << "]" << std::endl;
+            term_log << "]" << log::endl;
         } else {
-            std::cout << std::endl;
+            term_log << log::endl;
             for (auto &property : m_properties) {
-                std::cout << "[aip]         \"" << property << "\", " << std::endl;
+                term_log << "[aip]         \"" << property << "\", " << log::endl;
             }
-            std::cout << "[aip]     " << "]" << std::endl;
+            term_log << "[aip]     " << "]" << log::endl;
         }
 
         m_properties.push_back(nullptr);
@@ -169,89 +209,89 @@ public:
     }
 
     void setd(const std::string &name, double value) override {
-        std::cout << "[aip] [" << this << "] setd called." << std::endl;
-        std::cout << "[aip]     " << "param: name=" << name << std::endl;
-        std::cout << "[aip]     " << "param: value=" << value << std::endl;
+        term_log << "[aip] [" << this << "] setd called." << log::endl;
+        term_log << "[aip]     " << "param: name=" << name << log::endl;
+        term_log << "[aip]     " << "param: value=" << value << log::endl;
         m_property_values[name] = value;
     }
 
     double getd(const std::string &name) override {
-        std::cout << "[aip] [" << this << "] getd called." << std::endl;
-        std::cout << "[aip]     " << "param: name=" << name << std::endl;
+        term_log << "[aip] [" << this << "] getd called." << log::endl;
+        term_log << "[aip]     " << "param: name=" << name << log::endl;
         auto it = m_property_values.find(name);
         double value = 0;
         if (it != m_property_values.end()) {
             value = it->second;
         } else {
-            std::cout << "[aip]     " << "exception: property not set." << std::endl;
+            term_log << "[aip]     " << "exception: property not set." << log::endl;
         }
-        std::cout << "[aip]     " << "return: " << value << std::endl;
+        term_log << "[aip]     " << "return: " << value << log::endl;
         return value;
     }
 
     void set(const std::string &name, const SeetaAIPObject &value) override {
-        std::cout << "[aip] [" << this << "] set called." << std::endl;
-        std::cout << "[aip]     " << "param: name=" << name << std::endl;
-        std::cout << "[aip]     " << "param: value=" << value << std::endl;
+        term_log << "[aip] [" << this << "] set called." << log::endl;
+        term_log << "[aip]     " << "param: name=" << name << log::endl;
+        term_log << "[aip]     " << "param: value=" << value << log::endl;
         m_property_objects[name].raw(value);
     }
 
     SeetaAIPObject get(const std::string &name) override {
-        std::cout << "[aip] [" << this << "] get called." << std::endl;
-        std::cout << "[aip]     " << "param: name=" << name << std::endl;
+        term_log << "[aip] [" << this << "] get called." << log::endl;
+        term_log << "[aip]     " << "param: name=" << name << log::endl;
         auto it = m_property_objects.find(name);
         SeetaAIPObject value = m_empty_object;
         if (it != m_property_objects.end()) {
             value = it->second;
         } else {
-            std::cout << "[aip]     " << "exception: property not set." << std::endl;
+            term_log << "[aip]     " << "exception: property not set." << log::endl;
         }
-        std::cout << "[aip]     " << "return: " << value << std::endl;
+        term_log << "[aip]     " << "return: " << value << log::endl;
         return value;
     }
 
     const char *tag(uint32_t method_id, uint32_t label_index, int32_t label_value) override {
         static const char *tag = "tag";
-        std::cout << "[aip] [" << this << "] tag called." << std::endl;
-        std::cout << "[aip]     " << "param: method_id=" << method_id << std::endl;
-        std::cout << "[aip]     " << "param: label_index=" << label_index << std::endl;
-        std::cout << "[aip]     " << "param: label_value=" << label_value << std::endl;
-        std::cout << "[aip]     " << "return: " << tag << std::endl;
+        term_log << "[aip] [" << this << "] tag called." << log::endl;
+        term_log << "[aip]     " << "param: method_id=" << method_id << log::endl;
+        term_log << "[aip]     " << "param: label_index=" << label_index << log::endl;
+        term_log << "[aip]     " << "param: label_value=" << label_value << log::endl;
+        term_log << "[aip]     " << "return: " << tag << log::endl;
         return tag;
     }
 
     void reset() override {
-        std::cout << "[aip] [" << this << "] reset called." << std::endl;
+        term_log << "[aip] [" << this << "] reset called." << log::endl;
     }
 
     void forward(
             uint32_t method_id,
             const std::vector<SeetaAIPImageData> &images,
             const std::vector<SeetaAIPObject> &objects) override {
-        std::cout << "[aip] [" << this << "] forward called." << std::endl;
-        std::cout << "[aip]     " << "param: method_id=" << method_id << std::endl;
-        std::cout << "[aip]     " << "param: images=" << "[";
+        term_log << "[aip] [" << this << "] forward called." << log::endl;
+        term_log << "[aip]     " << "param: method_id=" << method_id << log::endl;
+        term_log << "[aip]     " << "param: images=" << "[";
         if (images.empty()) {
-            std::cout << "]" << std::endl;
+            term_log << "]" << log::endl;
         } else {
-            std::cout << std::endl;
+            term_log << log::endl;
             for (auto &image : images) {
-                std::cout << "[aip]         " << image << ", " << std::endl;
+                term_log << "[aip]         " << image << ", " << log::endl;
             }
-            std::cout << "[aip]     " << "]" << std::endl;
+            term_log << "[aip]     " << "]" << log::endl;
         }
-        std::cout << "[aip]     " << "param: objects=" << "[";
+        term_log << "[aip]     " << "param: objects=" << "[";
         if (objects.empty()) {
-            std::cout << "]" << std::endl;
+            term_log << "]" << log::endl;
         } else {
-            std::cout << std::endl;
+            term_log << log::endl;
             for (auto &object : objects) {
-                std::cout << "[aip]         " << object << ", " << std::endl;
+                term_log << "[aip]         " << object << ", " << log::endl;
             }
-            std::cout << "[aip]     " << "]" << std::endl;
+            term_log << "[aip]     " << "]" << log::endl;
         }
-        std::cout << "[aip]     " << "return: images=[]" << std::endl;
-        std::cout << "[aip]     " << "return: objects=[]" << std::endl;
+        term_log << "[aip]     " << "return: images=[]" << log::endl;
+        term_log << "[aip]     " << "return: objects=[]" << log::endl;
         result = Result();
     }
 };
@@ -259,20 +299,20 @@ public:
 class Init {
 public:
     Init() {
-        std::cout << "[dll] [" << this << "] initialized." << std::endl;
+        log::cout << "[dll] [" << this << "] initialized." << log::endl;
     }
 
     ~Init() {
-        std::cout << "[dll] [" << this << "] finalized." << std::endl;
+        log::cout << "[dll] [" << this << "] finalized." << log::endl;
     }
 };
 
 Init init;
 
 int32_t seeta_aip_load(struct SeetaAIP *aip, uint32_t size) {
-    std::cout << "[aip] seeta_aip_load called." << std::endl;
-    std::cout << "[aip]     " << "param: aip=@" << aip << std::endl;
-    std::cout << "[aip]     " << "param: size=" << size << std::endl;
+    log::cout << "[aip] seeta_aip_load called." << log::endl;
+    log::cout << "[aip]     " << "param: aip=@" << aip << log::endl;
+    log::cout << "[aip]     " << "param: size=" << size << log::endl;
 
     CHECK_AIP_SIZE(aip, size)
     static const char *support[] = {"cpu", "gpu", nullptr};
@@ -285,6 +325,6 @@ int32_t seeta_aip_load(struct SeetaAIP *aip, uint32_t size) {
             support);
     seeta::aip::setup_aip_entry<MyPackage>(*aip);
 
-    std::cout << "[aip]     " << "return: 0" << std::endl;
+    log::cout << "[aip]     " << "return: 0" << log::endl;
     return 0;
 }
